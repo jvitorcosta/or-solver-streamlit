@@ -79,7 +79,7 @@ exclude = ["docs/", "build/"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
-addopts = "--cov=or_solver --cov-report=term-missing --cov-report=html"
+addopts = "--tb=short"
 
 [tool.coverage.run]
 source = ["src"]

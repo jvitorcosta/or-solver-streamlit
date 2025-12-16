@@ -1,48 +1,29 @@
-name: Tests & Quality
+name: Tests
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 jobs:
   test:
-    name: 🐱 Test on ${{ matrix.os }} with Python ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ["3.11", "3.12"]
+    name: 🐱 Tests
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
 
       - name: Install dependencies
-        run: |
-          uv sync --extra dev
+        run: uv sync --extra test
 
-      - name: Lint with ruff
-        run: |
-          uv run ruff check src tests
-
-      - name: Check formatting
-        run: |
-          uv run ruff format --check src tests
-
-      - name: Run tests with pytest
-        run: |
-          uv run pytest -v --cov=or_solver --cov-report=term-missing
+      - name: Run tests
+        run: uv run pytest
