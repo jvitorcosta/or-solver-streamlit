@@ -5,6 +5,7 @@ Welcome! We're excited you want to help make linear programming as easy as petti
 ## 😸 Quick Start
 
 ### Setup
+
 ```bash
 # Clone the repo
 git clone https://github.com/YOUR_USERNAME/or-solver-streamlit.git
@@ -28,11 +29,13 @@ uv run pytest tests/test_parser.py -v
 ```
 
 ### Writing Tests
+
 - Add tests for new features
 - Test both English and Portuguese syntax
 - Use descriptive names with cat emojis! 🐾
 
 Example:
+
 ```python
 def test_parse_cat_food_problem():
     """Test parsing a cat food optimization problem."""
@@ -43,7 +46,7 @@ def test_parse_cat_food_problem():
     where:
         cat_food, cat_toys >= 0
     """
-    
+
     problem = parse_lp_problem(problem_text)
     assert problem.objective.direction == ObjectiveDirection.MAXIMIZE
 ```
@@ -61,6 +64,7 @@ make lint
 ```
 
 **Guidelines:**
+
 - Use type hints
 - Add docstrings
 - Use descriptive variable names
@@ -76,6 +80,7 @@ make lint
 ## 🏗️ Architecture
 
 Simple layered structure:
+
 - `presentation/` - CLI and web interfaces
 - `application/` - Business logic
 - `domain/` - Core models and parsing
@@ -84,11 +89,13 @@ Simple layered structure:
 ## 🐾 Issues
 
 **Bug Reports:**
+
 - Include Python version and OS
 - Provide minimal example
 - Rate bug severity on cat scale (1-10 cats) 😿
 
 **Feature Requests:**
+
 - Describe the use case
 - Explain educational value
 - How does it make the project more cat-like? 🐱
@@ -99,4 +106,4 @@ Be kind, helpful, and have fun! We're all learning together.
 
 ---
 
-*Happy coding! 😸*
+_Happy coding! 😸_
