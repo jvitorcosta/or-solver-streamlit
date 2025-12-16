@@ -60,9 +60,6 @@ def solve(
         raise typer.Exit(1)
 
 
-
-
-
 @app.command()
 def validate(
     problem_file: Path = typer.Argument(..., help="Problem file to validate"),
@@ -171,28 +168,28 @@ def syntax_help() -> None:
 
 [yellow]English Syntax (Default):[/yellow]
     maximize 8*cat_food + 10*cat_toys
-    
+
     subject to:
         0.5*cat_food + 0.5*cat_toys <= 150
         cat_food >= 30
-    
+
     where:
         cat_food, cat_toys >= 0
 
 [yellow]Portuguese Syntax:[/yellow]
     maximizar 8*comida_gato + 10*brinquedos_gato
-    
+
     sujeito a:
         0.5*comida_gato + 0.5*brinquedos_gato <= 150
         comida_gato >= 30
-    
+
     onde:
         comida_gato, brinquedos_gato >= 0
 
 [yellow]Variable Types:[/yellow]
     where:
         x1, x2 >= 0        # Continuous non-negative
-        integer y1, y2     # Integer variables  
+        integer y1, y2     # Integer variables
         binary z1, z2      # Binary (0/1) variables
 
 [yellow]Supported Operators:[/yellow]
@@ -255,9 +252,7 @@ def create_template(
     problem_type: str = typer.Argument(
         ..., help="Problem type: diet, transport, assignment, etc."
     ),
-    output_file: Path | None = typer.Option(
-        None, "--output", "-o", help="Output file"
-    ),
+    output_file: Path | None = typer.Option(None, "--output", "-o", help="Output file"),
 ) -> None:
     """📝 Create a problem template.
 
