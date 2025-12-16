@@ -1,6 +1,5 @@
 """Test the LP parser."""
 
-
 import pytest
 
 from or_solver.domain.models import (
@@ -21,12 +20,12 @@ class TestLPParser:
         """Test parsing a simple maximize problem."""
         problem_text = """
         maximize 2*x1 + 3*x2
-        
+
         subject to:
             x1 + x2 <= 10
             x1 >= 0
             x2 >= 0
-        
+
         where:
             x1, x2 >= 0
         """
@@ -41,10 +40,10 @@ class TestLPParser:
         """Test parsing a simple minimize problem."""
         problem_text = """
         minimize x1 + 2*x2
-        
+
         subject to:
             2*x1 + x2 >= 3
-        
+
         where:
             x1, x2 >= 0
         """
@@ -58,10 +57,10 @@ class TestLPParser:
         """Test parsing Portuguese syntax."""
         problem_text = """
         maximizar 8*comida_gato + 10*brinquedos_gato
-        
+
         sujeito a:
             0.5*comida_gato + 0.5*brinquedos_gato <= 150
-        
+
         onde:
             comida_gato, brinquedos_gato >= 0
         """
@@ -79,10 +78,10 @@ class TestLPParser:
         """Test parsing with implicit coefficients."""
         problem_text = """
         maximize x1 + x2  # Implicit coefficient 1
-        
+
         subject to:
             x1 + 2*x2 <= 5
-        
+
         where:
             x1, x2 >= 0
         """
@@ -97,10 +96,10 @@ class TestLPParser:
         """Test parsing negative coefficients."""
         problem_text = """
         minimize 2*x1 - 3*x2 + x3
-        
+
         subject to:
             x1 - x2 + 2*x3 <= 10
-        
+
         where:
             x1, x2, x3 >= 0
         """
@@ -114,10 +113,10 @@ class TestLPParser:
         """Test parsing integer variable declarations."""
         problem_text = """
         minimize x1 + x2
-        
+
         subject to:
             x1 + x2 <= 5
-        
+
         where:
             integer x1, x2
             x1, x2 >= 0
@@ -134,10 +133,10 @@ class TestLPParser:
         """Test parsing binary variable declarations."""
         problem_text = """
         maximize 5*y1 + 3*y2
-        
+
         subject to:
             y1 + y2 <= 1
-        
+
         where:
             binary y1, y2
         """
@@ -154,11 +153,11 @@ class TestLPParser:
         problem_text = """
         # This is a cat food optimization problem
         maximize 8*cat_food + 10*cat_toys  # Maximize happiness
-        
+
         subject to:
             0.5*cat_food + 0.5*cat_toys <= 150  # Budget constraint
             # cat_food >= 30  # This constraint is commented out
-        
+
         where:
             cat_food, cat_toys >= 0  # Non-negative variables
         """
