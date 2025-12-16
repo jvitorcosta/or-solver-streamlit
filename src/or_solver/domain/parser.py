@@ -40,7 +40,6 @@ class ParseError(Exception):
     """Exception raised when parsing fails."""
 
 
-
 class LPParser:
     """Parser for modern academic LP syntax.
 
