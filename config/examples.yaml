@@ -1,0 +1,110 @@
+# 🐾 Example Linear Programming Problems
+
+diet_problem:
+  name: "Optimal Cat Nutrition (Diet Problem)"
+  description: "Minimize cost while meeting nutritional requirements"
+  problem: |
+    minimize 2*kibble + 3*wet_food + 1*treats
+
+    subject to:
+        # Nutritional requirements
+        20*kibble + 15*wet_food + 5*treats >= 100   # Protein (g)
+        10*kibble + 25*wet_food + 2*treats >= 80    # Fat (g)  
+        5*kibble + 10*wet_food + 15*treats >= 50    # Fiber (g)
+
+    where:
+        kibble, wet_food, treats >= 0
+
+transportation_problem:
+  name: "Cat Food Distribution (Transportation Problem)" 
+  description: "Minimize shipping costs between factories and stores"
+  problem: |
+    minimize 3*x11 + 2*x12 + 4*x21 + 3*x22
+
+    subject to:
+        # Supply constraints (cat food factories)
+        x11 + x12 <= 100  # Factory 1 supply
+        x21 + x22 <= 150  # Factory 2 supply
+        
+        # Demand constraints (pet stores)
+        x11 + x21 >= 80   # Store 1 demand  
+        x12 + x22 >= 70   # Store 2 demand
+
+    where:
+        x11, x12, x21, x22 >= 0
+
+assignment_problem:
+  name: "Cat Toys Assignment"
+  description: "Assign toys to cats to minimize total unhappiness"
+  problem: |
+    minimize 5*x11 + 3*x12 + 4*x13 + 7*x21 + 2*x22 + 6*x23 + 8*x31 + 4*x32 + 3*x33
+
+    subject to:
+        # Each cat gets exactly one toy
+        x11 + x12 + x13 = 1  # Cat 1
+        x21 + x22 + x23 = 1  # Cat 2  
+        x31 + x32 + x33 = 1  # Cat 3
+        
+        # Each toy assigned to exactly one cat
+        x11 + x21 + x31 = 1  # Toy 1
+        x12 + x22 + x32 = 1  # Toy 2
+        x13 + x23 + x33 = 1  # Toy 3
+
+    where:
+        binary x11, x12, x13, x21, x22, x23, x31, x32, x33
+
+knapsack_problem:
+  name: "Cat Supply Knapsack"
+  description: "Maximize value of cat supplies within weight limit"  
+  problem: |
+    maximize 10*food_premium + 8*toy_feather + 12*bed_deluxe + 6*collar_basic
+
+    subject to:
+        # Weight constraint (kg)
+        2*food_premium + 1*toy_feather + 3*bed_deluxe + 0.5*collar_basic <= 5
+        
+        # Budget constraint ($)  
+        15*food_premium + 8*toy_feather + 25*bed_deluxe + 12*collar_basic <= 50
+
+    where:
+        binary food_premium, toy_feather, bed_deluxe, collar_basic
+
+production_problem:
+  name: "Cat Treat Production"
+  description: "Maximize profit from cat treat production"
+  problem: |
+    maximize 3*salmon_treats + 2*chicken_treats + 4*tuna_treats
+
+    subject to:
+        # Resource constraints
+        2*salmon_treats + 1*chicken_treats + 3*tuna_treats <= 100  # Protein (kg)
+        1*salmon_treats + 2*chicken_treats + 1*tuna_treats <= 80   # Carbs (kg)
+        0.5*salmon_treats + 0.3*chicken_treats + 0.8*tuna_treats <= 20  # Fat (kg)
+        
+        # Demand constraints  
+        salmon_treats <= 25
+        chicken_treats <= 30
+        tuna_treats <= 20
+
+    where:
+        salmon_treats, chicken_treats, tuna_treats >= 0
+
+mixed_integer_problem:
+  name: "Cat Shelter Staffing"
+  description: "Minimize staffing costs with integer constraints"
+  problem: |
+    minimize 200*full_time + 100*part_time + 50*volunteers
+
+    subject to:
+        # Coverage requirements (hours per week)
+        40*full_time + 20*part_time + 10*volunteers >= 300  # Total hours needed
+        
+        # Skill requirements
+        full_time + 0.5*part_time >= 5  # Experienced staff needed
+        
+        # Volunteer coordination
+        volunteers <= 2*full_time  # Volunteers need supervision
+
+    where:
+        integer full_time, part_time, volunteers
+        full_time, part_time, volunteers >= 0

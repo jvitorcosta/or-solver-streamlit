@@ -1,0 +1,26 @@
+[global]
+# Set development mode
+developmentMode = false
+
+[server]
+# Server settings
+port = 8501
+enableCORS = false
+enableXsrfProtection = true
+maxUploadSize = 200
+
+[browser]
+# Browser settings
+gatherUsageStats = false
+
+[theme]
+# Light theme as default
+primaryColor = "#FF6B6B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+font = "sans serif"
+
+[client]
+# Client settings
+showErrorDetails = true

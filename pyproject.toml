@@ -1,0 +1,98 @@
+[project]
+name = "or-solver-streamlit"
+version = "2.0.0"
+description = "🐱 Modern Operations Research Solver with Streamlit Interface - A purr-fect tool for linear programming!"
+authors = [{name = "João Pinheiro", email = "joao.pinheiro@example.com"}]
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+keywords = ["operations-research", "linear-programming", "optimization", "streamlit", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+dependencies = [
+    "typer",                # CLI framework
+    "rich",                 # Terminal output
+    "pydantic",            # Data validation
+    "pyparsing",           # Parsing library
+    "pyyaml",              # YAML configuration
+    "streamlit",           # Web interface
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "pre-commit",
+    "mypy",
+]
+
+test = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/username/or-solver-streamlit"
+Documentation = "https://username.github.io/or-solver-streamlit"
+Repository = "https://github.com/username/or-solver-streamlit"
+Issues = "https://github.com/username/or-solver-streamlit/issues"
+
+[project.scripts]
+solvedor = "or_solver.presentation.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/or_solver"]
+
+[tool.uv]
+dev-dependencies = [
+    "ipython>=8.28.0",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90", "I", "N", "UP", "B", "A", "C4", "PIE", "SIM"]
+ignore = ["E501"]  # Line too long (handled by formatter)
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+exclude = ["docs/", "build/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "--cov=or_solver --cov-report=term-missing --cov-report=html"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/test_*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+]

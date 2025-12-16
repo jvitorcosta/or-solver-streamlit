@@ -1,0 +1,36 @@
+# 🐱 OR-Solver Configuration
+
+# Default settings for the OR-Solver application
+default:
+  language: "en"  # en (English) or pt (Portuguese)
+  precision: 4    # Decimal places for results
+  solver: "glop"  # Default solver: glop (LP) or scip (IP)
+  timeout: 300    # Solver timeout in seconds
+
+# Solver-specific settings
+solvers:
+  glop:
+    name: "GLOP (Linear Programming)"
+    type: "linear"
+    parameters:
+      time_limit_ms: 300000
+      
+  scip:
+    name: "SCIP (Integer Programming)" 
+    type: "integer"
+    parameters:
+      time_limit_ms: 300000
+      gap_limit: 0.01
+
+# User interface settings  
+ui:
+  theme: "cat_theme"
+  show_progress: true
+  emoji_output: true
+  syntax_highlighting: true
+
+# Educational features
+education:
+  step_by_step: true
+  show_explanations: true
+  cat_themed_examples: true
