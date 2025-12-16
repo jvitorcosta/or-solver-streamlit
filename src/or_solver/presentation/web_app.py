@@ -44,7 +44,7 @@ def setup_page_config():
         """
     <style>
     @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-    
+
     .main > div {
         padding-top: 2rem;
     }
@@ -169,17 +169,21 @@ def render_main_interface(language):
     with col1:
         st.title("🐱 OR-Solver")
         if language == "pt":
-            st.markdown("**Otimização Linear Moderna** • *Fácil como fazer carinho em gato!*")
+            st.markdown(
+                "**Otimização Linear Moderna** • *Fácil como fazer carinho em gato!*"
+            )
         else:
-            st.markdown("**Modern Linear Programming** • *A purr-fect optimization tool!*")
-    
+            st.markdown(
+                "**Modern Linear Programming** • *A purr-fect optimization tool!*"
+            )
+
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
         if language == "pt":
             st.metric("Status", "● Ativo", "Pronto para resolver")
         else:
             st.metric("Status", "● Active", "Ready to solve")
-    
+
     st.markdown("---")
 
     # Set button labels
@@ -231,7 +235,7 @@ where:
     with col3:
         if st.button("? Syntax Help", use_container_width=True):
             show_syntax_help(language)
-    
+
     # Add some spacing after buttons
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -365,20 +369,20 @@ def show_syntax_help(language):
     if language == "pt":
         st.info("""
         ## 📚 Guia de Sintaxe - Português
-        
+
         **Função Objetivo:**
         ```
         maximizar 8*comida_gato + 10*brinquedos_gato
         minimizar 2*x1 + 3*x2
         ```
-        
+
         **Restrições:**
         ```
         sujeito a:
             0.5*comida_gato + 0.5*brinquedos_gato <= 150
             comida_gato >= 30
         ```
-        
+
         **Domínio das Variáveis:**
         ```
         onde:
@@ -390,20 +394,20 @@ def show_syntax_help(language):
     else:
         st.info("""
         ## 📚 Syntax Guide - English
-        
+
         **Objective Function:**
         ```
         maximize 8*cat_food + 10*cat_toys
         minimize 2*x1 + 3*x2
         ```
-        
+
         **Constraints:**
         ```
         subject to:
             0.5*cat_food + 0.5*cat_toys <= 150
             cat_food >= 30
         ```
-        
+
         **Variable Domain:**
         ```
         where:
