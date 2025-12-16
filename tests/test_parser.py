@@ -8,7 +8,6 @@ from or_solver.domain.models import (
 )
 from or_solver.domain.parser import (
     ParseError,
-    convert_old_syntax,
     parse_lp_problem,
 )
 
@@ -182,53 +181,3 @@ class TestLPParser:
         for invalid_text in invalid_problems:
             with pytest.raises(ParseError):
                 parse_lp_problem(invalid_text)
-
-
-class TestOldSyntaxConverter:
-    """Test the old syntax converter."""
-
-    def test_convert_basic_problem(self):
-        """Test converting a basic old syntax problem."""
-        old_text = """
-        problema: linear
-        max: 8x1 + 10x2
-        restricao: 0.5x1 + 0.5x2 <= 150
-        restricao: x1 >= 30
-        arredondamento: 3
-        """
-
-        new_text = convert_old_syntax(old_text)
-
-        assert "maximize 8x1 + 10x2" in new_text
-        assert "subject to:" in new_text
-        assert "0.5x1 + 0.5x2 <= 150" in new_text
-        assert "x1 >= 30" in new_text
-        assert "where:" in new_text
-        assert "x1, x2 >= 0" in new_text
-
-    def test_convert_minimization_problem(self):
-        """Test converting a minimization problem."""
-        old_text = """
-        p: inteiro
-        min: 2x1 + 3x2
-        r: x1 + x2 >= 5
-        """
-
-        new_text = convert_old_syntax(old_text)
-
-        assert "minimize 2x1 + 3x2" in new_text
-        assert "subject to:" in new_text
-        assert "x1 + x2 >= 5" in new_text
-
-    def test_convert_preserves_variables(self):
-        """Test that variable extraction works correctly."""
-        old_text = """
-        max: 5profit + 3cost
-        r: profit <= 100
-        r: cost >= 10
-        """
-
-        new_text = convert_old_syntax(old_text)
-
-        # Should identify both 'profit' and 'cost' as variables
-        assert "profit, cost >= 0" in new_text or "cost, profit >= 0" in new_text

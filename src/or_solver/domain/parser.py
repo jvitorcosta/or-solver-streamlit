@@ -89,7 +89,7 @@ class LPParser:
         coefficient = OptionalPP(number, default=Decimal("1"))
 
         # Term: [coefficient] [*] variable
-        Group(
+        term = Group(
             OptionalPP(minus, default="+").setResultsName("sign")
             + coefficient.setResultsName("coeff")
             + OptionalPP(multiply)
@@ -147,7 +147,7 @@ class LPParser:
         )
 
         # Constraints section
-        constraints_section = Group(subject_to + OneOrMore(constraint)).setResultsName(
+        constraints_section = Group(Suppress(subject_to) + OneOrMore(constraint)).setResultsName(
             "constraints"
         )
 
@@ -157,7 +157,7 @@ class LPParser:
         where_kw = where_en | where_pt
 
         # Variable lists
-        var_list = Group(OneOrMore(variable + OptionalPP(Suppress(","))))
+        var_list = Group(variable + ZeroOrMore(Suppress(",") + variable))
 
         # Bound specifications
         non_negative = Group(
@@ -175,7 +175,7 @@ class LPParser:
 
         # Bounds section
         bounds_section = Group(
-            where_kw + ZeroOrMore(non_negative | integer_decl | binary_decl)
+            Suppress(where_kw) + ZeroOrMore(non_negative | integer_decl | binary_decl)
         ).setResultsName("bounds")
 
         # Complete LP problem
@@ -232,9 +232,7 @@ class LPParser:
 
         # Add constraints
         if hasattr(parsed_data, "constraints"):
-            for constraint_data in parsed_data.constraints[
-                1:
-            ]:  # Skip the "subject to" part
+            for constraint_data in parsed_data.constraints:
                 constraint = self._build_constraint(constraint_data)
                 problem.add_constraint(constraint)
 
@@ -282,29 +280,36 @@ class LPParser:
 
     def _process_bounds(self, problem: Problem, bounds_data):
         """Process variable bounds and type declarations."""
-        for bound_spec in bounds_data[1:]:  # Skip the "where" part
-            if hasattr(bound_spec, "non_negative"):
-                # Non-negative variables
-                for var_name in bound_spec.non_negative.variables:
-                    if var_name not in problem.variables:
-                        problem.variables[var_name] = Variable(name=var_name)
-                    problem.variables[var_name].lower_bound = Decimal("0")
-
-            elif hasattr(bound_spec, "integer"):
-                # Integer variables
-                for var_name in bound_spec.integer.variables:
-                    if var_name not in problem.variables:
-                        problem.variables[var_name] = Variable(name=var_name)
-                    problem.variables[var_name].var_type = VariableType.INTEGER
-
-            elif hasattr(bound_spec, "binary"):
-                # Binary variables
-                for var_name in bound_spec.binary.variables:
-                    if var_name not in problem.variables:
-                        problem.variables[var_name] = Variable(name=var_name)
-                    problem.variables[var_name].var_type = VariableType.BINARY
-                    problem.variables[var_name].lower_bound = Decimal("0")
-                    problem.variables[var_name].upper_bound = Decimal("1")
+        for bound_spec in bounds_data:
+            # Check what type of bound specification this is by examining content
+            if len(bound_spec) == 2:
+                first_element, second_element = bound_spec[0], bound_spec[1]
+                
+                # Integer variable declaration: ['integer', ['x1', 'x2']]
+                if str(first_element) == 'integer':
+                    var_list = second_element
+                    for var_name in var_list:
+                        if var_name not in problem.variables:
+                            problem.variables[var_name] = Variable(name=var_name)
+                        problem.variables[var_name].var_type = VariableType.INTEGER
+                
+                # Binary variable declaration: ['binary', ['x1', 'x2']]
+                elif str(first_element) == 'binary':
+                    var_list = second_element
+                    for var_name in var_list:
+                        if var_name not in problem.variables:
+                            problem.variables[var_name] = Variable(name=var_name)
+                        problem.variables[var_name].var_type = VariableType.BINARY
+                        problem.variables[var_name].lower_bound = Decimal("0")
+                        problem.variables[var_name].upper_bound = Decimal("1")
+                        
+                # Non-negative bounds: [['x1', 'x2'], '0'] 
+                elif isinstance(first_element, list) and str(second_element) == '0':
+                    var_list = first_element
+                    for var_name in var_list:
+                        if var_name not in problem.variables:
+                            problem.variables[var_name] = Variable(name=var_name)
+                        problem.variables[var_name].lower_bound = Decimal("0")
 
 
 def parse_lp_problem(problem_text: str) -> Problem:
@@ -326,87 +331,4 @@ def parse_lp_problem(problem_text: str) -> Problem:
     return parser.parse(problem_text)
 
 
-# Legacy syntax converter for backward compatibility
-def convert_old_syntax(old_problem_text: str) -> str:
-    """Convert old Portuguese colon-based syntax to new academic syntax.
 
-    Args:
-        old_problem_text: Problem text in old format.
-
-    Returns:
-        Problem text in new academic format.
-    """
-    lines = old_problem_text.strip().split("\n")
-    converted_lines = []
-
-    objective_found = False
-    constraints_section = False
-
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-
-        # Convert problem type declaration (ignore for now)
-        if line.startswith(("problema:", "p:")):
-            continue
-
-        # Convert objective
-        if line.startswith(("max:", "min:")):
-            if line.startswith("max:"):
-                objective_expr = line[4:].strip()
-                converted_lines.append(f"maximize {objective_expr}")
-            else:
-                objective_expr = line[4:].strip()
-                converted_lines.append(f"minimize {objective_expr}")
-            objective_found = True
-            continue
-
-        # Convert constraints
-        if line.startswith(("restricao:", "r:")):
-            if not constraints_section and objective_found:
-                converted_lines.append("")
-                converted_lines.append("subject to:")
-                constraints_section = True
-
-            if line.startswith("restricao:"):
-                constraint_expr = line[10:].strip()
-            else:
-                constraint_expr = line[2:].strip()
-
-            converted_lines.append(f"    {constraint_expr}")
-            continue
-
-        # Convert rounding specification (ignore for now)
-        if line.startswith(("arredondamento:", "arred:")):
-            continue
-
-        # Keep other lines as-is
-        converted_lines.append(line)
-
-    # Add default non-negative constraints if none specified
-    if not any("where:" in line or "onde:" in line for line in converted_lines):
-        # Extract variables from the problem
-        variables = set()
-        for line in converted_lines:
-            # Simple regex to find variable patterns like x1, x2, etc.
-            vars_in_line = re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", line)
-            for var in vars_in_line:
-                if var.lower() not in [
-                    "maximize",
-                    "minimize",
-                    "subject",
-                    "to",
-                    "where",
-                    "integer",
-                    "binary",
-                ]:
-                    variables.add(var)
-
-        if variables:
-            converted_lines.append("")
-            converted_lines.append("where:")
-            sorted_vars = sorted(variables)
-            converted_lines.append(f"    {', '.join(sorted_vars)} >= 0")
-
-    return "\n".join(converted_lines)

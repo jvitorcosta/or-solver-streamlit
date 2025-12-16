@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from enum import Enum
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class ObjectiveDirection(str, Enum):
@@ -41,25 +41,20 @@ class Variable(BaseModel):
     lower_bound: Decimal | None = None
     upper_bound: Decimal | None = None
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def validate_name(cls, v):
-        if (
-            not v.replace("_", "")
-            .replace("0", "")
-            .replace("1", "")
-            .replace("2", "")
-            .replace("3", "")
-            .replace("4", "")
-            .replace("5", "")
-            .replace("6", "")
-            .replace("7", "")
-            .replace("8", "")
-            .replace("9", "")
-            .isalpha()
-        ):
-            raise ValueError(
-                "Variable name must contain only letters, numbers, and underscores"
-            )
+        if not v or not isinstance(v, str):
+            raise ValueError(f"Variable name must be a non-empty string: {v}")
+        
+        # Check for invalid characters (only allow alphanumeric, underscore)
+        if not v.replace("_", "").replace("-", "").isalnum():
+            raise ValueError(f"Invalid variable name: {v}")
+            
+        # Check for names starting with numbers
+        if v[0].isdigit():
+            raise ValueError(f"Variable name cannot start with a number: {v}")
+            
         return v
 
     @property
@@ -149,7 +144,16 @@ class Constraint(BaseModel):
 
     def __str__(self) -> str:
         """String representation of the constraint."""
-        return f"{self.expression} {self.operator} {self.rhs}"
+        op_symbol = {
+            ConstraintOperator.LESS_EQUAL: "<=",
+            ConstraintOperator.GREATER_EQUAL: ">=",
+            ConstraintOperator.EQUAL: "=",
+        }[self.operator]
+        
+        constraint_str = f"{self.expression} {op_symbol} {self.rhs}"
+        if self.name:
+            return f"{self.name}: {constraint_str}"
+        return constraint_str
 
     def get_variables(self) -> list[str]:
         """Get list of all variables in the constraint."""
