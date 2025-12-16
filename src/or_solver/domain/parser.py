@@ -89,7 +89,7 @@ class LPParser:
         coefficient = OptionalPP(number, default=Decimal("1"))
 
         # Term: [coefficient] [*] variable
-        term = Group(
+        Group(
             OptionalPP(minus, default="+").setResultsName("sign")
             + coefficient.setResultsName("coeff")
             + OptionalPP(multiply)
@@ -206,7 +206,7 @@ class LPParser:
             return self._build_problem(parsed)
 
         except ParseException as e:
-            raise ParseError(f"Failed to parse LP problem: {e}")
+            raise ParseError(f"Failed to parse LP problem: {e}") from e
 
     def _preprocess_text(self, text: str) -> str:
         """Clean and preprocess the input text."""
@@ -348,11 +348,11 @@ def convert_old_syntax(old_problem_text: str) -> str:
             continue
 
         # Convert problem type declaration (ignore for now)
-        if line.startswith("problema:") or line.startswith("p:"):
+        if line.startswith(("problema:", "p:")):
             continue
 
         # Convert objective
-        if line.startswith("max:") or line.startswith("min:"):
+        if line.startswith(("max:", "min:")):
             if line.startswith("max:"):
                 objective_expr = line[4:].strip()
                 converted_lines.append(f"maximize {objective_expr}")
@@ -363,7 +363,7 @@ def convert_old_syntax(old_problem_text: str) -> str:
             continue
 
         # Convert constraints
-        if line.startswith("restricao:") or line.startswith("r:"):
+        if line.startswith(("restricao:", "r:")):
             if not constraints_section and objective_found:
                 converted_lines.append("")
                 converted_lines.append("subject to:")
@@ -378,7 +378,7 @@ def convert_old_syntax(old_problem_text: str) -> str:
             continue
 
         # Convert rounding specification (ignore for now)
-        if line.startswith("arredondamento:") or line.startswith("arred:"):
+        if line.startswith(("arredondamento:", "arred:")):
             continue
 
         # Keep other lines as-is

@@ -212,7 +212,7 @@ class Problem(BaseModel):
         for constraint in self.constraints:
             var_names.update(constraint.get_variables())
 
-        return sorted(list(var_names))
+        return sorted(var_names)
 
     def __str__(self) -> str:
         """String representation of the problem."""

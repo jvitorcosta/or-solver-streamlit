@@ -31,7 +31,7 @@ app.add_typer(config_app, name="config")
 
 @app.command()
 def solve(
-    problem_file: Path | None = typer.Argument(None, help="Path to LP problem file"),
+    problem_file: Annotated[Path | None, typer.Argument(help="Path to LP problem file")] = None,
     interactive: bool = typer.Option(
         False, "--interactive", "-i", help="Interactive mode"
     ),
@@ -62,7 +62,7 @@ def solve(
 
 @app.command()
 def validate(
-    problem_file: Path = typer.Argument(..., help="Problem file to validate"),
+    problem_file: Annotated[Path, typer.Argument(help="Problem file to validate")],
     highlight: bool = typer.Option(True, "--highlight", help="Syntax highlighting"),
 ) -> None:
     """✅ Validate LP problem syntax.
@@ -103,10 +103,10 @@ def validate(
 
     except ParseError as e:
         console.print(f"\n[red]❌ Syntax Error:[/red] {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
     except Exception as e:
         console.print(f"\n[red]❌ Validation failed:[/red] {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -141,7 +141,7 @@ def web() -> None:
 
 @app.command()
 def explain(
-    problem_file: Path = typer.Argument(..., help="Problem file to explain"),
+    problem_file: Annotated[Path, typer.Argument(help="Problem file to explain")],
     language: str = typer.Option("en", "--lang", "-l", help="Language: en, pt"),
 ) -> None:
     """📚 Get step-by-step problem explanation.
@@ -252,7 +252,7 @@ def create_template(
     problem_type: str = typer.Argument(
         ..., help="Problem type: diet, transport, assignment, etc."
     ),
-    output_file: Path | None = typer.Option(None, "--output", "-o", help="Output file"),
+    output_file: Annotated[Path | None, typer.Option("--output", "-o", help="Output file")] = None,
 ) -> None:
     """📝 Create a problem template.
 
@@ -353,7 +353,7 @@ def _solve_from_file(
 
     except Exception as e:
         console.print(f"❌ Error processing file: {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 def _solve_problem_text(
@@ -368,7 +368,7 @@ def _solve_problem_text(
         ) as progress:
             # Parse problem
             parse_task = progress.add_task("🐱 Parsing problem...", total=None)
-            problem = parse_lp_problem(problem_text)
+            parse_lp_problem(problem_text)
             progress.update(parse_task, description="✅ Parsing complete!")
 
             # Setup solver
@@ -400,10 +400,10 @@ def _solve_problem_text(
 
     except ParseError as e:
         console.print(f"\n[red]❌ Parse Error:[/red] {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
     except Exception as e:
         console.print(f"\n[red]❌ Solving failed:[/red] {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 def _show_problem_summary(problem: Problem) -> None:
