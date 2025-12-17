@@ -24,7 +24,7 @@ from pyparsing import (
     Optional as OptionalPP,
 )
 
-from .models import (
+from solver.models import (
     Constraint,
     ConstraintOperator,
     LinearExpression,
@@ -88,14 +88,6 @@ class LPParser:
         # Coefficient (optional, defaults to 1)
         coefficient = OptionalPP(number, default=Decimal("1"))
 
-        # Term: [coefficient] [*] variable
-        term = Group(
-            OptionalPP(minus, default="+").setResultsName("sign")
-            + coefficient.setResultsName("coeff")
-            + OptionalPP(multiply)
-            + variable
-        )
-
         # Expression: term + term + ... (handling signs)
         expression = Forward()
         first_term = Group(
@@ -147,9 +139,9 @@ class LPParser:
         )
 
         # Constraints section
-        constraints_section = Group(Suppress(subject_to) + OneOrMore(constraint)).setResultsName(
-            "constraints"
-        )
+        constraints_section = Group(
+            Suppress(subject_to) + OneOrMore(constraint)
+        ).setResultsName("constraints")
 
         # Variable bounds and types keywords (optional)
         where_en = CaselessKeyword("where") + Suppress(":")
@@ -200,23 +192,23 @@ class LPParser:
             # Clean up the text
             text = self._preprocess_text(problem_text)
 
-            # Parse with pyparsing (remove parseAll=True to be more forgiving)
-            parsed = self.lp_problem.parseString(text, parseAll=False)
+            # Parse with pyparsing (parseAll=True ensures complete parsing)
+            parsed = self.lp_problem.parseString(text, parseAll=True)
 
             # Convert to Problem object
             return self._build_problem(parsed)
 
         except ParseException as e:
             # Provide more detailed error information
-            error_line = e.lineno if hasattr(e, 'lineno') else 'unknown'
-            error_col = e.col if hasattr(e, 'col') else 'unknown'
-            error_context = e.line if hasattr(e, 'line') else ''
-            
+            error_line = e.lineno if hasattr(e, "lineno") else "unknown"
+            error_col = e.col if hasattr(e, "col") else "unknown"
+            error_context = e.line if hasattr(e, "line") else ""
+
             error_msg = f"Parsing failed at line {error_line}, column {error_col}"
             if error_context:
                 error_msg += f" in: '{error_context}'"
             error_msg += f" - {str(e)}"
-            
+
             raise ParseError(error_msg) from e
 
     def _preprocess_text(self, text: str) -> str:
@@ -231,11 +223,11 @@ class LPParser:
             # Skip empty lines or lines with only whitespace
             if line and not line.isspace():
                 # Normalize multiple spaces to single spaces
-                line = re.sub(r'\s+', ' ', line)
+                line = re.sub(r"\s+", " ", line)
                 # Ensure proper spacing around operators
-                line = re.sub(r'([<>=]+)', r' \1 ', line)
-                line = re.sub(r'([+-])', r' \1 ', line)
-                line = re.sub(r'\s+', ' ', line).strip()
+                line = re.sub(r"([<>=]+)", r" \1 ", line)
+                line = re.sub(r"([+-])", r" \1 ", line)
+                line = re.sub(r"\s+", " ", line).strip()
                 lines.append(line)
 
         result = "\n".join(lines)
@@ -301,35 +293,40 @@ class LPParser:
     def _process_bounds(self, problem: Problem, bounds_data):
         """Process variable bounds and type declarations."""
         for bound_spec in bounds_data:
-            # Check what type of bound specification this is by examining content
-            if len(bound_spec) == 2:
-                first_element, second_element = bound_spec[0], bound_spec[1]
-                
-                # Integer variable declaration: ['integer', ['x1', 'x2']]
-                if str(first_element) == 'integer':
-                    var_list = second_element
-                    for var_name in var_list:
-                        if var_name not in problem.variables:
-                            problem.variables[var_name] = Variable(name=var_name)
-                        problem.variables[var_name].var_type = VariableType.INTEGER
-                
-                # Binary variable declaration: ['binary', ['x1', 'x2']]
-                elif str(first_element) == 'binary':
-                    var_list = second_element
-                    for var_name in var_list:
-                        if var_name not in problem.variables:
-                            problem.variables[var_name] = Variable(name=var_name)
-                        problem.variables[var_name].var_type = VariableType.BINARY
-                        problem.variables[var_name].lower_bound = Decimal("0")
-                        problem.variables[var_name].upper_bound = Decimal("1")
-                        
-                # Non-negative bounds: [['x1', 'x2'], '0'] 
-                elif isinstance(first_element, list) and str(second_element) == '0':
-                    var_list = first_element
-                    for var_name in var_list:
-                        if var_name not in problem.variables:
-                            problem.variables[var_name] = Variable(name=var_name)
-                        problem.variables[var_name].lower_bound = Decimal("0")
+            if len(bound_spec) != 2:
+                continue
+
+            first_element, second_element = bound_spec[0], bound_spec[1]
+
+            if str(first_element) == "integer":
+                self._process_integer_variables(problem, second_element)
+            elif str(first_element) == "binary":
+                self._process_binary_variables(problem, second_element)
+            elif isinstance(first_element, list) and str(second_element) == "0":
+                self._process_non_negative_variables(problem, first_element)
+
+    def _process_integer_variables(self, problem: Problem, var_list):
+        """Process integer variable declarations."""
+        for var_name in var_list:
+            if var_name not in problem.variables:
+                problem.variables[var_name] = Variable(name=var_name)
+            problem.variables[var_name].var_type = VariableType.INTEGER
+
+    def _process_binary_variables(self, problem: Problem, var_list):
+        """Process binary variable declarations."""
+        for var_name in var_list:
+            if var_name not in problem.variables:
+                problem.variables[var_name] = Variable(name=var_name)
+            problem.variables[var_name].var_type = VariableType.BINARY
+            problem.variables[var_name].lower_bound = Decimal("0")
+            problem.variables[var_name].upper_bound = Decimal("1")
+
+    def _process_non_negative_variables(self, problem: Problem, var_list):
+        """Process non-negative variable bounds."""
+        for var_name in var_list:
+            if var_name not in problem.variables:
+                problem.variables[var_name] = Variable(name=var_name)
+            problem.variables[var_name].lower_bound = Decimal("0")
 
 
 def parse_lp_problem(problem_text: str) -> Problem:
@@ -349,6 +346,3 @@ def parse_lp_problem(problem_text: str) -> Problem:
     """
     parser = LPParser()
     return parser.parse(problem_text)
-
-
-

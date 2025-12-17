@@ -46,15 +46,15 @@ class Variable(BaseModel):
     def validate_name(cls, v):
         if not v or not isinstance(v, str):
             raise ValueError(f"Variable name must be a non-empty string: {v}")
-        
+
         # Check for invalid characters (only allow alphanumeric, underscore)
         if not v.replace("_", "").replace("-", "").isalnum():
             raise ValueError(f"Invalid variable name: {v}")
-            
+
         # Check for names starting with numbers
         if v[0].isdigit():
             raise ValueError(f"Variable name cannot start with a number: {v}")
-            
+
         return v
 
     @property
@@ -149,7 +149,7 @@ class Constraint(BaseModel):
             ConstraintOperator.GREATER_EQUAL: ">=",
             ConstraintOperator.EQUAL: "=",
         }[self.operator]
-        
+
         constraint_str = f"{self.expression} {op_symbol} {self.rhs}"
         if self.name:
             return f"{self.name}: {constraint_str}"

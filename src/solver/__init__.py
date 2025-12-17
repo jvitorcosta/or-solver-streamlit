@@ -1,12 +1,12 @@
 """Solver domain for linear programming problem solving."""
 
-from .engine import solve_problem
-from .models import Problem, ObjectiveFunction, Constraint
-from .parser import parse_lp_problem, ParseError
+from solver.engine import solve_problem
+from solver.models import Constraint, ObjectiveFunction, Problem
+from solver.parser import ParseError, parse_lp_problem
 
 __all__ = [
     "solve_problem",
-    "Problem", 
+    "Problem",
     "ObjectiveFunction",
     "Constraint",
     "parse_lp_problem",

@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from or_solver.domain.models import (
+from solver.models import (
     Constraint,
     ConstraintOperator,
     LinearExpression,

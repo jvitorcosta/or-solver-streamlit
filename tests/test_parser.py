@@ -1,12 +1,10 @@
-"""Test the LP parser."""
-
 import pytest
 
-from or_solver.domain.models import (
+from solver.models import (
     ObjectiveDirection,
     VariableType,
 )
-from or_solver.domain.parser import (
+from solver.parser import (
     ParseError,
     parse_lp_problem,
 )
