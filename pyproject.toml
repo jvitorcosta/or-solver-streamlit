@@ -65,23 +65,35 @@ packages = ["src"]
 [tool.uv]
 dev-dependencies = [
     "ipython>=8.28.0",
+    "ruff>=0.14.9",
 ]
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 line-length = 88
-extend-exclude = ["docs"]
+src = ["src"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "C90", "I", "N", "UP", "B", "A", "C4", "PIE", "SIM"]
-ignore = ["E501"]  # Line too long (handled by formatter)
+select = [
+    "E4",
+    "E7",
+    "E9",  # pycodestyle
+    "F",   # Pyflakes
+    "I",   # isort
+    "A",   # flake8-builtins
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+]
+unfixable = ["F401"]
+isort.split-on-trailing-comma = false
 
 [tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
+docstring-code-format = true
+line-ending = "lf"
+skip-magic-trailing-comma = true
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.11"
 strict = true
 exclude = ["docs/", "build/"]
 
