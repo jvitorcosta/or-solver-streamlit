@@ -40,6 +40,11 @@ Run the following command in the root directory of the repository:
 make dev
 ```
 
+This command will:
+
+- Install all dependencies (including dev and test dependencies)
+- Set up pre-commit hooks automatically
+
 The environment is created at `.venv` directory.
 
 ## Development
@@ -57,15 +62,8 @@ Available commands:
   clean            Remove build and cache files
 ```
 
-For example:
-
-```sh
-make run    # Start web interface at http://localhost:8501
-make test   # Run all tests
-make lint   # Check code quality
-```
-
-Use [`uv run`](https://docs.astral.sh/uv/reference/cli/#uv-run) to run commands in the project's environment:
+Use [`uv run`](https://docs.astral.sh/uv/reference/cli/#uv-run) to run commands
+in the project's environment:
 
 ```sh
 uv run streamlit run app.py
@@ -74,24 +72,11 @@ uv run or-solver --help
 ```
 
 ## Tests
+
 Run tests to ensure everything works:
 
 ```sh
 make test
 ```
 
-4. Commit with [semantic commit](https://www.conventionalcommits.org/)
-
-## Testing
-
-Manual testing checklist:
-- [ ] Test English and Portuguese interfaces
-- [ ] Try all problem templates in the gallery
-- [ ] Verify responsive design on different screen sizes
-- [ ] Test invalid input handling
-
-## Getting Help
-
-Check out [good first issues](https://github.com/jvitorcosta/or-solver-streamlit/labels/good%20first%20issue) to get started!
-
-For questions, open an issue on GitHub.
+1. Commit with [semantic commit](https://www.conventionalcommits.org/)
