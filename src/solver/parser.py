@@ -20,9 +20,7 @@ from pyparsing import (
     alphanums,
     alphas,
 )
-from pyparsing import (
-    Optional as OptionalPP,
-)
+from pyparsing import Optional as OptionalPP
 
 from solver.models import (
     Constraint,

@@ -103,6 +103,11 @@ class LinearExpression(BaseModel):
         """Get list of all variable names in the expression."""
         return [term.variable for term in self.terms]
 
+    @property
+    def coefficients(self) -> dict[str, Decimal]:
+        """Get coefficients as a dictionary mapping variable names to coefficients."""
+        return {term.variable: term.coefficient for term in self.terms}
+
     def __str__(self) -> str:
         """String representation of the expression."""
         if not self.terms and self.constant == 0:
@@ -293,8 +298,11 @@ class Solution(BaseModel):
     objective_value: Decimal | None = Field(
         default=None, description="Optimal objective value"
     )
-    variables: dict[str, Decimal] = Field(
+    variable_values: dict[str, float] = Field(
         default_factory=dict, description="Variable values in the solution"
+    )
+    solver_message: str | None = Field(
+        default=None, description="Optional solver message or error details"
     )
     solve_time: float | None = Field(
         default=None, description="Time taken to solve (in seconds)"
@@ -311,9 +319,9 @@ class Solution(BaseModel):
         """Check if solution is feasible."""
         return self.status in [SolverStatus.OPTIMAL]
 
-    def get_variable_value(self, variable_name: str) -> Decimal | None:
+    def get_variable_value(self, variable_name: str) -> float | None:
         """Get value of a specific variable."""
-        return self.variables.get(variable_name)
+        return self.variable_values.get(variable_name)
 
     def __str__(self) -> str:
         """String representation of the solution."""
@@ -325,7 +333,7 @@ class Solution(BaseModel):
                 lines.append(f"   Objective Value: {self.objective_value}")
             lines.append("")
             lines.append("   Variables:")
-            for var_name, value in sorted(self.variables.items()):
+            for var_name, value in sorted(self.variable_values.items()):
                 lines.append(f"   🐾 {var_name} = {value}")
             lines.append("")
             lines.append("   Status: OPTIMAL 😺")

@@ -1,13 +1,7 @@
 import pytest
 
-from solver.models import (
-    ObjectiveDirection,
-    VariableType,
-)
-from solver.parser import (
-    ParseError,
-    parse_lp_problem,
-)
+from solver.models import ObjectiveDirection, VariableType
+from solver.parser import ParseError, parse_lp_problem
 
 
 class TestLPParser:
