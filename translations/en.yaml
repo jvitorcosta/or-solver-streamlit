@@ -1,0 +1,63 @@
+app:
+  title: "OR-Solver"
+  subtitle: "Modern Linear Programming"
+  footer: ":material/favorite: Did you enjoy using it? Please star the project on GitHub!"
+sidebar:
+  settings: "Settings"
+  language: "Language"
+
+interface:
+  problem_label: ":material/code: **Write your problem:**"
+  solve_button: "Solve Problem"
+  loaded_example: "Example loaded"
+  
+resources:
+  title: "Resources & Documentation"
+  thesis: "Research Thesis"
+  readme: "Project README"
+  contributing: "Contributing Guide"
+  changelog: "Change Log"
+  structure: "Project Structure"
+  view_pdf: "View PDF"
+  download_pdf: "Download PDF"
+messages:
+  empty_problem_solve: "Please enter a problem to solve"
+  solution_found: "Optimal Solution Found!"
+  
+status:
+  parsing: "Parsing problem..."
+  setting_up: "Setting up solver..."
+  solving: "Solving optimization..."
+  solution_found: "Solution found!"
+  complete: "Optimization complete!"
+  syntax_error: "Syntax error found"
+  solving_failed: "Solving failed"
+
+errors:
+  syntax_error: "Syntax Error"
+  solving_error: "Solving Error"
+
+results:
+  objective_value: "Objective Value"
+  solve_time: "Solve Time"
+  variables: "Variables"
+  constraints: "Constraints"
+  solution_variables: "Solution Variables"
+  
+  tabs:
+    summary: "Summary"
+    export: "Export"
+    analysis: "Analysis"
+    
+  summary:
+    objective: "Objective"
+    status: "Status"
+    optimal: "OPTIMAL"
+    
+  export:
+    download_json: "Download JSON"
+    download_csv: "Download CSV"
+    
+  analysis:
+    coming_soon: "Sensitivity analysis and optimization insights coming soon!"
+

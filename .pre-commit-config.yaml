@@ -5,7 +5,7 @@
 # Markdown lint rules: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
 
 default_language_version:
-  python: python3.11
+  python: python3.12
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks

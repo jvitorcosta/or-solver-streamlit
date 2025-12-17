@@ -14,7 +14,8 @@ maxUploadSize = 200
 gatherUsageStats = false
 
 [theme]
-# Light theme as default
+# Force light theme
+base = "light"
 primaryColor = "#FF6B6B"
 backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#F0F2F6"

@@ -1,0 +1,64 @@
+app:
+  title: "OR-Solver"
+  subtitle: "Otimização Linear Moderna"
+  footer: ":material/favorite: Gostou de usar? Por favor, dê uma estrela no GitHub!"
+
+sidebar:
+  settings: "Configurações"
+  language: "Idioma"
+
+interface:
+  problem_label: ":material/code: **Escreva seu problema:**"
+  solve_button: "Resolver Problema"
+  loaded_example: "Exemplo carregado"
+  
+resources:
+  title: "Recursos e Documentação"
+  thesis: "Tese de Pesquisa"
+  readme: "README do Projeto"
+  contributing: "Guia de Contribuição"
+  changelog: "Log de Alterações"
+  structure: "Estrutura do Projeto"
+  view_pdf: "Ver PDF"
+  download_pdf: "Baixar PDF"
+messages:
+  empty_problem_solve: "Por favor, digite um problema para resolver"
+  solution_found: "Solução Ótima Encontrada!"
+  
+status:
+  parsing: "Analisando problema..."
+  setting_up: "Configurando solver..."
+  solving: "Resolvendo otimização..."
+  solution_found: "Solução encontrada!"
+  complete: "Otimização completa!"
+  syntax_error: "Erro de sintaxe encontrado"
+  solving_failed: "Resolução falhou"
+
+errors:
+  syntax_error: "Erro de Sintaxe"
+  solving_error: "Erro na Resolução"
+
+results:
+  objective_value: "Valor Objetivo"
+  solve_time: "Tempo de Resolução"
+  variables: "Variáveis"
+  constraints: "Restrições"
+  solution_variables: "Variáveis da Solução"
+  
+  tabs:
+    summary: "Resumo"
+    export: "Exportar"
+    analysis: "Análise"
+    
+  summary:
+    objective: "Objetivo"
+    status: "Estado"
+    optimal: "ÓTIMO"
+    
+  export:
+    download_json: "Baixar JSON"
+    download_csv: "Baixar CSV"
+    
+  analysis:
+    coming_soon: "Análise de sensibilidade e insights de otimização em breve!"
+

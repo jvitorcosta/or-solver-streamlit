@@ -19,12 +19,17 @@ classifiers = [
 ]
 
 dependencies = [
-    "typer",                # CLI framework
-    "rich",                 # Terminal output
-    "pydantic",            # Data validation
-    "pyparsing",           # Parsing library
-    "pyyaml",              # YAML configuration
-    "streamlit",           # Web interface
+    "typer", # CLI framework
+    "rich", # Terminal output
+    "pydantic", # Data validation
+    "pyparsing", # Parsing library
+    "pyyaml", # YAML configuration
+    "streamlit[pdf]", # Web interface
+    "plotly>=5.0.0", # Interactive 2D/3D plotting
+    "matplotlib>=3.5.0", # Static plotting support
+    "numpy>=1.21.0", # Numerical computations
+    "pandas>=1.3.0",
+    "scipy>=1.16.3",
 ]
 
 [project.optional-dependencies]
@@ -48,7 +53,7 @@ Repository = "https://github.com/username/or-solver-streamlit"
 Issues = "https://github.com/username/or-solver-streamlit/issues"
 
 [project.scripts]
-solvedor = "or_solver.presentation.cli:main"
+or-solver = "app:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -63,16 +68,20 @@ dev-dependencies = [
 ]
 
 [tool.ruff]
+target-version = "py312"
 line-length = 88
-target-version = "py311"
 extend-exclude = ["docs"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "C90", "I", "N", "UP", "B", "A", "C4", "PIE", "SIM"]
 ignore = ["E501"]  # Line too long (handled by formatter)
 
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = true
 exclude = ["docs/", "build/"]
 

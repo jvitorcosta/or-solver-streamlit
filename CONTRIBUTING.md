@@ -1,109 +1,97 @@
-# 🐱 Contributing to OR-Solver
+# Contributing
 
-Welcome! We're excited you want to help make linear programming as easy as petting a cat! 😻
+## Requirements
 
-## 😸 Quick Start
+1. Ensure you have **Python 3.11+** installed:
 
-### Setup
+   ```sh
+   python --version  # Should be 3.11+
+   ```
 
-```bash
-# Clone the repo
-git clone https://github.com/YOUR_USERNAME/or-solver-streamlit.git
-cd or-solver-streamlit
+2. Ensure that you have `uv` installed.
+   We recommend installing it using the official installer:
 
-# Install dependencies
+   ```sh
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+   If you already have `uv` installed, please update it to the latest version:
+
+   ```sh
+   uv self update
+   ```
+
+3. Fork the repository on GitHub and clone your fork:
+
+   ```sh
+   git clone https://github.com/YOUR_USERNAME/or-solver-streamlit.git
+   cd or-solver-streamlit
+   ```
+
+## Setup
+
+Run the following command in the root directory of the repository:
+
+> [!NOTE]
+> Pre-commit hooks will be automatically installed during setup
+> to ensure code quality on every commit.
+
+```sh
 make dev
+```
 
-# Run tests
+The environment is created at `.venv` directory.
+
+## Development
+
+[`Makefile`](./Makefile) has useful commands for development:
+
+```console
+$ make help
+Available commands:
+  dev              Setup development environment
+  run              Run Streamlit web interface
+  test             Run test suite
+  lint             Check code quality
+  format           Format code with ruff
+  clean            Remove build and cache files
+```
+
+For example:
+
+```sh
+make run    # Start web interface at http://localhost:8501
+make test   # Run all tests
+make lint   # Check code quality
+```
+
+Use [`uv run`](https://docs.astral.sh/uv/reference/cli/#uv-run) to run commands in the project's environment:
+
+```sh
+uv run streamlit run app.py
+uv run pytest tests/ -v
+uv run or-solver --help
+```
+
+## Tests
+Run tests to ensure everything works:
+
+```sh
 make test
 ```
 
-## 🧪 Testing
+4. Commit with [semantic commit](https://www.conventionalcommits.org/)
 
-```bash
-# Run all tests
-make test
+## Testing
 
-# Run specific test
-uv run pytest tests/test_parser.py -v
-```
+Manual testing checklist:
+- [ ] Test English and Portuguese interfaces
+- [ ] Try all problem templates in the gallery
+- [ ] Verify responsive design on different screen sizes
+- [ ] Test invalid input handling
 
-### Writing Tests
+## Getting Help
 
-- Add tests for new features
-- Test both English and Portuguese syntax
-- Use descriptive names with cat emojis! 🐾
+Check out [good first issues](https://github.com/jvitorcosta/or-solver-streamlit/labels/good%20first%20issue) to get started!
 
-Example:
-
-```python
-def test_parse_cat_food_problem():
-    """Test parsing a cat food optimization problem."""
-    problem_text = """
-    maximize cat_food + cat_toys
-    subject to:
-        cat_food <= 100
-    where:
-        cat_food, cat_toys >= 0
-    """
-
-    problem = parse_lp_problem(problem_text)
-    assert problem.objective.direction == ObjectiveDirection.MAXIMIZE
-```
-
-## 🎨 Code Style
-
-We use automated formatting:
-
-```bash
-# Format code
-make format
-
-# Check style
-make lint
-```
-
-**Guidelines:**
-
-- Use type hints
-- Add docstrings
-- Use descriptive variable names
-- Cat emojis are welcome! 😺
-
-## 🚀 Pull Requests
-
-1. **Fork** and create a feature branch
-2. **Make changes** with tests
-3. **Run** `make test` and `make lint`
-4. **Submit** PR with clear description
-
-## 🏗️ Architecture
-
-Simple layered structure:
-
-- `presentation/` - CLI and web interfaces
-- `application/` - Business logic
-- `domain/` - Core models and parsing
-- `infrastructure/` - External tools (OR-Tools)
-
-## 🐾 Issues
-
-**Bug Reports:**
-
-- Include Python version and OS
-- Provide minimal example
-- Rate bug severity on cat scale (1-10 cats) 😿
-
-**Feature Requests:**
-
-- Describe the use case
-- Explain educational value
-- How does it make the project more cat-like? 🐱
-
-## 🤝 Community
-
-Be kind, helpful, and have fun! We're all learning together.
-
----
-
-_Happy coding! 😸_
+For questions, open an issue on GitHub.

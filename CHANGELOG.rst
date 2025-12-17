@@ -10,7 +10,7 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 [Unreleased]
 ============
 
-[2.0.0] - 2024-12-16
+[1.0.0] - 2024-12-16
 ====================
 
 Added
@@ -42,7 +42,7 @@ Removed
 * Windows testing (focused on macOS/Ubuntu)
 * Redundant documentation and comments
 
-[1.0.0] - Previous Version
+[0.0.0] - Previous Version
 ==========================
 * Legacy Portuguese colon-based syntax
 * Basic Streamlit interface

@@ -151,7 +151,7 @@ class LPParser:
             "constraints"
         )
 
-        # Variable bounds and types keywords
+        # Variable bounds and types keywords (optional)
         where_en = CaselessKeyword("where") + Suppress(":")
         where_pt = CaselessKeyword("onde") + Suppress(":")
         where_kw = where_en | where_pt
@@ -173,9 +173,10 @@ class LPParser:
             CaselessKeyword("binary") + var_list.setResultsName("variables")
         ).setResultsName("binary")
 
-        # Bounds section
+        # Bounds can appear with or without "where:" keyword
+        bounds_content = ZeroOrMore(non_negative | integer_decl | binary_decl)
         bounds_section = Group(
-            Suppress(where_kw) + ZeroOrMore(non_negative | integer_decl | binary_decl)
+            OptionalPP(Suppress(where_kw)) + bounds_content
         ).setResultsName("bounds")
 
         # Complete LP problem
@@ -199,28 +200,47 @@ class LPParser:
             # Clean up the text
             text = self._preprocess_text(problem_text)
 
-            # Parse with pyparsing
-            parsed = self.lp_problem.parseString(text, parseAll=True)
+            # Parse with pyparsing (remove parseAll=True to be more forgiving)
+            parsed = self.lp_problem.parseString(text, parseAll=False)
 
             # Convert to Problem object
             return self._build_problem(parsed)
 
         except ParseException as e:
-            raise ParseError(f"Failed to parse LP problem: {e}") from e
+            # Provide more detailed error information
+            error_line = e.lineno if hasattr(e, 'lineno') else 'unknown'
+            error_col = e.col if hasattr(e, 'col') else 'unknown'
+            error_context = e.line if hasattr(e, 'line') else ''
+            
+            error_msg = f"Parsing failed at line {error_line}, column {error_col}"
+            if error_context:
+                error_msg += f" in: '{error_context}'"
+            error_msg += f" - {str(e)}"
+            
+            raise ParseError(error_msg) from e
 
     def _preprocess_text(self, text: str) -> str:
         """Clean and preprocess the input text."""
-        # Remove comments
+        # Remove comments and clean up
         lines = []
         for line in text.split("\n"):
             # Remove comments (anything after #)
             line = re.sub(r"#.*$", "", line)
-            # Remove extra whitespace
+            # Remove extra whitespace and normalize
             line = line.strip()
-            if line:  # Skip empty lines
+            # Skip empty lines or lines with only whitespace
+            if line and not line.isspace():
+                # Normalize multiple spaces to single spaces
+                line = re.sub(r'\s+', ' ', line)
+                # Ensure proper spacing around operators
+                line = re.sub(r'([<>=]+)', r' \1 ', line)
+                line = re.sub(r'([+-])', r' \1 ', line)
+                line = re.sub(r'\s+', ' ', line).strip()
                 lines.append(line)
 
-        return "\n".join(lines)
+        result = "\n".join(lines)
+        # Remove any trailing whitespace or newlines
+        return result.strip()
 
     def _build_problem(self, parsed_data) -> Problem:
         """Build a Problem object from parsed data."""

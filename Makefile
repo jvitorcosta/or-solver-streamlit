@@ -37,7 +37,7 @@ pre-commit:
 
 # Running
 run:
-	uv run streamlit run src/or_solver/presentation/web_app.py
+	uv run streamlit run app.py
 
 # Maintenance
 clean:

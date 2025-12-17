@@ -1,5 +1,3 @@
-# 🐱 OR-Solver Configuration
-
 # Default settings for the OR-Solver application
 default:
   language: "en" # en (English) or pt (Portuguese)
