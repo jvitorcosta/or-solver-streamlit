@@ -25,10 +25,3 @@
 
 - Changes to documentation and examples
 -->
-
-## Check list
-
-If releasing a new package version,
-
-- [ ] Create a RST file at `docs/source/releases/{version}.rst` directory
-- [ ] Update the `toctree` in `docs/source/releases.index.rst`
