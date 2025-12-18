@@ -1,12 +1,12 @@
 """Tests for solver functions."""
 
-from solver.engine import solve_optimization_problem
+from solver.engine import parse_text_and_solve_with_backend
 from solver.models import Problem, SolverStatus
 
 
-def test_linear_problem():
-    """Test solving a basic linear programming problem."""
-    problem_text = """
+def test_solve_continuous_linear_program_optimally():
+    """Test solving continuous linear programming problem to optimal solution."""
+    linear_program_text = """
     maximize 3*x + 2*y
 
     subject to:
@@ -17,19 +17,21 @@ def test_linear_problem():
         x, y >= 0
     """
 
-    problem, solution = solve_optimization_problem(problem_text)
+    parsed_linear_problem, optimal_solution = parse_text_and_solve_with_backend(
+        linear_program_text
+    )
 
-    assert isinstance(problem, Problem)
-    assert len(problem.variables) == 2
-    assert solution.status == SolverStatus.OPTIMAL
-    assert solution.objective_value is not None
-    assert "x" in solution.variable_values
-    assert "y" in solution.variable_values
+    assert isinstance(parsed_linear_problem, Problem)
+    assert len(parsed_linear_problem.variables) == 2
+    assert optimal_solution.status == SolverStatus.OPTIMAL
+    assert optimal_solution.objective_value is not None
+    assert "x" in optimal_solution.variable_values
+    assert "y" in optimal_solution.variable_values
 
 
-def test_integer_problem():
-    """Test solving an integer programming problem."""
-    problem_text = """
+def test_solve_integer_program_with_discrete_variables():
+    """Test solving integer programming problem with discrete variable constraints."""
+    integer_program_text = """
     maximize 3*x + 2*y
 
     subject to:
@@ -41,18 +43,20 @@ def test_integer_problem():
         integer x, y
     """
 
-    problem, solution = solve_optimization_problem(problem_text)
+    parsed_integer_problem, integer_solution = parse_text_and_solve_with_backend(
+        integer_program_text
+    )
 
-    assert len(problem.variables) == 2
-    assert solution.status == SolverStatus.OPTIMAL
+    assert len(parsed_integer_problem.variables) == 2
+    assert integer_solution.status == SolverStatus.OPTIMAL
     # Values should be integers
-    for value in solution.variable_values.values():
-        assert abs(value - round(value)) < 1e-6
+    for variable_value in integer_solution.variable_values.values():
+        assert abs(variable_value - round(variable_value)) < 1e-6
 
 
-def test_minimize_problem():
-    """Test solving a minimization problem."""
-    problem_text = """
+def test_solve_minimization_problem_successfully():
+    """Test solving minimization problem to find lowest objective value."""
+    minimization_problem_text = """
     minimize x + y
 
     subject to:
@@ -63,8 +67,10 @@ def test_minimize_problem():
         x, y >= 0
     """
 
-    problem, solution = solve_optimization_problem(problem_text)
+    parsed_minimization_problem, minimization_solution = (
+        parse_text_and_solve_with_backend(minimization_problem_text)
+    )
 
-    assert solution.status == SolverStatus.OPTIMAL
-    assert solution.objective_value is not None
-    assert float(solution.objective_value) >= 2  # Should be at least 2
+    assert minimization_solution.status == SolverStatus.OPTIMAL
+    assert minimization_solution.objective_value is not None
+    assert float(minimization_solution.objective_value) >= 2  # Should be at least 2

@@ -15,91 +15,94 @@ from solver.models import (
     SolverStatus,
     Variable,
     VariableType,
+    add_term_to_linear_expression,
 )
 
 
 class TestVariable:
     """Test Variable model."""
 
-    def test_create_basic_variable(self):
-        """Test creating a basic variable."""
-        var = Variable(name="x1")
-        assert var.name == "x1"
-        assert var.var_type == VariableType.CONTINUOUS
-        assert var.lower_bound is None
-        assert var.upper_bound is None
+    def test_instantiate_continuous_variable_with_defaults(self):
+        """Test creating a basic continuous variable with default settings."""
+        basic_continuous_variable = Variable(name="x1")
+        assert basic_continuous_variable.name == "x1"
+        assert basic_continuous_variable.variable_type == VariableType.CONTINUOUS
+        assert basic_continuous_variable.lower_bound is None
+        assert basic_continuous_variable.upper_bound is None
 
-    def test_create_integer_variable(self):
-        """Test creating an integer variable."""
-        var = Variable(
+    def test_instantiate_bounded_integer_variable(self):
+        """Test creating integer variable with explicit bounds."""
+        bounded_integer_variable = Variable(
             name="y1",
-            var_type=VariableType.INTEGER,
+            variable_type=VariableType.INTEGER,
             lower_bound=Decimal("0"),
             upper_bound=Decimal("10"),
         )
-        assert var.name == "y1"
-        assert var.var_type == VariableType.INTEGER
-        assert var.lower_bound == Decimal("0")
-        assert var.upper_bound == Decimal("10")
+        assert bounded_integer_variable.name == "y1"
+        assert bounded_integer_variable.variable_type == VariableType.INTEGER
+        assert bounded_integer_variable.lower_bound == Decimal("0")
+        assert bounded_integer_variable.upper_bound == Decimal("10")
 
-    def test_create_binary_variable(self):
-        """Test creating a binary variable."""
-        var = Variable(
+    def test_instantiate_zero_one_binary_variable(self):
+        """Test creating binary variable constrained to 0-1 values."""
+        zero_one_binary_variable = Variable(
             name="z1",
-            var_type=VariableType.BINARY,
+            variable_type=VariableType.BINARY,
             lower_bound=Decimal("0"),
             upper_bound=Decimal("1"),
         )
-        assert var.name == "z1"
-        assert var.var_type == VariableType.BINARY
-        assert var.is_bounded
+        assert zero_one_binary_variable.name == "z1"
+        assert zero_one_binary_variable.variable_type == VariableType.BINARY
+        assert zero_one_binary_variable.is_bounded
 
-    def test_invalid_variable_name(self):
-        """Test variable name validation."""
+    def test_reject_invalid_variable_name_format(self):
+        """Test validation rejects invalid variable name formats."""
         with pytest.raises(ValueError):
             Variable(name="123invalid")
 
-    def test_is_non_negative(self):
-        """Test non-negative property."""
-        var = Variable(name="x1", lower_bound=Decimal("0"))
-        assert var.is_non_negative
+    def test_identify_non_negative_variables_correctly(self):
+        """Test identification of non-negative vs negative-allowed variables."""
+        non_negative_variable = Variable(name="x1", lower_bound=Decimal("0"))
+        assert non_negative_variable.is_non_negative
 
-        var_neg = Variable(name="x2", lower_bound=Decimal("-5"))
-        assert not var_neg.is_non_negative
+        negative_allowed_variable = Variable(name="x2", lower_bound=Decimal("-5"))
+        assert not negative_allowed_variable.is_non_negative
 
 
 class TestLinearExpression:
     """Test LinearExpression model."""
 
-    def test_create_empty_expression(self):
-        """Test creating an empty expression."""
-        expr = LinearExpression()
-        assert len(expr.terms) == 0
-        assert expr.constant == Decimal("0")
-        assert str(expr) == "0"
+    def test_instantiate_empty_linear_expression(self):
+        """Test creating empty linear expression with default values."""
+        empty_linear_expression = LinearExpression()
+        assert len(empty_linear_expression.terms) == 0
+        assert empty_linear_expression.constant == Decimal("0")
+        assert str(empty_linear_expression) == "0"
 
-    def test_add_single_term(self):
-        """Test adding a single term."""
-        expr = LinearExpression()
-        expr.add_term(Decimal("2"), "x1")
+    def test_add_coefficient_variable_term_to_expression(self):
+        """Test adding single coefficient-variable term to linear expression."""
+        linear_expression_with_one_term = LinearExpression()
+        add_term_to_linear_expression(
+            linear_expression_with_one_term, Decimal("2"), "x1"
+        )
 
-        assert len(expr.terms) == 1
-        assert expr.terms[0].coefficient == Decimal("2")
-        assert expr.terms[0].variable == "x1"
-        assert str(expr) == "2*x1"
+        assert len(linear_expression_with_one_term.terms) == 1
+        assert linear_expression_with_one_term.terms[0].coefficient == Decimal("2")
+        assert linear_expression_with_one_term.terms[0].variable == "x1"
+        assert str(linear_expression_with_one_term) == "2*x1"
 
-    def test_add_multiple_terms(self):
-        """Test adding multiple terms."""
-        expr = LinearExpression()
-        expr.add_term(Decimal("2"), "x1")
-        expr.add_term(Decimal("3"), "x2")
-        expr.add_term(Decimal("-1"), "x3")
+    def test_build_multi_variable_linear_expression(self):
+        """Test building linear expression with multiple variable terms."""
+        multi_variable_expression = LinearExpression()
+        multi_variable_expression.add_term(Decimal("2"), "x1")
+        multi_variable_expression.add_term(Decimal("3"), "x2")
+        multi_variable_expression.add_term(Decimal("-1"), "x3")
 
-        assert len(expr.terms) == 3
-        variables = expr.get_variables()
-        assert "x1" in variables
-        assert "x2" in variables
-        assert "x3" in variables
+        assert len(multi_variable_expression.terms) == 3
+        extracted_variable_names = multi_variable_expression.extract_variable_names()
+        assert "x1" in extracted_variable_names
+        assert "x2" in extracted_variable_names
+        assert "x3" in extracted_variable_names
 
     def test_combine_same_variable(self):
         """Test combining coefficients for the same variable."""
@@ -136,7 +139,7 @@ class TestConstraint:
 
         assert constraint.operator == ConstraintOperator.LESS_EQUAL
         assert constraint.rhs == Decimal("10")
-        assert len(constraint.get_variables()) == 2
+        assert len(constraint.extract_variable_names()) == 2
         assert "2*x1 + 3*x2 <= 10" in str(constraint)
 
 
@@ -152,7 +155,7 @@ class TestObjectiveFunction:
         obj = ObjectiveFunction(direction=ObjectiveDirection.MINIMIZE, expression=expr)
 
         assert obj.direction == ObjectiveDirection.MINIMIZE
-        assert len(obj.get_variables()) == 2
+        assert len(obj.extract_variable_names()) == 2
         assert "minimize" in str(obj)
 
     def test_maximize_objective(self):
@@ -196,9 +199,9 @@ class TestProblem:
         problem.add_constraint(constraint)
 
         assert len(problem.constraints) == 1
-        assert len(problem.get_all_variables()) == 2
-        assert "x1" in problem.get_all_variables()
-        assert "x2" in problem.get_all_variables()
+        assert len(problem.variables) == 2
+        assert "x1" in problem.extract_all_variable_names()
+        assert "x2" in problem.extract_all_variable_names()
 
     def test_problem_string_representation(self):
         """Test string representation of complete problem."""
@@ -231,8 +234,8 @@ class TestSolution:
 
         assert solution.is_optimal
         assert solution.is_feasible
-        assert solution.get_variable_value("x1") == 2.5
-        assert solution.get_variable_value("nonexistent") is None
+        assert solution.variable_values["x1"] == 2.5
+        assert solution.extract_variable_value("nonexistent") is None
         assert "🎯 Optimal Solution Found!" in str(solution)
 
     def test_infeasible_solution(self):
