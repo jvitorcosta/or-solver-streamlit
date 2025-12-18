@@ -27,7 +27,7 @@ def render_examples_section(*, translations: dict[str, Any]) -> None:
     selected_template_key = st.pills(
         translations.gallery.choose_text,
         options=list(example_template_options.keys()),
-        format_func=lambda template_key: example_template_options[template_key],
+        format_func=lambda key: example_template_options[key],
         help=translations.gallery.select_help,
     )
 
@@ -44,7 +44,7 @@ def render_examples_section(*, translations: dict[str, Any]) -> None:
             _, center_col, _ = st.columns([1, 2, 1])
             with center_col:
                 copy_button_pressed = st.button(
-                    f":material/content_copy: {translations.gallery.copy_button}",
+                    (f":material/content_copy: {translations.gallery.copy_button}"),
                     key="load_template",
                     type="primary",
                     use_container_width=True,
@@ -54,11 +54,13 @@ def render_examples_section(*, translations: dict[str, Any]) -> None:
                 if copy_button_pressed:
                     st.session_state.example_text = selected_example["problem"]
                     st.session_state.example_name = selected_example["name"]
-                    st.session_state.problem_text = selected_example[
-                        "problem"
-                    ]  # Update text area directly
+                    # Update text area directly
+                    st.session_state.problem_text = selected_example["problem"]
                     st.toast(
-                        f":material/check_circle: **{selected_example['name']}** {translations.gallery.copied_toast}",
+                        (
+                            f":material/check_circle: **{selected_example['name']}** "
+                            f"{translations.gallery.copied_toast}"
+                        ),
                         icon=":material/content_copy:",
                     )
                     st.rerun()
@@ -90,7 +92,8 @@ def render_optimization_problem_form(*, initial_text: str, language_code: str) -
     translations = language.load_language_translations(language_code=language_code)
 
     with st.form("problem_form", border=False):
-        # To ensure we won't erase the text area content on rerun (e.g. changing language)
+        # To ensure we won't erase the text area content on rerun
+        # (e.g. changing language)
         if "problem_text" not in st.session_state:
             st.session_state.problem_text = initial_text
 
@@ -108,7 +111,7 @@ def render_optimization_problem_form(*, initial_text: str, language_code: str) -
 
         with button_col1:
             solve_button_pressed = st.form_submit_button(
-                f":material/play_arrow: **{translations.interface.solve_button}**",
+                (f":material/play_arrow: **{translations.interface.solve_button}**"),
                 type="primary",
                 use_container_width=True,
                 help=translations.interface.solve_help,
@@ -116,7 +119,7 @@ def render_optimization_problem_form(*, initial_text: str, language_code: str) -
 
         with button_col2:
             clear_button_pressed = st.form_submit_button(
-                f":material/restart_alt: {translations.interface.clear_workspace}",
+                (f":material/restart_alt: {translations.interface.clear_workspace}"),
                 type="secondary",
                 use_container_width=True,
                 help=translations.interface.clear_help,
@@ -131,19 +134,22 @@ def render_optimization_problem_form(*, initial_text: str, language_code: str) -
                     problem_text=problem_text, language_code=language_code
                 )
                 st.toast(
-                    f":material/calculate: {translations.interface.processing_toast}",
+                    (f":material/calculate: {translations.interface.processing_toast}"),
                     icon=":material/play_arrow:",
                 )
                 st.rerun()
             else:
                 st.toast(
-                    f":material/warning: {translations.messages.empty_problem_solve}!",
+                    (
+                        f":material/warning: "
+                        f"{translations.messages.empty_problem_solve}!"
+                    ),
                     icon=":material/error:",
                 )
 
         if clear_button_pressed:
             st.toast(
-                f":material/refresh: {translations.interface.clear_workspace}!",
+                (f":material/refresh: {translations.interface.clear_workspace}!"),
                 icon=":material/restart_alt:",
             )
 
@@ -152,7 +158,8 @@ def _get_workspace_initial_state() -> tuple[str, bool]:
     """Get initial workspace state from session storage.
 
     Returns:
-        Tuple of (initial_text, example_is_loaded) for workspace initialization.
+        Tuple of (initial_text, example_is_loaded) for workspace
+        initialization.
     """
     workspace_initial_text = ""
     example_is_loaded = False
@@ -173,7 +180,7 @@ def _render_workspace_header(*, example_is_loaded: bool) -> None:
     st.markdown("#### :material/edit_note: Workspace")
     if example_is_loaded and "example_name" in st.session_state:
         st.caption(
-            f":material/lightbulb: Using example: **{st.session_state.example_name}**"
+            (f":material/lightbulb: Using example: **{st.session_state.example_name}**")
         )
 
 
@@ -201,7 +208,8 @@ def _detect_variable_type_from_text(*, problem_text: str) -> str:
         problem_text: The optimization problem text to analyze.
 
     Returns:
-        Variable type: 'integer' if integer/binary keywords found, else 'continuous'.
+        Variable type: 'integer' if integer/binary keywords found,
+        else 'continuous'.
     """
     text_lower = problem_text.lower()
     integer_keywords = ["integer", "binary"]

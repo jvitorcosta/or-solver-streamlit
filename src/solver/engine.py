@@ -172,13 +172,19 @@ def _display_ortools_results(
     elif solution.status == SolverStatus.INFEASIBLE:
         st.error("❌ **Problem is infeasible**")
         st.info(
-            "The constraints cannot be satisfied simultaneously. Check your constraint definitions."
+            (
+                "The constraints cannot be satisfied simultaneously. "
+                "Check your constraint definitions."
+            )
         )
 
     elif solution.status == SolverStatus.UNBOUNDED:
         st.warning("⚠️ **Problem is unbounded**")
         st.info(
-            "The objective function can be improved infinitely. Add upper/lower bounds to variables."
+            (
+                "The objective function can be improved infinitely. "
+                "Add upper/lower bounds to variables."
+            )
         )
 
     else:
@@ -232,7 +238,10 @@ def _create_2d_visualization(problem, solution):
         info_text = (
             translations.visualization.integer_info
             if translations
-            else "🔢 Visualization shows continuous relaxation for integer/binary variables"
+            else (
+                "🔢 Visualization shows continuous relaxation for "
+                "integer/binary variables"
+            )
         )
         st.info(info_text)
 
@@ -254,7 +263,10 @@ def _create_2d_visualization(problem, solution):
                 fillcolor="rgba(76, 175, 80, 0.15)",  # Soft green
                 line={"color": "rgba(76, 175, 80, 0.8)", "width": 3},
                 name="🟢 Feasible Region",
-                hovertemplate="<b>Feasible Region</b><br>All points satisfying constraints<extra></extra>",
+                hovertemplate=(
+                    "<b>Feasible Region</b><br>All points satisfying "
+                    "constraints<extra></extra>"
+                ),
             )
         )
 
@@ -294,7 +306,9 @@ def _create_2d_visualization(problem, solution):
                     mode="lines",
                     line={"color": constraint["color"], "width": 3, "dash": "dash"},
                     name=f"📏 {constraint['name']}",
-                    hovertemplate=f"<b>{constraint['name']}</b><br>Boundary line<extra></extra>",
+                    hovertemplate=(
+                        f"<b>{constraint['name']}</b><br>Boundary line<extra></extra>"
+                    ),
                 )
             )
 
@@ -321,7 +335,10 @@ def _create_2d_visualization(problem, solution):
                     line=dict(color="black", width=2),
                 ),
                 name="⭐ Optimal Solution",
-                hovertemplate=f"<b>Optimal Solution</b><br>{var1_name} = {opt_x:.3f}<br>{var2_name} = {opt_y:.3f}<extra></extra>",
+                hovertemplate=(
+                    f"<b>Optimal Solution</b><br>{var1_name} = {opt_x:.3f}<br>"
+                    f"{var2_name} = {opt_y:.3f}<extra></extra>"
+                ),
             )
         )
 

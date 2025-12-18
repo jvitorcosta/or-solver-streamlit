@@ -68,9 +68,11 @@ def render_guide_tab() -> None:
 
     #### :material/lightbulb: **Pro Tips**
 
-    - **Vertices matter**: Optimal solutions for linear programs always occur at vertices
+    - **Vertices matter**: Optimal solutions for linear programs always occur
+      at vertices
     - **Direction matters**: Gradient shows which way to improve the objective
-    - **Constraints define limits**: Feasible region boundaries prevent further improvement
+    - **Constraints define limits**: Feasible region boundaries prevent
+      further improvement
     - **Interactive exploration**: Hover over points to see exact coordinates and values
     """)
 
@@ -105,10 +107,13 @@ def _render_thesis_header_with_download(*, thesis_file_path: Path) -> None:
 
     with col1:
         st.markdown(
-            "**:material/school: Research Thesis - SolvedOR: Modern Operations Research Interface**"
+            (
+                "**:material/school: Research Thesis - SolvedOR: "
+                "Modern Operations Research Interface**"
+            )
         )
         st.caption(
-            "This thesis introduces the OR-Solver application and its methodology."
+            ("This thesis introduces the OR-Solver application and its methodology.")
         )
 
     with col2:
@@ -124,7 +129,10 @@ def _render_thesis_header_with_download(*, thesis_file_path: Path) -> None:
 
                 if download_pressed:
                     st.toast(
-                        ":material/file_download_done: Thesis PDF ready for download!",
+                        (
+                            ":material/file_download_done: "
+                            "Thesis PDF ready for download!"
+                        ),
                         icon=":material/download:",
                     )
         except OSError:
@@ -141,6 +149,9 @@ def _render_pdf_viewer(*, pdf_file_path: Path) -> None:
         st.pdf(str(pdf_file_path))
     except Exception as pdf_error:
         st.warning(
-            "PDF viewer not available. You can download the thesis using the button above."
+            (
+                "PDF viewer not available. You can download the thesis "
+                "using the button above."
+            )
         )
         st.info(f"Error: {str(pdf_error)}")

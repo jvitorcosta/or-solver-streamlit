@@ -204,7 +204,8 @@ class SolverFactory:
 
         Args:
             problem: The optimization problem to solve
-            solver_preference: Optional solver preference ('linear', 'integer', or specific solver name)
+            solver_preference: Optional solver preference ('linear', 'integer',
+                or specific solver name)
         """
         has_integer_vars = any(
             var.var_type in (VariableType.INTEGER, VariableType.BINARY)

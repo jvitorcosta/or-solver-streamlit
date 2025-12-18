@@ -12,8 +12,10 @@ def _configure_streamlit_application() -> None:
         layout="wide",
         initial_sidebar_state="expanded",
         menu_items={
-            "Get Help": "https://github.com/jvitorcosta/or-solver-streamlit",
-            "Report a bug": "https://github.com/jvitorcosta/or-solver-streamlit/issues",
+            "Get Help": ("https://github.com/jvitorcosta/or-solver-streamlit"),
+            "Report a bug": (
+                "https://github.com/jvitorcosta/or-solver-streamlit/issues"
+            ),
             "About": "# OR-Solver\nModern Operations Research Solver",
         },
     )
@@ -51,7 +53,7 @@ def render_main_interface(*, translations: language.TranslationSchema) -> None:
         f":material/group: {translations.tabs.contributing}",
     ]
 
-    workspace_tab, paper_tab, guide_tab, readme_tab, contributing_tab = st.tabs(
+    (workspace_tab, paper_tab, guide_tab, readme_tab, contributing_tab) = st.tabs(
         tab_names
     )
 
