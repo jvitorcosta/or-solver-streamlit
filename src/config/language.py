@@ -188,7 +188,7 @@ class LanguageManager(BaseModel):
         Returns:
             LanguageManager instance with loaded translation schemas.
         """
-        return LanguageManager(translation_schemas=_load_all_translation_files())
+        return LanguageManager(translation_schemas=build_language_schema_dictionary())
 
     @staticmethod
     def from_dict(
@@ -203,9 +203,9 @@ class LanguageManager(BaseModel):
         Returns:
             LanguageManager instance with validated translations.
         """
-        validated_schema = TranslationSchema(**translations)
-        translation_schemas = {language_code: validated_schema}
-        return LanguageManager(translation_schemas=translation_schemas)
+        validated_translation_schema = TranslationSchema(**translations)
+        language_schema_mapping = {language_code: validated_translation_schema}
+        return LanguageManager(translation_schemas=language_schema_mapping)
 
     def get_translations(self, language_code: LanguageCode) -> TranslationSchema:
         """Get translation schema for specified language.
@@ -232,14 +232,16 @@ class LanguageManager(BaseModel):
         Returns:
             Translation string for the specified key path.
         """
-        translation_schema = self.get_translations(language_code)
-        return _navigate_translation_path(
-            translation_object=translation_schema, key_path=key_path
+        language_translation_schema = self.get_translations(language_code)
+        return traverse_nested_translation_attributes(
+            translation_object=language_translation_schema, key_path=key_path
         )
 
 
-def _load_translation_file(*, language_code: LanguageCode) -> TranslationSchema | None:
-    """Load translation file for specific language code.
+def parse_yaml_translation_file_for_language(
+    *, language_code: LanguageCode
+) -> TranslationSchema | None:
+    """Parse YAML translation file and return validated schema for specific language.
 
     Args:
         language_code: Language code to load translations for.
@@ -248,31 +250,42 @@ def _load_translation_file(*, language_code: LanguageCode) -> TranslationSchema 
         TranslationSchema if file exists and is valid, None otherwise.
     """
     translations_directory = Path(__file__).parents[2] / "translations"
-    file_path = translations_directory / f"{language_code.value}.yaml"
+    yaml_file_path = translations_directory / f"{language_code.value}.yaml"
 
     try:
-        content = file_path.read_text(encoding="utf-8")
-        translation_data = yaml.safe_load(content)
-        return TranslationSchema(**translation_data) if translation_data else None
+        yaml_file_content = yaml_file_path.read_text(encoding="utf-8")
+        parsed_translation_data = yaml.safe_load(yaml_file_content)
+        return (
+            TranslationSchema(**parsed_translation_data)
+            if parsed_translation_data
+            else None
+        )
     except (FileNotFoundError, yaml.YAMLError, OSError):
         return None
 
 
-def _load_all_translation_files() -> dict[LanguageCode, TranslationSchema]:
-    """Load all available translation files.
+def build_language_schema_dictionary() -> dict[LanguageCode, TranslationSchema]:
+    """Build dictionary of all supported languages with their translation schemas.
 
     Returns:
         Dictionary mapping language codes to their translation schemas.
     """
     return {
-        lang_code: schema
-        for lang_code in LanguageCode
-        if (schema := _load_translation_file(language_code=lang_code)) is not None
+        language_code_enum: translation_schema
+        for language_code_enum in LanguageCode
+        if (
+            translation_schema := parse_yaml_translation_file_for_language(
+                language_code=language_code_enum
+            )
+        )
+        is not None
     }
 
 
-def _navigate_translation_path(*, translation_object: Any, key_path: str) -> str:
-    """Navigate through nested translation attributes using dot notation.
+def traverse_nested_translation_attributes(
+    *, translation_object: Any, key_path: str
+) -> str:
+    """Traverse nested translation attributes using dot-separated key path.
 
     Args:
         translation_object: Starting translation object to navigate.
@@ -290,7 +303,7 @@ def _navigate_translation_path(*, translation_object: Any, key_path: str) -> str
 
 
 def load_language_translations(*, language_code: str) -> TranslationSchema:
-    """Load localization strings for specified language.
+    """Load localization strings for specified language with English fallback.
 
     Args:
         language_code: Language code string (e.g., 'en', 'pt').
@@ -301,13 +314,13 @@ def load_language_translations(*, language_code: str) -> TranslationSchema:
     """
     # Validate and fallback to English if invalid
     try:
-        lang_code = LanguageCode(language_code)
+        validated_language_code = LanguageCode(language_code)
     except ValueError:
-        lang_code = LanguageCode.ENGLISH
+        validated_language_code = LanguageCode.ENGLISH
 
     # Load requested language or fallback to English
     return (
-        _load_translation_file(language_code=lang_code)
-        or _load_translation_file(language_code=LanguageCode.ENGLISH)
+        parse_yaml_translation_file_for_language(language_code=validated_language_code)
+        or parse_yaml_translation_file_for_language(language_code=LanguageCode.ENGLISH)
         or TranslationSchema(**{})  # Empty schema as last resort
     )

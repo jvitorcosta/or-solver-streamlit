@@ -4,8 +4,8 @@ from typing import Any
 import yaml
 
 
-def load_yaml_configuration_file(*, file_name: str) -> dict[str, Any]:
-    """Load YAML configuration file from config directory.
+def parse_yaml_config_from_file_system(*, file_name: str) -> dict[str, Any]:
+    """Parse YAML configuration file from config directory into dictionary.
 
     Args:
         file_name: Name of the YAML file to load (e.g., 'examples.yaml').
@@ -20,26 +20,26 @@ def load_yaml_configuration_file(*, file_name: str) -> dict[str, Any]:
     if not (file_name and file_name.strip()):
         raise ValueError("File name cannot be empty or None")
 
-    file_path = Path(__file__).parent / file_name.strip()
+    yaml_file_path = Path(__file__).parent / file_name.strip()
 
     try:
-        content = file_path.read_text(encoding="utf-8")
-        return yaml.safe_load(content) or {}
+        yaml_file_content = yaml_file_path.read_text(encoding="utf-8")
+        return yaml.safe_load(yaml_file_content) or {}
     except (FileNotFoundError, yaml.YAMLError, OSError):
         return {}
 
 
-def load_optimization_examples() -> dict[str, Any]:
-    """Load optimization problem examples from resources directory.
+def extract_examples_from_resources_directory() -> dict[str, Any]:
+    """Extract optimization problem examples from YAML file in resources directory.
 
     Returns:
         Dictionary containing example optimization problems.
         Returns empty dict if examples file is not found or invalid.
     """
-    examples_path = Path(__file__).parents[2] / "resources" / "examples.yaml"
+    examples_yaml_file_path = Path(__file__).parents[2] / "resources" / "examples.yaml"
 
     try:
-        content = examples_path.read_text(encoding="utf-8")
-        return yaml.safe_load(content) or {}
+        examples_file_content = examples_yaml_file_path.read_text(encoding="utf-8")
+        return yaml.safe_load(examples_file_content) or {}
     except (FileNotFoundError, yaml.YAMLError, OSError):
         return {}
