@@ -17,21 +17,15 @@ def load_yaml_configuration_file(*, file_name: str) -> dict[str, Any]:
     Raises:
         ValueError: If file_name is empty or None.
     """
-    if not file_name or not file_name.strip():
+    if not (file_name and file_name.strip()):
         raise ValueError("File name cannot be empty or None")
 
-    config_directory = Path(__file__).parent
-    file_path = config_directory / file_name.strip()
-
-    if not file_path.exists():
-        return {}
+    file_path = Path(__file__).parent / file_name.strip()
 
     try:
-        with open(file_path, encoding="utf-8") as yaml_file:
-            content = yaml.safe_load(yaml_file)
-            return content if content is not None else {}
-    except (yaml.YAMLError, OSError):
-        # Return empty dict for invalid YAML or file access errors
+        content = file_path.read_text(encoding="utf-8")
+        return yaml.safe_load(content) or {}
+    except (FileNotFoundError, yaml.YAMLError, OSError):
         return {}
 
 
@@ -42,15 +36,10 @@ def load_optimization_examples() -> dict[str, Any]:
         Dictionary containing example optimization problems.
         Returns empty dict if examples file is not found or invalid.
     """
-    resources_directory = Path(__file__).parents[2] / "resources"
-    examples_file_path = resources_directory / "examples.yaml"
-
-    if not examples_file_path.exists():
-        return {}
+    examples_path = Path(__file__).parents[2] / "resources" / "examples.yaml"
 
     try:
-        with open(examples_file_path, encoding="utf-8") as yaml_file:
-            content = yaml.safe_load(yaml_file)
-            return content if content is not None else {}
-    except (yaml.YAMLError, OSError):
+        content = examples_path.read_text(encoding="utf-8")
+        return yaml.safe_load(content) or {}
+    except (FileNotFoundError, yaml.YAMLError, OSError):
         return {}

@@ -1,72 +1,100 @@
-from typing import Any
-
 import streamlit as st
 
 from config import language, settings
 from solver import engine
 
+# Example template configuration for better maintainability
+EXAMPLE_TEMPLATES = {
+    "production_planning": ":material/factory: Production",
+    "transportation": ":material/local_shipping: Transport",
+    "diet_optimization": ":material/restaurant: Diet",
+    "resource_allocation": ":material/account_balance: Resource",
+    "facility_location": ":material/location_on: Location",
+}
 
-def render_examples_section(*, translations: dict[str, Any]) -> None:
+# Detection keywords for variable types
+INTEGER_KEYWORDS = frozenset(["integer", "binary"])
+
+
+def render_examples_section(*, translations: language.TranslationSchema) -> None:
     """Render the optimization problem examples gallery section.
 
     Args:
-        translations: Dictionary containing translation data.
+        translations: Translation schema for the current language.
     """
-    optimization_examples = settings.load_optimization_examples()
-    if not optimization_examples:
+    examples = settings.load_optimization_examples()
+    if not examples:
         return
 
-    example_template_options = {
-        "production_planning": ":material/factory: Production",
-        "transportation": ":material/local_shipping: Transport",
-        "diet_optimization": ":material/restaurant: Diet",
-        "resource_allocation": ":material/account_balance: Resource",
-        "facility_location": ":material/location_on: Location",
-    }
-
-    selected_template_key = st.pills(
+    selected_key = st.pills(
         translations.gallery.choose_text,
-        options=list(example_template_options.keys()),
-        format_func=lambda key: example_template_options[key],
+        options=list(EXAMPLE_TEMPLATES.keys()),
+        format_func=EXAMPLE_TEMPLATES.get,
         help=translations.gallery.select_help,
     )
 
-    # Display selected example preview and copy functionality
-    if selected_template_key and selected_template_key in optimization_examples:
-        selected_example = optimization_examples[selected_template_key]
+    # Early return if no selection
+    if not selected_key or selected_key not in examples:
+        return
 
-        st.markdown("")
-        with st.container(border=True):
-            st.markdown(f"**:material/assignment: {selected_example['name']}**")
-            st.code(selected_example["problem"], language="text")
-
-            # Center-aligned copy button
-            _, center_col, _ = st.columns([1, 2, 1])
-            with center_col:
-                copy_button_pressed = st.button(
-                    (f":material/content_copy: {translations.gallery.copy_button}"),
-                    key="load_template",
-                    type="primary",
-                    use_container_width=True,
-                    help=translations.gallery.copy_help,
-                )
-
-                if copy_button_pressed:
-                    st.session_state.example_text = selected_example["problem"]
-                    st.session_state.example_name = selected_example["name"]
-                    # Update text area directly
-                    st.session_state.problem_text = selected_example["problem"]
-                    st.toast(
-                        (
-                            f":material/check_circle: **{selected_example['name']}** "
-                            f"{translations.gallery.copied_toast}"
-                        ),
-                        icon=":material/content_copy:",
-                    )
-                    st.rerun()
+    selected_example = examples[selected_key]
+    _render_example_preview(selected_example, translations)
 
 
-def render_workspace_section(*, translations: dict[str, Any]) -> None:
+def _render_example_preview(
+    example: dict[str, str], translations: language.TranslationSchema
+) -> None:
+    """Render example preview with copy functionality.
+
+    Args:
+        example: Example data dictionary.
+        translations: Translation schema.
+    """
+    st.markdown("")
+    with st.container(border=True):
+        st.markdown(f"**:material/assignment: {example['name']}**")
+        st.code(example["problem"], language="text")
+
+        # Center-aligned copy button
+        _, center_col, _ = st.columns([1, 2, 1])
+        with center_col:
+            if st.button(
+                f":material/content_copy: {translations.gallery.copy_button}",
+                key="load_template",
+                type="primary",
+                use_container_width=True,
+                help=translations.gallery.copy_help,
+            ):
+                _copy_example_to_workspace(example, translations)
+
+
+def _copy_example_to_workspace(
+    example: dict[str, str], translations: language.TranslationSchema
+) -> None:
+    """Copy example to workspace and show feedback.
+
+    Args:
+        example: Example data to copy.
+        translations: Translation schema for messages.
+    """
+    # Update session state with example data
+    st.session_state.update(
+        {
+            "example_text": example["problem"],
+            "example_name": example["name"],
+            "problem_text": example["problem"],
+        }
+    )
+
+    # Show success feedback
+    st.toast(
+        f":material/check_circle: **{example['name']}** {translations.gallery.copied_toast}",
+        icon=":material/content_copy:",
+    )
+    st.rerun()
+
+
+def render_workspace_section(*, translations: language.TranslationSchema) -> None:
     """Render the optimization problem workspace section.
 
     Args:
@@ -212,11 +240,9 @@ def _detect_variable_type_from_text(*, problem_text: str) -> str:
         else 'continuous'.
     """
     text_lower = problem_text.lower()
-    integer_keywords = ["integer", "binary"]
-
     return (
         "integer"
-        if any(keyword in text_lower for keyword in integer_keywords)
+        if any(keyword in text_lower for keyword in INTEGER_KEYWORDS)
         else "continuous"
     )
 

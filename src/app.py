@@ -23,10 +23,9 @@ def _configure_streamlit_application() -> None:
 
 def _initialize_session_state() -> None:
     """Initialize default values for Streamlit session state variables."""
-    if "solver_status" not in st.session_state:
-        st.session_state.solver_status = "ready"
-    if "language" not in st.session_state:
-        st.session_state.language = "en"
+    # Use setdefault for cleaner initialization
+    st.session_state.setdefault("solver_status", "ready")
+    st.session_state.setdefault("language", "en")
 
 
 def render_main_interface(*, translations: language.TranslationSchema) -> None:
@@ -44,40 +43,36 @@ def render_main_interface(*, translations: language.TranslationSchema) -> None:
         """
     )
 
-    # Configure tab navigation with query parameter support
-    tab_names = [
-        f":material/work: {translations.tabs.workspace}",
-        f":material/school: {translations.tabs.paper}",
-        f":material/help: {translations.tabs.guide}",
-        f":material/description: {translations.tabs.readme}",
-        f":material/group: {translations.tabs.contributing}",
-    ]
+    # Configure tab navigation - explicit mapping for clarity
+    tab_config = {
+        "workspace": (":material/work:", translations.tabs.workspace),
+        "paper": (":material/school:", translations.tabs.paper),
+        "guide": (":material/help:", translations.tabs.guide),
+        "readme": (":material/description:", translations.tabs.readme),
+        "contributing": (":material/group:", translations.tabs.contributing),
+    }
 
-    (workspace_tab, paper_tab, guide_tab, readme_tab, contributing_tab) = st.tabs(
-        tab_names
-    )
+    tab_names = [f"{icon} {label}" for icon, label in tab_config.values()]
+    tabs_dict = dict(zip(tab_config.keys(), st.tabs(tab_names), strict=True))
 
-    with workspace_tab:
+    # Render tabs using clean, functional approach
+    with tabs_dict["workspace"]:
         st.markdown(f"#### :material/collections: {translations.gallery.title}")
         workspace.render_examples_section(translations=translations)
         st.markdown("---")
         workspace.render_workspace_section(translations=translations)
 
-    with paper_tab:
+    with tabs_dict["paper"]:
         tabs.render_thesis_tab()
 
-    with guide_tab:
+    with tabs_dict["guide"]:
         tabs.render_guide_tab()
 
-    with readme_tab:
-        tabs._render_markdown_file(
-            file_name="README.md", not_found_message="README.md not found."
-        )
+    with tabs_dict["readme"]:
+        tabs.render_markdown_file("README.md")
 
-    with contributing_tab:
-        tabs._render_markdown_file(
-            file_name="CONTRIBUTING.md", not_found_message="CONTRIBUTING.md not found."
-        )
+    with tabs_dict["contributing"]:
+        tabs.render_markdown_file("CONTRIBUTING.md")
 
 
 if __name__ == "__main__":

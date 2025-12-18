@@ -77,24 +77,21 @@ def render_guide_tab() -> None:
     """)
 
 
-def _render_markdown_file(*, file_name: str, not_found_message: str) -> None:
+def render_markdown_file(file_name: str) -> None:
     """Render a markdown file from the project root directory.
 
     Args:
         file_name: Name of the markdown file to render.
-        not_found_message: Warning message to display if file is not found.
     """
     file_path = Path(__file__).parents[2] / file_name
 
-    if file_path.exists():
-        try:
-            with open(file_path, encoding="utf-8") as markdown_file:
-                file_content = markdown_file.read()
-            st.markdown(file_content)
-        except OSError:
-            st.warning(f"Could not read {file_name}.")
-    else:
-        st.warning(not_found_message)
+    try:
+        content = file_path.read_text(encoding="utf-8")
+        st.markdown(content)
+    except FileNotFoundError:
+        st.warning(f"📄 {file_name} not found.")
+    except OSError:
+        st.warning(f"⚠️ Could not read {file_name}.")
 
 
 def _render_thesis_header_with_download(*, thesis_file_path: Path) -> None:
@@ -118,25 +115,22 @@ def _render_thesis_header_with_download(*, thesis_file_path: Path) -> None:
 
     with col2:
         try:
-            with open(thesis_file_path, "rb") as pdf_file:
-                download_pressed = st.download_button(
-                    ":material/download: Download PDF",
-                    pdf_file.read(),
-                    file_name="solvedor_article.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                )
+            pdf_data = thesis_file_path.read_bytes()
+            download_pressed = st.download_button(
+                ":material/download: Download PDF",
+                pdf_data,
+                file_name="solvedor_article.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
 
-                if download_pressed:
-                    st.toast(
-                        (
-                            ":material/file_download_done: "
-                            "Thesis PDF ready for download!"
-                        ),
-                        icon=":material/download:",
-                    )
+            if download_pressed:
+                st.toast(
+                    ":material/file_download_done: Thesis PDF ready for download!",
+                    icon=":material/download:",
+                )
         except OSError:
-            st.error("Could not load PDF for download.")
+            st.error("📚 Could not load PDF for download.")
 
 
 def _render_pdf_viewer(*, pdf_file_path: Path) -> None:

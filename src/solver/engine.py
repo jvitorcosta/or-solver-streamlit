@@ -6,16 +6,25 @@ from solver import parser
 from solver.backends import SolverFactory
 from solver.models import Problem, Solution, SolverStatus, VariableType
 
+# Progress tracking for UI feedback
+PROGRESS_STEPS = {"parsing": 20, "setup": 40, "solving": 80, "complete": 100}
+
 
 def solve_optimization_problem(problem_text: str) -> tuple[Problem, Solution]:
-    """Core solver function that returns Problem and Solution objects."""
-    # Parse the problem
-    problem = parser.parse_lp_problem(problem_text)
+    """Core solver function that returns Problem and Solution objects.
 
-    # Create and use solver
+    Args:
+        problem_text: Linear programming problem in text format.
+
+    Returns:
+        Tuple of (parsed problem, solution).
+
+    Raises:
+        parser.ParseError: If problem text cannot be parsed.
+    """
+    problem = parser.parse_lp_problem(problem_text)
     solver = SolverFactory.create_solver(problem)
     solution = solver.solve(problem)
-
     return problem, solution
 
 
@@ -40,13 +49,13 @@ def solve_problem(
 
         try:
             progress_text.text(translations.status.parsing)
-            progress_bar.progress(20)
+            progress_bar.progress(PROGRESS_STEPS["parsing"])
 
             progress_text.text(translations.status.setting_up)
-            progress_bar.progress(40)
+            progress_bar.progress(PROGRESS_STEPS["setup"])
 
             progress_text.text(translations.status.solving)
-            progress_bar.progress(80)
+            progress_bar.progress(PROGRESS_STEPS["solving"])
 
             problem, solution = solve_optimization_problem(problem_text)
 

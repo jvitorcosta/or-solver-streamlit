@@ -4,6 +4,9 @@ import streamlit as st
 
 from config import language
 
+# Language display configuration
+LANGUAGE_DISPLAY = {"en": "🇺🇸 English", "pt": "🇵🇹 Português"}
+
 
 def render_sidebar(*, translations: language.TranslationSchema) -> None:
     """Render the sidebar with language selection.
@@ -17,16 +20,19 @@ def render_sidebar(*, translations: language.TranslationSchema) -> None:
         st.markdown(f"## :material/settings: **{translations.sidebar.settings}**")
         st.markdown(f":material/language: **{translations.sidebar.language}**")
 
+        language_options = [lang.value for lang in language.LanguageCode]
+        current_index = language_options.index(current_language)
+
         selected_language = st.selectbox(
             "",
-            options=[lang.value for lang in language.LanguageCode],
-            format_func=_format_language_option,
-            index=0 if current_language == "en" else 1,
+            options=language_options,
+            format_func=lambda code: LANGUAGE_DISPLAY[code],
+            index=current_index,
             label_visibility="collapsed",
         )
 
-        # Update session state immediately and trigger rerun on language change
-        if current_language != selected_language:
+        # Handle language change with immediate feedback
+        if selected_language != current_language:
             st.session_state.language = selected_language
             st.toast(
                 ":material/language: Language changed!", icon=":material/language:"
@@ -34,6 +40,4 @@ def render_sidebar(*, translations: language.TranslationSchema) -> None:
             st.rerun()
 
 
-def _format_language_option(lang_code: str) -> str:
-    language_map = {"en": "🇺🇸 English", "pt": "🇵🇹 Português"}
-    return language_map[lang_code]
+# Language formatting now handled inline with lambda and constant

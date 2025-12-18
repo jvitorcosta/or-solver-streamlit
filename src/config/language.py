@@ -248,16 +248,13 @@ def _load_translation_file(*, language_code: LanguageCode) -> TranslationSchema 
         TranslationSchema if file exists and is valid, None otherwise.
     """
     translations_directory = Path(__file__).parents[2] / "translations"
-    translation_file_path = translations_directory / f"{language_code.value}.yaml"
-
-    if not translation_file_path.exists():
-        return None
+    file_path = translations_directory / f"{language_code.value}.yaml"
 
     try:
-        with open(translation_file_path, encoding="utf-8") as yaml_file:
-            translation_data = yaml.safe_load(yaml_file)
-            return TranslationSchema(**translation_data)
-    except (yaml.YAMLError, OSError):
+        content = file_path.read_text(encoding="utf-8")
+        translation_data = yaml.safe_load(content)
+        return TranslationSchema(**translation_data) if translation_data else None
+    except (FileNotFoundError, yaml.YAMLError, OSError):
         return None
 
 
@@ -267,14 +264,11 @@ def _load_all_translation_files() -> dict[LanguageCode, TranslationSchema]:
     Returns:
         Dictionary mapping language codes to their translation schemas.
     """
-    loaded_translations = {}
-
-    for language_code in LanguageCode:
-        translation_schema = _load_translation_file(language_code=language_code)
-        if translation_schema is not None:
-            loaded_translations[language_code] = translation_schema
-
-    return loaded_translations
+    return {
+        lang_code: schema
+        for lang_code in LanguageCode
+        if (schema := _load_translation_file(language_code=lang_code)) is not None
+    }
 
 
 def _navigate_translation_path(*, translation_object: Any, key_path: str) -> str:
@@ -290,12 +284,9 @@ def _navigate_translation_path(*, translation_object: Any, key_path: str) -> str
     Raises:
         AttributeError: If the key path is invalid or not found.
     """
-    current_object = translation_object
+    from functools import reduce
 
-    for key in key_path.split("."):
-        current_object = getattr(current_object, key)
-
-    return current_object
+    return reduce(getattr, key_path.split("."), translation_object)
 
 
 def load_language_translations(*, language_code: str) -> TranslationSchema:
@@ -308,18 +299,15 @@ def load_language_translations(*, language_code: str) -> TranslationSchema:
         TranslationSchema instance with validated translations for the language.
         Falls back to English if the requested language is invalid.
     """
+    # Validate and fallback to English if invalid
     try:
-        validated_language_code = LanguageCode(language_code)
+        lang_code = LanguageCode(language_code)
     except ValueError:
-        validated_language_code = LanguageCode.ENGLISH
+        lang_code = LanguageCode.ENGLISH
 
-    # TODO: Is there a way to detect the available languages before loading
-    # TODO: in order to avoid this validation?
-
-    # Load translation file directly
-    translation_schema = _load_translation_file(language_code=validated_language_code)
-    if translation_schema is None:
-        # Fallback to English if requested language not found
-        translation_schema = _load_translation_file(language_code=LanguageCode.ENGLISH)
-
-    return translation_schema
+    # Load requested language or fallback to English
+    return (
+        _load_translation_file(language_code=lang_code)
+        or _load_translation_file(language_code=LanguageCode.ENGLISH)
+        or TranslationSchema(**{})  # Empty schema as last resort
+    )
