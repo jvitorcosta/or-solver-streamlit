@@ -37,25 +37,27 @@ class SolverStatus(str, Enum):
 
 class Variable(BaseModel):
     name: str
-    var_type: VariableType = VariableType.CONTINUOUS
+    variable_type: VariableType = VariableType.CONTINUOUS
     lower_bound: Decimal | None = None
     upper_bound: Decimal | None = None
 
     @field_validator("name")
     @classmethod
-    def validate_name(cls, v):
-        if not v or not isinstance(v, str):
-            raise ValueError(f"Variable name must be a non-empty string: {v}")
+    def ensure_valid_variable_name(cls, variable_name):
+        if not variable_name or not isinstance(variable_name, str):
+            raise ValueError(
+                f"Variable name must be a non-empty string: {variable_name}"
+            )
 
-        # Check for invalid characters (only allow alphanumeric, underscore)
-        if not v.replace("_", "").replace("-", "").isalnum():
-            raise ValueError(f"Invalid variable name: {v}")
+        if not variable_name.replace("_", "").replace("-", "").isalnum():
+            raise ValueError(f"Invalid variable name: {variable_name}")
 
-        # Check for names starting with numbers
-        if v[0].isdigit():
-            raise ValueError(f"Variable name cannot start with a number: {v}")
+        if variable_name[0].isdigit():
+            raise ValueError(
+                f"Variable name cannot start with a number: {variable_name}"
+            )
 
-        return v
+        return variable_name
 
     @property
     def is_bounded(self) -> bool:
@@ -86,57 +88,50 @@ class LinearExpression(BaseModel):
     terms: list[Term] = Field(default_factory=list, description="List of terms")
     constant: Decimal = Field(default=Decimal("0"), description="Constant term")
 
-    def add_term(self, coefficient: Decimal | float | int, variable: str) -> None:
-        """Add a term to the expression."""
-        coeff = Decimal(str(coefficient))
+    def add_term(self, coefficient: Decimal | float | int, variable_name: str) -> None:
+        decimal_coefficient = Decimal(str(coefficient))
 
-        # Check if variable already exists and combine coefficients
-        for term in self.terms:
-            if term.variable == variable:
-                term.coefficient += coeff
+        for existing_term in self.terms:
+            if existing_term.variable == variable_name:
+                existing_term.coefficient += decimal_coefficient
                 return
 
-        # Add new term
-        self.terms.append(Term(coefficient=coeff, variable=variable))
+        new_term = Term(coefficient=decimal_coefficient, variable=variable_name)
+        self.terms.append(new_term)
 
-    def get_variables(self) -> list[str]:
-        """Get list of all variable names in the expression."""
+    def extract_variable_names(self) -> list[str]:
         return [term.variable for term in self.terms]
 
     @property
-    def coefficients(self) -> dict[str, Decimal]:
-        """Get coefficients as a dictionary mapping variable names to coefficients."""
+    def variable_coefficients_map(self) -> dict[str, Decimal]:
         return {term.variable: term.coefficient for term in self.terms}
 
     def __str__(self) -> str:
-        """String representation of the expression."""
         if not self.terms and self.constant == 0:
             return "0"
 
-        parts = []
+        expression_parts = []
 
-        # Add terms
-        for i, term in enumerate(self.terms):
-            term_str = str(term)
-            if i == 0:
-                parts.append(term_str)
+        for term_index, current_term in enumerate(self.terms):
+            term_string = str(current_term)
+            if term_index == 0:
+                expression_parts.append(term_string)
             else:
-                if term.coefficient >= 0:
-                    parts.append(f" + {term_str}")
+                if current_term.coefficient >= 0:
+                    expression_parts.append(f" + {term_string}")
                 else:
-                    parts.append(f" - {str(term).lstrip('-')}")
+                    expression_parts.append(f" - {str(current_term).lstrip('-')}")
 
-        # Add constant if non-zero
         if self.constant != 0:
-            if parts:
+            if expression_parts:
                 if self.constant > 0:
-                    parts.append(f" + {self.constant}")
+                    expression_parts.append(f" + {self.constant}")
                 else:
-                    parts.append(f" - {abs(self.constant)}")
+                    expression_parts.append(f" - {abs(self.constant)}")
             else:
-                parts.append(str(self.constant))
+                expression_parts.append(str(self.constant))
 
-        return "".join(parts)
+        return "".join(expression_parts)
 
 
 class Constraint(BaseModel):
@@ -160,9 +155,8 @@ class Constraint(BaseModel):
             return f"{self.name}: {constraint_str}"
         return constraint_str
 
-    def get_variables(self) -> list[str]:
-        """Get list of all variables in the constraint."""
-        return self.expression.get_variables()
+    def extract_variable_names(self) -> list[str]:
+        return self.expression.extract_variable_names()
 
 
 class ObjectiveFunction(BaseModel):
@@ -172,17 +166,16 @@ class ObjectiveFunction(BaseModel):
     expression: LinearExpression = Field(..., description="Objective expression")
 
     def __str__(self) -> str:
-        """String representation of the objective."""
-        direction_str = self.direction.value
-        if direction_str in ["minimizar", "maximizar"]:
-            # Use English for string representation
-            direction_str = "minimize" if direction_str == "minimizar" else "maximize"
+        english_direction = self.direction.value
+        if english_direction in ["minimizar", "maximizar"]:
+            english_direction = (
+                "minimize" if english_direction == "minimizar" else "maximize"
+            )
 
-        return f"{direction_str} {self.expression}"
+        return f"{english_direction} {self.expression}"
 
-    def get_variables(self) -> list[str]:
-        """Get list of all variables in the objective."""
-        return self.expression.get_variables()
+    def extract_variable_names(self) -> list[str]:
+        return self.expression.extract_variable_names()
 
 
 class Problem(BaseModel):
@@ -197,98 +190,110 @@ class Problem(BaseModel):
     )
     name: str | None = Field(default=None, description="Problem name")
 
-    def add_constraint(self, constraint: Constraint) -> None:
-        """Add a constraint to the problem."""
-        self.constraints.append(constraint)
+    def add_constraint(self, new_constraint: Constraint) -> None:
+        self.constraints.append(new_constraint)
 
-        # Auto-register variables from constraint
-        for var_name in constraint.get_variables():
-            if var_name not in self.variables:
-                self.variables[var_name] = Variable(name=var_name)
+        constraint_variable_names = new_constraint.extract_variable_names()
+        for variable_name in constraint_variable_names:
+            if variable_name not in self.variables:
+                self.variables[variable_name] = Variable(name=variable_name)
 
     def add_variable(self, variable: Variable) -> None:
         """Add or update a variable definition."""
         self.variables[variable.name] = variable
 
-    def get_all_variables(self) -> list[str]:
-        """Get list of all variable names used in the problem."""
-        var_names = set()
+    def extract_all_variable_names(self) -> list[str]:
+        all_variable_names = set()
 
-        # Variables from objective
-        var_names.update(self.objective.get_variables())
+        objective_variables = self.objective.extract_variable_names()
+        all_variable_names.update(objective_variables)
 
-        # Variables from constraints
         for constraint in self.constraints:
-            var_names.update(constraint.get_variables())
+            constraint_variables = constraint.extract_variable_names()
+            all_variable_names.update(constraint_variables)
 
-        return sorted(var_names)
+        return sorted(all_variable_names)
 
     def __str__(self) -> str:
-        """String representation of the problem."""
-        lines = []
+        problem_lines = []
 
-        # Objective
-        lines.append(str(self.objective))
-        lines.append("")
+        problem_lines.append(str(self.objective))
+        problem_lines.append("")
 
-        # Constraints
         if self.constraints:
-            lines.append("subject to:")
+            problem_lines.append("subject to:")
             for constraint in self.constraints:
-                lines.append(f"    {constraint}")
+                problem_lines.append(f"    {constraint}")
 
-        # Variable bounds and types
-        non_negative_vars = []
-        bounded_vars = []
-        integer_vars = []
-        binary_vars = []
+        non_negative_variable_names = []
+        bounded_variable_constraints = []
+        integer_variable_names = []
+        binary_variable_names = []
 
-        for var_name in self.get_all_variables():
-            if var_name in self.variables:
-                var = self.variables[var_name]
+        all_variables = self.extract_all_variable_names()
+        for variable_name in all_variables:
+            if variable_name in self.variables:
+                variable_definition = self.variables[variable_name]
 
-                if var.var_type == VariableType.INTEGER:
-                    integer_vars.append(var_name)
-                elif var.var_type == VariableType.BINARY:
-                    binary_vars.append(var_name)
+                if variable_definition.variable_type == VariableType.INTEGER:
+                    integer_variable_names.append(variable_name)
+                elif variable_definition.variable_type == VariableType.BINARY:
+                    binary_variable_names.append(variable_name)
 
-                if var.is_bounded:
-                    if var.lower_bound == 0 and var.upper_bound is None:
-                        non_negative_vars.append(var_name)
+                if variable_definition.is_bounded:
+                    if (
+                        variable_definition.lower_bound == 0
+                        and variable_definition.upper_bound is None
+                    ):
+                        non_negative_variable_names.append(variable_name)
                     else:
-                        bound_parts = []
-                        if var.lower_bound is not None:
-                            bound_parts.append(str(var.lower_bound))
-                        bound_parts.append("<=")
-                        bound_parts.append(var_name)
-                        if var.upper_bound is not None:
-                            bound_parts.append("<=")
-                            bound_parts.append(str(var.upper_bound))
-                        bounded_vars.append(" ".join(bound_parts))
+                        bound_constraint_parts = []
+                        if variable_definition.lower_bound is not None:
+                            bound_constraint_parts.append(
+                                str(variable_definition.lower_bound)
+                            )
+                        bound_constraint_parts.append("<=")
+                        bound_constraint_parts.append(variable_name)
+                        if variable_definition.upper_bound is not None:
+                            bound_constraint_parts.append("<=")
+                            bound_constraint_parts.append(
+                                str(variable_definition.upper_bound)
+                            )
+                        bounded_variable_constraints.append(
+                            " ".join(bound_constraint_parts)
+                        )
                 else:
-                    non_negative_vars.append(var_name)
+                    non_negative_variable_names.append(variable_name)
             else:
-                # Default to non-negative
-                non_negative_vars.append(var_name)
+                non_negative_variable_names.append(variable_name)
 
-        if any([non_negative_vars, bounded_vars, integer_vars, binary_vars]):
-            lines.append("")
-            lines.append("where:")
+        has_variable_constraints = any(
+            [
+                non_negative_variable_names,
+                bounded_variable_constraints,
+                integer_variable_names,
+                binary_variable_names,
+            ]
+        )
+        if has_variable_constraints:
+            problem_lines.append("")
+            problem_lines.append("where:")
 
-            if non_negative_vars:
-                lines.append(f"    {', '.join(non_negative_vars)} >= 0")
+            if non_negative_variable_names:
+                problem_lines.append(
+                    f"    {', '.join(non_negative_variable_names)} >= 0"
+                )
 
-            if bounded_vars:
-                for bound in bounded_vars:
-                    lines.append(f"    {bound}")
+            for bound_constraint in bounded_variable_constraints:
+                problem_lines.append(f"    {bound_constraint}")
 
-            if integer_vars:
-                lines.append(f"    integer {', '.join(integer_vars)}")
+            if integer_variable_names:
+                problem_lines.append(f"    integer {', '.join(integer_variable_names)}")
 
-            if binary_vars:
-                lines.append(f"    binary {', '.join(binary_vars)}")
+            if binary_variable_names:
+                problem_lines.append(f"    binary {', '.join(binary_variable_names)}")
 
-        return "\n".join(lines)
+        return "\n".join(problem_lines)
 
 
 class Solution(BaseModel):
@@ -319,34 +324,52 @@ class Solution(BaseModel):
         """Check if solution is feasible."""
         return self.status in [SolverStatus.OPTIMAL]
 
-    def get_variable_value(self, variable_name: str) -> float | None:
-        """Get value of a specific variable."""
+    def extract_variable_value(self, variable_name: str) -> float | None:
         return self.variable_values.get(variable_name)
 
     def __str__(self) -> str:
-        """String representation of the solution."""
-        lines = []
+        solution_display_lines = []
 
         if self.status == SolverStatus.OPTIMAL:
-            lines.append("🎯 Optimal Solution Found!")
+            solution_display_lines.append("🎯 Optimal Solution Found!")
             if self.objective_value is not None:
-                lines.append(f"   Objective Value: {self.objective_value}")
-            lines.append("")
-            lines.append("   Variables:")
-            for var_name, value in sorted(self.variable_values.items()):
-                lines.append(f"   🐾 {var_name} = {value}")
-            lines.append("")
-            lines.append("   Status: OPTIMAL 😺")
+                solution_display_lines.append(
+                    f"   Objective Value: {self.objective_value}"
+                )
+            solution_display_lines.append("")
+            solution_display_lines.append("   Variables:")
+            for variable_name, variable_value in sorted(self.variable_values.items()):
+                solution_display_lines.append(
+                    f"   🐾 {variable_name} = {variable_value}"
+                )
+            solution_display_lines.append("")
+            solution_display_lines.append("   Status: OPTIMAL 😺")
         elif self.status == SolverStatus.INFEASIBLE:
-            lines.append("🙀 Problem is Infeasible!")
-            lines.append("   No solution exists that satisfies all constraints.")
+            solution_display_lines.append("🙀 Problem is Infeasible!")
+            solution_display_lines.append(
+                "   No solution exists that satisfies all constraints."
+            )
         elif self.status == SolverStatus.UNBOUNDED:
-            lines.append("😿 Problem is Unbounded!")
-            lines.append("   The objective function can be improved infinitely.")
+            solution_display_lines.append("😿 Problem is Unbounded!")
+            solution_display_lines.append(
+                "   The objective function can be improved infinitely."
+            )
         else:
-            lines.append(f"😾 Solver Status: {self.status}")
+            solution_display_lines.append(f"😾 Solver Status: {self.status}")
 
         if self.solve_time is not None:
-            lines.append(f"   ⏱️ Solve Time: {self.solve_time:.3f}s")
+            solution_display_lines.append(f"   ⏱️ Solve Time: {self.solve_time:.3f}s")
 
-        return "\n".join(lines)
+        return "\n".join(solution_display_lines)
+
+
+def add_term_to_linear_expression(
+    target_expression: LinearExpression,
+    coefficient: Decimal | float | int,
+    variable_name: str,
+) -> None:
+    target_expression.add_term(coefficient, variable_name)
+
+
+def extract_variables_from_expression(source_expression: LinearExpression) -> list[str]:
+    return source_expression.extract_variable_names()
