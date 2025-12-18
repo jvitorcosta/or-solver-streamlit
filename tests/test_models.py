@@ -225,13 +225,13 @@ class TestSolution:
         solution = Solution(
             status=SolverStatus.OPTIMAL,
             objective_value=Decimal("15.5"),
-            variables={"x1": Decimal("2.5"), "x2": Decimal("3.0")},
+            variable_values={"x1": 2.5, "x2": 3.0},
             solve_time=0.123,
         )
 
         assert solution.is_optimal
         assert solution.is_feasible
-        assert solution.get_variable_value("x1") == Decimal("2.5")
+        assert solution.get_variable_value("x1") == 2.5
         assert solution.get_variable_value("nonexistent") is None
         assert "🎯 Optimal Solution Found!" in str(solution)
 

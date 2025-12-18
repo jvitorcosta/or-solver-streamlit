@@ -3,11 +3,15 @@
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Modern Operations Research solver with academic-standard syntax for linear programming problems.
+Modern Operations Research solver with academic-standard syntax for
+linear programming problems.
 
 ## Overview
 
-OR-Solver is a web-based Linear Programming solver that accepts textbook-style mathematical syntax. The application provides an intuitive interface for solving optimization problems with detailed step-by-step explanations.
+OR-Solver is a web-based Linear Programming solver that accepts
+textbook-style mathematical syntax. The application provides an intuitive
+interface for solving optimization problems with detailed step-by-step
+explanations.
 
 ## Quick Start
 
@@ -98,6 +102,9 @@ The solver provides:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the
+[LICENSE](LICENSE) file for details.
 
-**Maintainer**: João Vitor Pinheiro da Costa - [GitHub](https://github.com/jvitorcosta) | [LinkedIn](https://linkedin.com/in/jvpro)
+**Maintainer**: João Vitor Pinheiro da Costa -
+[GitHub](https://github.com/jvitorcosta) |
+[LinkedIn](https://linkedin.com/in/jvpro)
