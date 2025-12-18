@@ -4,31 +4,34 @@ from config import language
 from ui import components, tabs, workspace
 
 
-def _configure_streamlit_application() -> None:
-    """Configure Streamlit application settings and initialize session state."""
+def initialize_streamlit_page_configuration() -> None:
+    """Initialize Streamlit page configuration with title, layout, and menu options."""
     st.set_page_config(
         page_title="SolvedOR",
         page_icon=":material/analytics:",
         layout="wide",
         initial_sidebar_state="expanded",
         menu_items={
-            "Get Help": "https://github.com/jvitorcosta/or-solver-streamlit",
-            "Report a bug": "https://github.com/jvitorcosta/or-solver-streamlit/issues",
+            "Get Help": ("https://github.com/jvitorcosta/or-solver-streamlit"),
+            "Report a bug": (
+                "https://github.com/jvitorcosta/or-solver-streamlit/issues"
+            ),
             "About": "# OR-Solver\nModern Operations Research Solver",
         },
     )
 
 
-def _initialize_session_state() -> None:
-    """Initialize default values for Streamlit session state variables."""
-    if "solver_status" not in st.session_state:
-        st.session_state.solver_status = "ready"
-    if "language" not in st.session_state:
-        st.session_state.language = "en"
+def setup_default_session_state_variables() -> None:
+    """Setup default values for Streamlit session state variables across application."""
+    # Use setdefault for cleaner initialization
+    st.session_state.setdefault("solver_status", "ready")
+    st.session_state.setdefault("language", "en")
 
 
-def render_main_interface(*, translations: language.TranslationSchema) -> None:
-    """Render the main problem input and solving interface.
+def display_tabbed_application_interface(
+    *, translations: language.TranslationSchema
+) -> None:
+    """Display main tabbed interface with workspace, documentation, and guide sections.
 
     Args:
         translations: Loaded translation schema for the current language.
@@ -42,52 +45,54 @@ def render_main_interface(*, translations: language.TranslationSchema) -> None:
         """
     )
 
-    # Configure tab navigation with query parameter support
-    tab_names = [
-        f":material/work: {translations.tabs.workspace}",
-        f":material/school: {translations.tabs.paper}",
-        f":material/help: {translations.tabs.guide}",
-        f":material/description: {translations.tabs.readme}",
-        f":material/group: {translations.tabs.contributing}",
-    ]
+    # Configure tab navigation - explicit mapping for clarity
+    tab_configuration_mapping = {
+        "workspace": (":material/work:", translations.tabs.workspace),
+        "paper": (":material/school:", translations.tabs.paper),
+        "guide": (":material/help:", translations.tabs.guide),
+        "readme": (":material/description:", translations.tabs.readme),
+        "contributing": (":material/group:", translations.tabs.contributing),
+    }
 
-    workspace_tab, paper_tab, guide_tab, readme_tab, contributing_tab = st.tabs(
-        tab_names
+    formatted_tab_names = [
+        f"{icon} {label}" for icon, label in tab_configuration_mapping.values()
+    ]
+    streamlit_tabs_dictionary = dict(
+        zip(tab_configuration_mapping.keys(), st.tabs(formatted_tab_names), strict=True)
     )
 
-    with workspace_tab:
+    # Render tabs using clean, functional approach
+    with streamlit_tabs_dictionary["workspace"]:
         st.markdown(f"#### :material/collections: {translations.gallery.title}")
-        workspace.render_examples_section(translations=translations)
+        workspace.display_optimization_problem_gallery(translations=translations)
         st.markdown("---")
-        workspace.render_workspace_section(translations=translations)
+        workspace.display_optimization_workspace_interface(translations=translations)
 
-    with paper_tab:
-        tabs.render_thesis_tab()
+    with streamlit_tabs_dictionary["paper"]:
+        tabs.display_research_thesis_with_viewer()
 
-    with guide_tab:
-        tabs.render_guide_tab()
+    with streamlit_tabs_dictionary["guide"]:
+        tabs.display_visualization_elements_guide()
 
-    with readme_tab:
-        tabs._render_markdown_file(
-            file_name="README.md", not_found_message="README.md not found."
-        )
+    with streamlit_tabs_dictionary["readme"]:
+        tabs.display_markdown_content_from_file("README.md")
 
-    with contributing_tab:
-        tabs._render_markdown_file(
-            file_name="CONTRIBUTING.md", not_found_message="CONTRIBUTING.md not found."
-        )
+    with streamlit_tabs_dictionary["contributing"]:
+        tabs.display_markdown_content_from_file("CONTRIBUTING.md")
 
 
 if __name__ == "__main__":
-    _configure_streamlit_application()
-    _initialize_session_state()
+    initialize_streamlit_page_configuration()
+    setup_default_session_state_variables()
 
-    translations = language.load_language_translations(
+    current_language_translations = language.load_language_translations(
         language_code=st.session_state.get("language")
     )
 
-    components.render_sidebar(translations=translations)
-    render_main_interface(translations=translations)
+    components.display_language_selection_sidebar(
+        translations=current_language_translations
+    )
+    display_tabbed_application_interface(translations=current_language_translations)
 
     st.divider()
-    st.markdown(translations.app.footer)
+    st.markdown(current_language_translations.app.footer)

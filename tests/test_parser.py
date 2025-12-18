@@ -7,9 +7,9 @@ from solver.parser import ParseError, parse_lp_problem
 class TestLPParser:
     """Test the modern LP parser."""
 
-    def test_simple_maximize_problem(self):
-        """Test parsing a simple maximize problem."""
-        problem_text = """
+    def test_parse_maximize_linear_program_successfully(self):
+        """Test parsing maximize linear program with multiple constraints."""
+        maximize_problem_text = """
         maximize 2*x1 + 3*x2
 
         subject to:
@@ -21,15 +21,19 @@ class TestLPParser:
             x1, x2 >= 0
         """
 
-        problem = parse_lp_problem(problem_text)
+        parsed_maximize_problem = parse_lp_problem(maximize_problem_text)
 
-        assert problem.objective.direction == ObjectiveDirection.MAXIMIZE
-        assert len(problem.objective.get_variables()) == 2
-        assert len(problem.constraints) >= 2  # At least the explicit constraints
+        assert (
+            parsed_maximize_problem.objective.direction == ObjectiveDirection.MAXIMIZE
+        )
+        assert len(parsed_maximize_problem.objective.extract_variable_names()) == 2
+        assert (
+            len(parsed_maximize_problem.constraints) >= 2
+        )  # At least the explicit constraints
 
-    def test_simple_minimize_problem(self):
-        """Test parsing a simple minimize problem."""
-        problem_text = """
+    def test_parse_minimize_linear_program_successfully(self):
+        """Test parsing minimize linear program with constraint handling."""
+        minimize_problem_text = """
         minimize x1 + 2*x2
 
         subject to:
@@ -39,14 +43,16 @@ class TestLPParser:
             x1, x2 >= 0
         """
 
-        problem = parse_lp_problem(problem_text)
+        parsed_minimize_problem = parse_lp_problem(minimize_problem_text)
 
-        assert problem.objective.direction == ObjectiveDirection.MINIMIZE
-        assert len(problem.constraints) >= 1
+        assert (
+            parsed_minimize_problem.objective.direction == ObjectiveDirection.MINIMIZE
+        )
+        assert len(parsed_minimize_problem.constraints) >= 1
 
-    def test_portuguese_syntax(self):
-        """Test parsing Portuguese syntax."""
-        problem_text = """
+    def test_parse_portuguese_language_keywords_correctly(self):
+        """Test parsing optimization problems written in Portuguese language."""
+        portuguese_problem_text = """
         maximizar 8*comida_gato + 10*brinquedos_gato
 
         sujeito a:
@@ -56,14 +62,14 @@ class TestLPParser:
             comida_gato, brinquedos_gato >= 0
         """
 
-        problem = parse_lp_problem(problem_text)
+        parsed_portuguese_problem = parse_lp_problem(portuguese_problem_text)
 
         assert (
-            problem.objective.direction == ObjectiveDirection.MAXIMIZE
+            parsed_portuguese_problem.objective.direction == ObjectiveDirection.MAXIMIZE
         )  # Converted to English internally
-        variables = problem.get_all_variables()
-        assert "comida_gato" in variables
-        assert "brinquedos_gato" in variables
+        problem_variables = list(parsed_portuguese_problem.variables.keys())
+        assert "comida_gato" in problem_variables
+        assert "brinquedos_gato" in problem_variables
 
     def test_implicit_coefficients(self):
         """Test parsing with implicit coefficients."""
@@ -80,7 +86,7 @@ class TestLPParser:
         problem = parse_lp_problem(problem_text)
 
         # Check that implicit coefficients are handled
-        obj_vars = problem.objective.get_variables()
+        obj_vars = problem.objective.extract_variable_names()
         assert len(obj_vars) == 2
 
     def test_negative_coefficients(self):
@@ -97,7 +103,7 @@ class TestLPParser:
 
         problem = parse_lp_problem(problem_text)
 
-        assert len(problem.objective.get_variables()) == 3
+        assert len(problem.objective.extract_variable_names()) == 3
         assert len(problem.constraints) >= 1
 
     def test_integer_variables(self):
@@ -118,7 +124,7 @@ class TestLPParser:
         # Check that variables are marked as integer
         for var_name in ["x1", "x2"]:
             if var_name in problem.variables:
-                assert problem.variables[var_name].var_type == VariableType.INTEGER
+                assert problem.variables[var_name].variable_type == VariableType.INTEGER
 
     def test_binary_variables(self):
         """Test parsing binary variable declarations."""
@@ -137,7 +143,7 @@ class TestLPParser:
         # Check that variables are marked as binary
         for var_name in ["y1", "y2"]:
             if var_name in problem.variables:
-                assert problem.variables[var_name].var_type == VariableType.BINARY
+                assert problem.variables[var_name].variable_type == VariableType.BINARY
 
     def test_comments_ignored(self):
         """Test that comments are properly ignored."""
@@ -157,7 +163,7 @@ class TestLPParser:
 
         # Should parse successfully despite comments
         assert problem.objective.direction == ObjectiveDirection.MAXIMIZE
-        variables = problem.get_all_variables()
+        variables = list(problem.variables.keys())
         assert "cat_food" in variables
         assert "cat_toys" in variables
 
