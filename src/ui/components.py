@@ -8,36 +8,35 @@ from config import language
 LANGUAGE_DISPLAY = {"en": "🇺🇸 English", "pt": "🇵🇹 Português"}
 
 
-def render_sidebar(*, translations: language.TranslationSchema) -> None:
-    """Render the sidebar with language selection.
+def display_language_selection_sidebar(
+    *, translations: language.TranslationSchema
+) -> None:
+    """Display sidebar with interactive language selection interface.
 
     Args:
         translations: Translation schema for rendering sidebar labels.
     """
     with st.sidebar:
-        current_language = st.session_state.language
+        active_language_code = st.session_state.language
 
         st.markdown(f"## :material/settings: **{translations.sidebar.settings}**")
         st.markdown(f":material/language: **{translations.sidebar.language}**")
 
-        language_options = [lang.value for lang in language.LanguageCode]
-        current_index = language_options.index(current_language)
+        available_language_codes = [lang.value for lang in language.LanguageCode]
+        current_language_index = available_language_codes.index(active_language_code)
 
-        selected_language = st.selectbox(
+        user_selected_language = st.selectbox(
             "",
-            options=language_options,
+            options=available_language_codes,
             format_func=lambda code: LANGUAGE_DISPLAY[code],
-            index=current_index,
+            index=current_language_index,
             label_visibility="collapsed",
         )
 
         # Handle language change with immediate feedback
-        if selected_language != current_language:
-            st.session_state.language = selected_language
+        if user_selected_language != active_language_code:
+            st.session_state.language = user_selected_language
             st.toast(
                 ":material/language: Language changed!", icon=":material/language:"
             )
             st.rerun()
-
-
-# Language formatting now handled inline with lambda and constant
