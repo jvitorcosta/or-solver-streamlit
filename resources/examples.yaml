@@ -2,24 +2,24 @@ production_planning:
   name: "Production Planning"
   description: |
     **Problem:** A factory produces products A and B with profits of $40 and $50 per unit respectively.
-    
+
     **Constraints:**
     • Labor: 2A + 3B ≤ 100 hours available
-    • Materials: 4A + 2B ≤ 120 units available  
+    • Materials: 4A + 2B ≤ 120 units available
     • Capacity: A ≤ 30, B ≤ 25 units
-    
+
     **Find:** Production levels that maximize total profit.
   problem: |
     # Linear Programming Problem (Continuous Variables)
     maximize 40*product_a + 50*product_b
-    
+
     subject to:
         # Resource constraints
         2*product_a + 3*product_b <= 100  # Labor hours available
         4*product_a + 2*product_b <= 120  # Raw materials limit
         product_a <= 30                   # Product A capacity
         product_b <= 25                   # Product B capacity
-    
+
     where:
         product_a, product_b >= 0         # Non-negativity
 
@@ -27,53 +27,53 @@ transportation:
   name: "Transportation Problem"
   description: |
     **Problem:** Two warehouses (W1: 200 units, W2: 300 units) supply three stores with demands (S1: 150, S2: 200, S3: 150).
-    
+
     **Shipping costs per unit:**
     • W1→S1: $8, W1→S2: $6, W1→S3: $10
     • W2→S1: $9, W2→S2: $12, W2→S3: $13
-    
+
     **Find:** Minimum-cost shipping plan that satisfies all demands.
   problem: |
     # Linear Programming Problem (Continuous Variables)
     minimize 8*x11 + 6*x12 + 10*x13 + 9*x21 + 12*x22 + 13*x23
-    
+
     subject to:
         # Supply constraints (warehouses)
         x11 + x12 + x13 = 200  # Warehouse 1 supply
         x21 + x22 + x23 = 300  # Warehouse 2 supply
-        
+
         # Demand constraints (stores)
         x11 + x21 = 150         # Store 1 demand
         x12 + x22 = 200         # Store 2 demand
         x13 + x23 = 150         # Store 3 demand
-    
+
     where:
         x11, x12, x13, x21, x22, x23 >= 0  # Non-negativity
 
 diet_optimization:
-  name: "Diet Optimization"  
+  name: "Diet Optimization"
   description: |
     **Problem:** Plan a minimum-cost diet using bread ($3), milk ($2), cheese ($4), potato ($1) per serving.
-    
+
     **Nutritional requirements (per serving):**
     • Bread: 4 cal, 2g protein, 2 vitamins
     • Milk: 8 cal, 12g protein, 3 vitamins
     • Cheese: 2 cal, 10g protein, 8 vitamins
     • Potato: 2 cal, 4g protein, 2 vitamins
-    
+
     **Daily minimums:** 2000 calories, 55g protein, 800 vitamin units
-    
+
     **Find:** Serving quantities that minimize cost while meeting requirements.
   problem: |
     # Linear Programming Problem (Continuous Variables)
     minimize 3*bread + 2*milk + 4*cheese + 1*potato
-    
+
     subject to:
         # Nutritional requirements
         4*bread + 8*milk + 2*cheese + 2*potato >= 2000  # Minimum calories
         2*bread + 12*milk + 10*cheese + 4*potato >= 55  # Minimum protein (g)
         2*bread + 3*milk + 8*cheese + 2*potato >= 800   # Minimum vitamins
-    
+
     where:
         bread, milk, cheese, potato >= 0                # Non-negativity
 
@@ -81,27 +81,27 @@ resource_allocation:
   name: "Resource Allocation"
   description: |
     **Problem:** Allocate $1,000,000 across three investment projects with annual returns: A (12%), B (15%), C (18%).
-    
+
     **Constraints:**
     • Total budget: $1,000,000 maximum
     • Risk budget: 0.6A + 0.8B + 0.9C ≤ $750,000
     • Minimum investments: A ≥ $100k, B ≥ $150k, C ≥ $200k
-    
+
     **Find:** Investment amounts that maximize total expected return.
   problem: |
-    # Linear Programming Problem (Continuous Variables)  
+    # Linear Programming Problem (Continuous Variables)
     maximize 0.12*project_a + 0.15*project_b + 0.18*project_c
-    
+
     subject to:
         # Resource constraints
         project_a + project_b + project_c <= 1000000      # Total budget limit
         0.6*project_a + 0.8*project_b + 0.9*project_c <= 750000  # Risk budget
-        
+
         # Minimum investment requirements
         project_a >= 100000                               # Min investment A
-        project_b >= 150000                               # Min investment B  
+        project_b >= 150000                               # Min investment B
         project_c >= 200000                               # Min investment C
-    
+
     where:
         project_a, project_b, project_c >= 0             # Non-negativity
 
@@ -109,29 +109,29 @@ facility_location:
   name: "Facility Location (Integer)"
   description: |
     **Problem:** Choose which warehouses to open from 4 locations with fixed costs: L1 ($50k), L2 ($60k), L3 ($45k), L4 ($55k).
-    
+
     **Service requirements:**
     • Region 1: served by L1 or L2
     • Region 2: served by L2 or L3
     • Region 3: served by L3 or L4
     • Region 4: served by L1 or L4
     • Minimum 2 facilities must operate
-    
+
     **Find:** Which facilities to open to minimize total fixed costs.
   problem: |
     # Integer Programming Problem (Binary Variables)
     minimize 50000*x1 + 60000*x2 + 45000*x3 + 55000*x4
-    
+
     subject to:
-        # Service coverage requirements  
+        # Service coverage requirements
         x1 + x2 >= 1           # Must cover region 1
         x2 + x3 >= 1           # Must cover region 2
         x3 + x4 >= 1           # Must cover region 3
         x1 + x4 >= 1           # Must cover region 4
-        
+
         # Capacity constraint
         x1 + x2 + x3 + x4 >= 2 # Need at least 2 facilities
-        
+
     where:
         x1, x2, x3, x4 >= 0
         x1, x2, x3, x4 integer  # Binary decision variables (0 or 1)

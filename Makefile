@@ -18,7 +18,7 @@ setup: dev ## Alias for dev (backward compatibility)
 ##@ Development
 .PHONY: run
 run: ## Start the web interface
-	uv run streamlit run app.py
+	uv run streamlit run src/app.py
 
 .PHONY: format
 format: ## Format code with ruff

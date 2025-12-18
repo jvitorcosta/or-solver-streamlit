@@ -1,6 +1,6 @@
 app:
   title: "OR-Solver"
-  subtitle: "Otimização Linear Moderna"
+  subtitle: "Um aplicação de Pesquisa Operacional"
   footer: ":material/favorite: Gostou de usar? Por favor, dê uma estrela no GitHub!"
 
 sidebar:
@@ -9,9 +9,43 @@ sidebar:
 
 interface:
   problem_label: ":material/code: **Escreva seu problema:**"
-  solve_button: "Resolver Problema"
+  solve_button: "Solucionar"
   loaded_example: "Exemplo carregado"
-  
+  placeholder: "Digite seu modelo aqui..."
+  help_text: "Digite seu modelo usando notação matemática"
+  clear_workspace: "Limpar workspace"
+  clear_help: "Limpar workspace e começar do zero"
+  solve_help: "Analisar e resolver seu problema de otimização"
+  processing_toast: "Resolvendo seu modelo..."
+
+tabs:
+  workspace: "Workspace"
+  paper: "Artigo"
+  guide: "Guia"
+  readme: "Readme"
+  contributing: "Contribuição"
+
+gallery:
+  title: "Galeria"
+  choose_text: "Escolha um modelo para começar:"
+  select_help: "Selecione um problema da galeria para carregar no seu workspace"
+  copy_button: "Copiar para workspace"
+  copy_help: "Copiar este exemplo para seu workspace"
+  copied_toast: "copiado para workspace!"
+
+visualization:
+  title: "Visualização"
+  integer_info: "Visualização mostra relaxamento contínuo para variáveis inteiras/binárias"
+  guide_title: "Guia de Visualização:"
+  feasible_region: "Área verde: Região viável onde todas as restrições são satisfeitas"
+  constraint_lines: "Linhas tracejadas: Fronteiras de restrições individuais"
+  optimal_point: "Estrela dourada: Ponto da solução ótima"
+  gradient_arrow: "Seta azul: Direção de otimização (gradiente)"
+
+language_labels:
+  english: "🇺🇸 English"
+  portuguese: "🇧🇷 Português"
+
 resources:
   title: "Recursos e Documentação"
   thesis: "Tese de Pesquisa"
@@ -24,7 +58,8 @@ resources:
 messages:
   empty_problem_solve: "Por favor, digite um problema para resolver"
   solution_found: "Solução Ótima Encontrada!"
-  
+  problem_copied: "Copiado para o workspace!"
+
 status:
   parsing: "Analisando problema..."
   setting_up: "Configurando solver..."
@@ -39,26 +74,19 @@ errors:
   solving_error: "Erro na Resolução"
 
 results:
+  solution: "Solução"
+  optimal_found: "Solução ótima encontrada"
   objective_value: "Valor Objetivo"
   solve_time: "Tempo de Resolução"
   variables: "Variáveis"
+  variable_values: "Valores das Variáveis"
   constraints: "Restrições"
   solution_variables: "Variáveis da Solução"
-  
+
   tabs:
     summary: "Resumo"
-    export: "Exportar"
-    analysis: "Análise"
-    
+
   summary:
     objective: "Objetivo"
     status: "Estado"
     optimal: "ÓTIMO"
-    
-  export:
-    download_json: "Baixar JSON"
-    download_csv: "Baixar CSV"
-    
-  analysis:
-    coming_soon: "Análise de sensibilidade e insights de otimização em breve!"
-

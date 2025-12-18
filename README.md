@@ -40,6 +40,7 @@ OR-Solver is a web-based Linear Programming solver that accepts textbook-style m
 Write optimization problems using academic-standard mathematical syntax:
 
 ### Linear Programming Example
+
 ```text
 # Production Planning Problem
 maximize 40*product_a + 50*product_b
@@ -56,6 +57,7 @@ where:
 ```
 
 ### Integer Programming Example
+
 ```text
 # Facility Location Problem
 minimize 50000*location_1 + 60000*location_2 + 45000*location_3
@@ -70,6 +72,7 @@ where:
 ```
 
 ### Supported Features
+
 - **Objective Types**: `maximize` / `minimize` (or Portuguese `maximizar` / `minimizar`)
 - **Constraints**: `<=`, `>=`, `=` with mathematical expressions
 - **Variables**: Named variables with coefficients (explicit or implicit)
@@ -78,6 +81,7 @@ where:
 - **Languages**: English and Portuguese syntax support
 
 The solver provides:
+
 - Optimal solution values and objective function value
 - Step-by-step solution explanations with mathematical reasoning
 - Graphical visualization for 2D problems

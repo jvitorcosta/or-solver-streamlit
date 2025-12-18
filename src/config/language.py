@@ -1,5 +1,3 @@
-"""Language model configurations and translations management."""
-
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -36,6 +34,12 @@ class InterfaceTranslations(BaseModel):
     problem_label: str
     solve_button: str
     loaded_example: str
+    placeholder: str
+    help_text: str
+    clear_workspace: str
+    clear_help: str
+    solve_help: str
+    processing_toast: str
 
 
 class ResourcesTranslations(BaseModel):
@@ -56,6 +60,7 @@ class MessagesTranslations(BaseModel):
 
     empty_problem_solve: str
     solution_found: str
+    problem_copied: str
 
 
 class StatusTranslations(BaseModel):
@@ -81,8 +86,6 @@ class ResultTabsTranslations(BaseModel):
     """Result tabs translations."""
 
     summary: str
-    export: str
-    analysis: str
 
 
 class ResultSummaryTranslations(BaseModel):
@@ -93,31 +96,59 @@ class ResultSummaryTranslations(BaseModel):
     optimal: str
 
 
-class ResultExportTranslations(BaseModel):
-    """Result export translations."""
+class TabsTranslations(BaseModel):
+    """Tab names translations."""
 
-    download_json: str
-    download_csv: str
+    workspace: str
+    paper: str
+    guide: str
+    readme: str
+    contributing: str
 
 
-class ResultAnalysisTranslations(BaseModel):
-    """Result analysis translations."""
+class GalleryTranslations(BaseModel):
+    """Gallery section translations."""
 
-    coming_soon: str
+    title: str
+    choose_text: str
+    select_help: str
+    copy_button: str
+    copy_help: str
+    copied_toast: str
+
+
+class VisualizationTranslations(BaseModel):
+    """Visualization section translations."""
+
+    title: str
+    integer_info: str
+    guide_title: str
+    feasible_region: str
+    constraint_lines: str
+    optimal_point: str
+    gradient_arrow: str
+
+
+class LanguageLabelsTranslations(BaseModel):
+    """Language label translations."""
+
+    english: str
+    portuguese: str
 
 
 class ResultsTranslations(BaseModel):
     """Results section translations."""
 
+    solution: str
+    optimal_found: str
     objective_value: str
     solve_time: str
     variables: str
+    variable_values: str
     constraints: str
     solution_variables: str
     tabs: ResultTabsTranslations
     summary: ResultSummaryTranslations
-    export: ResultExportTranslations
-    analysis: ResultAnalysisTranslations
 
 
 class TranslationSchema(BaseModel):
@@ -131,6 +162,10 @@ class TranslationSchema(BaseModel):
     status: StatusTranslations
     errors: ErrorsTranslations
     results: ResultsTranslations
+    tabs: TabsTranslations
+    gallery: GalleryTranslations
+    visualization: VisualizationTranslations
+    language_labels: LanguageLabelsTranslations
 
     model_config = ConfigDict(frozen=True)  # Immutable after creation
 
@@ -138,7 +173,6 @@ class TranslationSchema(BaseModel):
 class LanguageManager(BaseModel):
     """Manages language translations with Pydantic validation and immutable state."""
 
-    current_language_code: LanguageCode = LanguageCode.ENGLISH
     translation_schemas: dict[LanguageCode, TranslationSchema] = Field(
         default_factory=dict
     )
@@ -154,8 +188,7 @@ class LanguageManager(BaseModel):
         Returns:
             LanguageManager instance with loaded translation schemas.
         """
-        loaded_translations = _load_all_translation_files()
-        return LanguageManager(translation_schemas=loaded_translations)
+        return LanguageManager(translation_schemas=_load_all_translation_files())
 
     @staticmethod
     def from_dict(
@@ -172,37 +205,29 @@ class LanguageManager(BaseModel):
         """
         validated_schema = TranslationSchema(**translations)
         translation_schemas = {language_code: validated_schema}
-        return LanguageManager(
-            current_language_code=language_code, translation_schemas=translation_schemas
-        )
+        return LanguageManager(translation_schemas=translation_schemas)
 
-    def get_translations(
-        self, language_code: LanguageCode | None = None
-    ) -> TranslationSchema:
-        """Get translation schema for specified or current language.
+    def get_translations(self, language_code: LanguageCode) -> TranslationSchema:
+        """Get translation schema for specified language.
 
         Args:
-            language_code: Optional language code. Uses current if not specified.
+            language_code: Language code for translations.
 
         Returns:
-            TranslationSchema for the requested language, falls back to English.
+            TranslationSchema for the requested language.
         """
-        requested_language = language_code or self.current_language_code
+        if language_code not in self.translation_schemas:
+            raise ValueError(
+                f"Translations for language code '{language_code}' not found."
+            )
+        return self.translation_schemas[language_code]
 
-        if requested_language not in self.translation_schemas:
-            # Fallback to English if requested language unavailable
-            requested_language = LanguageCode.ENGLISH
-
-        return self.translation_schemas[requested_language]
-
-    def get_translation(
-        self, key_path: str, language_code: LanguageCode | None = None
-    ) -> str:
+    def get_translation(self, key_path: str, language_code: LanguageCode) -> str:
         """Get specific translation using dot notation key path.
 
         Args:
             key_path: Dot-separated path to translation (e.g., 'app.title').
-            language_code: Optional language code for translation lookup.
+            language_code: Language code for translation lookup.
 
         Returns:
             Translation string for the specified key path.
@@ -211,15 +236,6 @@ class LanguageManager(BaseModel):
         return _navigate_translation_path(
             translation_object=translation_schema, key_path=key_path
         )
-
-
-def _get_translations_directory_path() -> Path:
-    """Get path to the translations directory.
-
-    Returns:
-        Path to the translations directory relative to project root.
-    """
-    return Path(__file__).parent.parent.parent / "translations"
 
 
 def _load_translation_file(*, language_code: LanguageCode) -> TranslationSchema | None:
@@ -231,7 +247,7 @@ def _load_translation_file(*, language_code: LanguageCode) -> TranslationSchema 
     Returns:
         TranslationSchema if file exists and is valid, None otherwise.
     """
-    translations_directory = _get_translations_directory_path()
+    translations_directory = Path(__file__).parents[2] / "translations"
     translation_file_path = translations_directory / f"{language_code.value}.yaml"
 
     if not translation_file_path.exists():
@@ -280,3 +296,30 @@ def _navigate_translation_path(*, translation_object: Any, key_path: str) -> str
         current_object = getattr(current_object, key)
 
     return current_object
+
+
+def load_language_translations(*, language_code: str) -> TranslationSchema:
+    """Load localization strings for specified language.
+
+    Args:
+        language_code: Language code string (e.g., 'en', 'pt').
+
+    Returns:
+        TranslationSchema instance with validated translations for the language.
+        Falls back to English if the requested language is invalid.
+    """
+    try:
+        validated_language_code = LanguageCode(language_code)
+    except ValueError:
+        validated_language_code = LanguageCode.ENGLISH
+
+    # TODO: Is there a way to detect the available languages before loading
+    # TODO: in order to avoid this validation?
+
+    # Load translation file directly
+    translation_schema = _load_translation_file(language_code=validated_language_code)
+    if translation_schema is None:
+        # Fallback to English if requested language not found
+        translation_schema = _load_translation_file(language_code=LanguageCode.ENGLISH)
+
+    return translation_schema

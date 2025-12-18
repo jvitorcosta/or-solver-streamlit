@@ -2,29 +2,38 @@
 
 import streamlit as st
 
-from config import language_models, localization
+from config import language
 
 
-def render_sidebar() -> tuple[str, float, str]:
-    """Render the sidebar with language selection."""
+def render_sidebar(*, translations: language.TranslationSchema) -> None:
+    """Render the sidebar with language selection.
+
+    Args:
+        translations: Translation schema for rendering sidebar labels.
+    """
     with st.sidebar:
-        # Get current language for initial rendering
-        language = st.session_state.get("language", "en")
-        translations = localization.load_language(language)
+        current_language = st.session_state.language
 
         st.markdown(f"## :material/settings: **{translations.sidebar.settings}**")
-
-        # Modern language selection with material icons
         st.markdown(f":material/language: **{translations.sidebar.language}**")
-        language = st.selectbox(
+
+        selected_language = st.selectbox(
             "",
-            options=[lang.value for lang in language_models.LanguageCode],
-            format_func=lambda x: "🇺🇸 English" if x == "en" else "🇧🇷 Português",
-            index=0 if language == "en" else 1,
+            options=[lang.value for lang in language.LanguageCode],
+            format_func=_format_language_option,
+            index=0 if current_language == "en" else 1,
             label_visibility="collapsed",
         )
 
-        # Store language in session state
-        st.session_state.language = language
+        # Update session state immediately and trigger rerun on language change
+        if current_language != selected_language:
+            st.session_state.language = selected_language
+            st.toast(
+                ":material/language: Language changed!", icon=":material/language:"
+            )
+            st.rerun()
 
-    return language, 4, "glop"  # Removed variable_type since it's now in the main form
+
+def _format_language_option(lang_code: str) -> str:
+    language_map = {"en": "🇺🇸 English", "pt": "🇵🇹 Português"}
+    return language_map[lang_code]

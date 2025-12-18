@@ -66,7 +66,7 @@ Use [`uv run`](https://docs.astral.sh/uv/reference/cli/#uv-run) to run commands
 in the project's environment:
 
 ```sh
-uv run streamlit run app.py
+uv run streamlit run src/app.py
 uv run pytest tests/ -v
 uv run or-solver --help
 ```
