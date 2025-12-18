@@ -1,0 +1,8 @@
+# See available options at:
+#   https://docs.streamlit.io/library/advanced-features/configuration
+
+[browser]
+gatherUsageStats = false
+
+[server]
+address = "localhost"

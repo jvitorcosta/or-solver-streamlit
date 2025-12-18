@@ -1,0 +1,90 @@
+app:
+  title: "OR-Solver"
+  subtitle: "An Operations Research app"
+  footer: ":material/favorite: Did you enjoy using it? Please star the project on GitHub!"
+sidebar:
+  settings: "Settings"
+  language: "Language"
+
+interface:
+  problem_label: ":material/code: **Write your problem:**"
+  solve_button: "Solve"
+  loaded_example: "Example loaded"
+  placeholder: "Enter your model here..."
+  help_text: "Enter your model using mathematical notation"
+  clear_workspace: "Clear workspace"
+  clear_help: "Clear workspace and start fresh"
+  solve_help: "Analyze and solve your optimization problem"
+  processing_toast: "Solving your model..."
+
+tabs:
+  workspace: "Workspace"
+  paper: "Paper"
+  guide: "Guide"
+  readme: "Readme"
+  contributing: "Contributing"
+gallery:
+  title: "Gallery"
+  choose_text: "Choose from gallery to get started:"
+  select_help: "Select a problem from the gallery to load into your workspace"
+  copy_button: "Copy to Workspace"
+  copy_help: "Copy this example to your workspace"
+  copied_toast: "copied to workspace!"
+
+visualization:
+  title: "Problem Visualization"
+  integer_info: "Visualization shows continuous relaxation for integer/binary variables"
+  guide_title: "Visualization Guide:"
+  feasible_region: "Green area: Feasible region where all constraints are satisfied"
+  constraint_lines: "Dashed lines: Individual constraint boundaries"
+  optimal_point: "Gold star: Optimal solution point"
+  gradient_arrow: "Blue arrow: Optimization direction (gradient)"
+
+language_labels:
+  english: "🇺🇸 English"
+  portuguese: "🇧🇷 Português"
+
+resources:
+  title: "Resources & Documentation"
+  thesis: "Research Thesis"
+  readme: "Project README"
+  contributing: "Contributing Guide"
+  changelog: "Change Log"
+  structure: "Project Structure"
+  view_pdf: "View PDF"
+  download_pdf: "Download PDF"
+messages:
+  empty_problem_solve: "Please enter a problem to solve"
+  solution_found: "Optimal Solution Found!"
+  problem_copied: "Problem copied to workspace!"
+
+status:
+  parsing: "Parsing problem..."
+  setting_up: "Setting up solver..."
+  solving: "Solving optimization..."
+  solution_found: "Solution found!"
+  complete: "Optimization complete!"
+  syntax_error: "Syntax error found"
+  solving_failed: "Solving failed"
+
+errors:
+  syntax_error: "Syntax Error"
+  solving_error: "Solving Error"
+
+results:
+  solution: "Solution"
+  optimal_found: "Optimal solution found"
+  objective_value: "Objective Value"
+  solve_time: "Solve Time"
+  variables: "Variables"
+  variable_values: "Variable Values"
+  constraints: "Constraints"
+  solution_variables: "Solution Variables"
+
+  tabs:
+    summary: "Summary"
+
+  summary:
+    objective: "Objective"
+    status: "Status"
+    optimal: "OPTIMAL"
