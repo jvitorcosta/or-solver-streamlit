@@ -111,11 +111,14 @@ def display_markdown_content_from_file(file_name: str) -> None:
         st.warning(f"⚠️ Could not read {file_name}.")
 
 
-def display_thesis_header_with_download_button(*, thesis_file_path: Path) -> None:
+def display_thesis_header_with_download_button(
+    *, thesis_file_path: Path, translations: language.TranslationSchema
+) -> None:
     """Display thesis header section with interactive download button.
 
     Args:
         thesis_file_path: Path to the thesis PDF file.
+        translations: Translation schema for localized text.
     """
     col1, col2 = st.columns([3, 1])
 
@@ -134,7 +137,7 @@ def display_thesis_header_with_download_button(*, thesis_file_path: Path) -> Non
         try:
             thesis_pdf_binary_data = thesis_file_path.read_bytes()
             download_button_clicked = st.download_button(
-                ":material/download: Download PDF",
+                f":material/download: {translations.resources.download_pdf}",
                 thesis_pdf_binary_data,
                 file_name="solvedor_article.pdf",
                 mime="application/pdf",
@@ -147,22 +150,20 @@ def display_thesis_header_with_download_button(*, thesis_file_path: Path) -> Non
                     icon=":material/download:",
                 )
         except OSError:
-            st.error("📚 Could not load PDF for download.")
+            st.error(f":material/error: {translations.errors.pdf_load_error}")
 
 
-def display_pdf_in_streamlit_viewer(*, pdf_file_path: Path) -> None:
+def display_pdf_in_streamlit_viewer(
+    *, pdf_file_path: Path, translations: language.TranslationSchema
+) -> None:
     """Display PDF using Streamlit's built-in viewer with error handling.
 
     Args:
         pdf_file_path: Path to the PDF file to display.
+        translations: Translation schema for localized text.
     """
     try:
         st.pdf(str(pdf_file_path))
     except Exception as pdf_display_error:
-        st.warning(
-            (
-                "PDF viewer not available. You can download the thesis "
-                "using the button above."
-            )
-        )
+        st.warning(translations.errors.pdf_display_error)
         st.info(f"Error: {str(pdf_display_error)}")
