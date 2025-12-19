@@ -16,6 +16,8 @@ interface:
   clear_help: "Clear workspace and start fresh"
   solve_help: "Analyze and solve your optimization problem"
   processing_toast: "Solving your model..."
+  workspace_title: "Workspace"
+  using_example: "Using example"
 
 tabs:
   workspace: "Workspace"
@@ -70,6 +72,13 @@ status:
 errors:
   syntax_error: "Syntax Error"
   solving_error: "Solving Error"
+  thesis_not_found: "Thesis PDF not found."
+  file_not_found: "not found."
+  file_read_error: "Could not read"
+  pdf_load_error: "Could not load PDF for download."
+  pdf_display_error: "Could not display PDF. Your browser might not support PDF preview."
+  visualization_error: "Could not generate visualization"
+  debug_info: "Debug info"
 
 results:
   solution: "Solution"
@@ -80,6 +89,20 @@ results:
   variable_values: "Variable Values"
   constraints: "Constraints"
   solution_variables: "Solution Variables"
+  no_variable_values: "No variable values to display"
+  problem_infeasible: "Problem is infeasible"
+  infeasible_help: "The constraints cannot be satisfied simultaneously. Check your constraint definitions."
+  problem_unbounded: "Problem is unbounded"
+  unbounded_help: "The objective function can be improved infinitely. Add upper/lower bounds to variables."
+  solver_error: "Solver Error"
+  error_details: "Details"
+  problem_type: "Problem Type"
+  solver: "Solver"
+  objective_value_help: "Optimal value of the objective function"
+  solve_time_help: "Time taken to solve the problem"
+  variable: "Variable"
+  value: "Value"
+  type: "Type"
 
   tabs:
     summary: "Summary"

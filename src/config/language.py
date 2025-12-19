@@ -4,6 +4,7 @@ from typing import Any
 
 import pydantic
 import yaml
+from pydantic import BaseModel
 
 
 class LanguageCode(str, Enum):
@@ -13,7 +14,7 @@ class LanguageCode(str, Enum):
     PORTUGUESE = "pt"
 
 
-class AppTranslations(pydantic.BaseModel):
+class AppTranslations(BaseModel):
     """Application-level translations."""
 
     title: str
@@ -21,14 +22,14 @@ class AppTranslations(pydantic.BaseModel):
     footer: str
 
 
-class SidebarTranslations(pydantic.BaseModel):
+class SidebarTranslations(BaseModel):
     """Sidebar translations."""
 
     settings: str
     language: str
 
 
-class InterfaceTranslations(pydantic.BaseModel):
+class InterfaceTranslations(BaseModel):
     """Interface translations."""
 
     problem_label: str
@@ -40,9 +41,11 @@ class InterfaceTranslations(pydantic.BaseModel):
     clear_help: str
     solve_help: str
     processing_toast: str
+    workspace_title: str
+    using_example: str
 
 
-class ResourcesTranslations(pydantic.BaseModel):
+class ResourcesTranslations(BaseModel):
     """Resources section translations."""
 
     title: str
@@ -55,7 +58,7 @@ class ResourcesTranslations(pydantic.BaseModel):
     download_pdf: str
 
 
-class MessagesTranslations(pydantic.BaseModel):
+class MessagesTranslations(BaseModel):
     """Message translations."""
 
     empty_problem_solve: str
@@ -63,7 +66,7 @@ class MessagesTranslations(pydantic.BaseModel):
     problem_copied: str
 
 
-class StatusTranslations(pydantic.BaseModel):
+class StatusTranslations(BaseModel):
     """Status message translations."""
 
     parsing: str
@@ -75,20 +78,27 @@ class StatusTranslations(pydantic.BaseModel):
     solving_failed: str
 
 
-class ErrorsTranslations(pydantic.BaseModel):
+class ErrorsTranslations(BaseModel):
     """Error message translations."""
 
     syntax_error: str
     solving_error: str
+    thesis_not_found: str
+    file_not_found: str
+    file_read_error: str
+    pdf_load_error: str
+    pdf_display_error: str
+    visualization_error: str
+    debug_info: str
 
 
-class ResultTabsTranslations(pydantic.BaseModel):
+class ResultTabsTranslations(BaseModel):
     """Result tabs translations."""
 
     summary: str
 
 
-class ResultSummaryTranslations(pydantic.BaseModel):
+class ResultSummaryTranslations(BaseModel):
     """Result summary translations."""
 
     objective: str
@@ -96,7 +106,7 @@ class ResultSummaryTranslations(pydantic.BaseModel):
     optimal: str
 
 
-class TabsTranslations(pydantic.BaseModel):
+class TabsTranslations(BaseModel):
     """Tab names translations."""
 
     workspace: str
@@ -106,7 +116,7 @@ class TabsTranslations(pydantic.BaseModel):
     contributing: str
 
 
-class GalleryTranslations(pydantic.BaseModel):
+class GalleryTranslations(BaseModel):
     """Gallery section translations."""
 
     title: str
@@ -117,7 +127,7 @@ class GalleryTranslations(pydantic.BaseModel):
     copied_toast: str
 
 
-class VisualizationTranslations(pydantic.BaseModel):
+class VisualizationTranslations(BaseModel):
     """Visualization section translations."""
 
     title: str
@@ -129,14 +139,14 @@ class VisualizationTranslations(pydantic.BaseModel):
     gradient_arrow: str
 
 
-class LanguageLabelsTranslations(pydantic.BaseModel):
+class LanguageLabelsTranslations(BaseModel):
     """Language label translations."""
 
     english: str
     portuguese: str
 
 
-class ResultsTranslations(pydantic.BaseModel):
+class ResultsTranslations(BaseModel):
     """Results section translations."""
 
     solution: str
@@ -147,11 +157,25 @@ class ResultsTranslations(pydantic.BaseModel):
     variable_values: str
     constraints: str
     solution_variables: str
+    no_variable_values: str
+    problem_infeasible: str
+    infeasible_help: str
+    problem_unbounded: str
+    unbounded_help: str
+    solver_error: str
+    error_details: str
+    problem_type: str
+    solver: str
+    objective_value_help: str
+    solve_time_help: str
+    variable: str
+    value: str
+    type: str
     tabs: ResultTabsTranslations
     summary: ResultSummaryTranslations
 
 
-class TranslationSchema(pydantic.BaseModel):
+class TranslationSchema(BaseModel):
     """Complete translation schema."""
 
     app: AppTranslations
@@ -170,7 +194,7 @@ class TranslationSchema(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(frozen=True)  # Immutable after creation
 
 
-class LanguageManager(pydantic.BaseModel):
+class LanguageManager(BaseModel):
     """Manages language translations with Pydantic validation and immutable state."""
 
     translation_schemas: dict[LanguageCode, TranslationSchema] = pydantic.Field(

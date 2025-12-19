@@ -17,6 +17,8 @@ interface:
   clear_help: "Limpar workspace e começar do zero"
   solve_help: "Analisar e resolver seu problema de otimização"
   processing_toast: "Resolvendo seu modelo..."
+  workspace_title: "Workspace"
+  using_example: "Usando exemplo"
 
 tabs:
   workspace: "Workspace"
@@ -72,6 +74,13 @@ status:
 errors:
   syntax_error: "Erro de Sintaxe"
   solving_error: "Erro na Resolução"
+  thesis_not_found: "PDF da tese não encontrado."
+  file_not_found: "não encontrado."
+  file_read_error: "Não foi possível ler"
+  pdf_load_error: "Não foi possível carregar o PDF para download."
+  pdf_display_error: "Não foi possível exibir o PDF. Seu navegador pode não suportar visualização de PDF."
+  visualization_error: "Não foi possível gerar a visualização"
+  debug_info: "Info de debug"
 
 results:
   solution: "Solução"
@@ -82,6 +91,20 @@ results:
   variable_values: "Valores das Variáveis"
   constraints: "Restrições"
   solution_variables: "Variáveis da Solução"
+  no_variable_values: "Nenhum valor de variável para exibir"
+  problem_infeasible: "Problema é inviável"
+  infeasible_help: "As restrições não podem ser satisfeitas simultaneamente. Verifique suas definições de restrição."
+  problem_unbounded: "Problema é ilimitado"
+  unbounded_help: "A função objetivo pode ser melhorada infinitamente. Adicione limites superiores/inferiores às variáveis."
+  solver_error: "Erro do Solver"
+  error_details: "Detalhes"
+  problem_type: "Tipo de Problema"
+  solver: "Solver"
+  objective_value_help: "Valor ótimo da função objetivo"
+  solve_time_help: "Tempo gasto para resolver o problema"
+  variable: "Variável"
+  value: "Valor"
+  type: "Tipo"
 
   tabs:
     summary: "Resumo"

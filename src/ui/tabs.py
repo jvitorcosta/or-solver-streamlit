@@ -2,20 +2,35 @@ from pathlib import Path
 
 import streamlit as st
 
+from config import language
 
-def display_research_thesis_with_viewer() -> None:
+
+def display_research_thesis_with_viewer(
+    translations: language.TranslationSchema = None,
+) -> None:
     """Display research thesis PDF with integrated viewer and download functionality."""
     project_resources_directory = Path(__file__).parents[2] / "resources"
     thesis_pdf_file_path = project_resources_directory / "solvedor_article.pdf"
 
+    # Load translations if not provided
+    if translations is None:
+        import streamlit as st
+
+        from config import language
+
+        language_code = st.session_state.get("language", "en")
+        translations = language.load_language_translations(language_code=language_code)
+
     if thesis_pdf_file_path.exists():
         display_thesis_header_with_download_button(
-            thesis_file_path=thesis_pdf_file_path
+            thesis_file_path=thesis_pdf_file_path, translations=translations
         )
         st.markdown("")
-        display_pdf_in_streamlit_viewer(pdf_file_path=thesis_pdf_file_path)
+        display_pdf_in_streamlit_viewer(
+            pdf_file_path=thesis_pdf_file_path, translations=translations
+        )
     else:
-        st.warning("Thesis PDF not found.")
+        st.warning(translations.errors.thesis_not_found)
 
 
 def display_visualization_elements_guide() -> None:

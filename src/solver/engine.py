@@ -127,28 +127,28 @@ def render_solution_results_with_metrics(
     # Solver information
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Problem Type", problem_type)
+        st.metric(translations.results.problem_type, problem_type)
     with col2:
-        st.metric("Solver", solver_name.replace("OR-Tools ", ""))
+        st.metric(translations.results.solver, solver_name.replace("OR-Tools ", ""))
     with col3:
-        st.metric("Variables", len(problem.variables))
+        st.metric(translations.results.variables, len(problem.variables))
 
     if solution.status == SolverStatus.OPTIMAL:
         st.success(f"✅ **{translations.results.optimal_found}**")
 
         # Objective value
         st.metric(
-            "Objective Value",
+            translations.results.objective_value,
             f"{solution.objective_value:.6f}" if solution.objective_value else "N/A",
-            help="Optimal value of the objective function",
+            help=translations.results.objective_value_help,
         )
 
         # Solve time
         if solution.solve_time:
             st.metric(
-                "Solve Time",
+                translations.results.solve_time,
                 f"{solution.solve_time:.3f}s",
-                help="Time taken to solve the problem",
+                help=translations.results.solve_time_help,
             )
 
         # Variable values table
@@ -172,38 +172,36 @@ def render_solution_results_with_metrics(
                 hide_index=True,
                 use_container_width=True,
                 column_config={
-                    "Variable": st.column_config.TextColumn("Variable", width="medium"),
-                    "Value": st.column_config.NumberColumn(
-                        "Value", width="medium", format="%.6f"
+                    "Variable": st.column_config.TextColumn(
+                        translations.results.variable, width="medium"
                     ),
-                    "Type": st.column_config.TextColumn("Type", width="small"),
+                    "Value": st.column_config.NumberColumn(
+                        translations.results.value, width="medium", format="%.6f"
+                    ),
+                    "Type": st.column_config.TextColumn(
+                        translations.results.type, width="small"
+                    ),
                 },
             )
         else:
-            st.info("No variable values to display")
+            st.info(translations.results.no_variable_values)
 
     else:
         match solution.status:
             case SolverStatus.INFEASIBLE:
-                st.error("❌ **Problem is infeasible**")
-                st.info(
-                    (
-                        "The constraints cannot be satisfied simultaneously. "
-                        "Check your constraint definitions."
-                    )
-                )
+                st.error(f"❌ **{translations.results.problem_infeasible}**")
+                st.info(translations.results.infeasible_help)
             case SolverStatus.UNBOUNDED:
-                st.warning("⚠️ **Problem is unbounded**")
-                st.info(
-                    (
-                        "The objective function can be improved infinitely. "
-                        "Add upper/lower bounds to variables."
-                    )
-                )
+                st.warning(f"⚠️ **{translations.results.problem_unbounded}**")
+                st.info(translations.results.unbounded_help)
             case _:
-                st.error(f"❌ **Solver Error**: {solution.status.value}")
+                st.error(
+                    f"❌ **{translations.results.solver_error}**: {solution.status.value}"
+                )
                 if hasattr(solution, "solver_message") and solution.solver_message:
-                    st.info(f"Details: {solution.solver_message}")
+                    st.info(
+                        f"{translations.results.error_details}: {solution.solver_message}"
+                    )
 
 
 def _format_value_by_variable_type(variable_name: str, value: float, problem) -> str:
@@ -448,7 +446,7 @@ def _generate_interactive_2d_plot(problem, solution):
         st.info(guide_text)
 
     except Exception as e:
-        st.warning(f"Could not generate visualization: {e}")
+        st.warning(f"{translations.errors.visualization_error}: {e}")
         import traceback
 
-        st.error(f"Debug info: {traceback.format_exc()}")
+        st.error(f"{translations.errors.debug_info}: {traceback.format_exc()}")
