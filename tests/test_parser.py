@@ -1,7 +1,8 @@
 import pytest
 
+from solver import parser
 from solver.models import ObjectiveDirection, VariableType
-from solver.parser import ParseError, parse_lp_problem
+from solver.parser import ParseError
 
 
 class TestLPParser:
@@ -21,7 +22,7 @@ class TestLPParser:
             x1, x2 >= 0
         """
 
-        parsed_maximize_problem = parse_lp_problem(maximize_problem_text)
+        parsed_maximize_problem = parser.parse_lp_problem(maximize_problem_text)
 
         assert (
             parsed_maximize_problem.objective.direction == ObjectiveDirection.MAXIMIZE
@@ -43,7 +44,7 @@ class TestLPParser:
             x1, x2 >= 0
         """
 
-        parsed_minimize_problem = parse_lp_problem(minimize_problem_text)
+        parsed_minimize_problem = parser.parse_lp_problem(minimize_problem_text)
 
         assert (
             parsed_minimize_problem.objective.direction == ObjectiveDirection.MINIMIZE
@@ -62,7 +63,7 @@ class TestLPParser:
             comida_gato, brinquedos_gato >= 0
         """
 
-        parsed_portuguese_problem = parse_lp_problem(portuguese_problem_text)
+        parsed_portuguese_problem = parser.parse_lp_problem(portuguese_problem_text)
 
         assert (
             parsed_portuguese_problem.objective.direction == ObjectiveDirection.MAXIMIZE
@@ -83,7 +84,7 @@ class TestLPParser:
             x1, x2 >= 0
         """
 
-        problem = parse_lp_problem(problem_text)
+        problem = parser.parse_lp_problem(problem_text)
 
         # Check that implicit coefficients are handled
         obj_vars = problem.objective.extract_variable_names()
@@ -101,7 +102,7 @@ class TestLPParser:
             x1, x2, x3 >= 0
         """
 
-        problem = parse_lp_problem(problem_text)
+        problem = parser.parse_lp_problem(problem_text)
 
         assert len(problem.objective.extract_variable_names()) == 3
         assert len(problem.constraints) >= 1
@@ -119,7 +120,7 @@ class TestLPParser:
             x1, x2 >= 0
         """
 
-        problem = parse_lp_problem(problem_text)
+        problem = parser.parse_lp_problem(problem_text)
 
         # Check that variables are marked as integer
         for var_name in ["x1", "x2"]:
@@ -138,7 +139,7 @@ class TestLPParser:
             binary y1, y2
         """
 
-        problem = parse_lp_problem(problem_text)
+        problem = parser.parse_lp_problem(problem_text)
 
         # Check that variables are marked as binary
         for var_name in ["y1", "y2"]:
@@ -159,7 +160,7 @@ class TestLPParser:
             cat_food, cat_toys >= 0  # Non-negative variables
         """
 
-        problem = parse_lp_problem(problem_text)
+        problem = parser.parse_lp_problem(problem_text)
 
         # Should parse successfully despite comments
         assert problem.objective.direction == ObjectiveDirection.MAXIMIZE
@@ -178,4 +179,4 @@ class TestLPParser:
 
         for invalid_text in invalid_problems:
             with pytest.raises(ParseError):
-                parse_lp_problem(invalid_text)
+                parser.parse_lp_problem(invalid_text)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ortools.linear_solver import pywraplp
 
@@ -72,7 +72,7 @@ class OrToolsBackend:
 
 
 def select_optimal_solver_for_problem(
-    problem: Problem, solver_preference: Optional[str] = None
+    problem: Problem, solver_preference: str | None = None
 ) -> OrToolsBackend:
     """Select most suitable solver based on problem characteristics.
 
@@ -103,7 +103,7 @@ def select_optimal_solver_for_problem(
         return OrToolsBackend("GLOP")  # Linear programming
 
 
-def enumerate_supported_solver_backends() -> Dict[str, str]:
+def enumerate_supported_solver_backends() -> dict[str, str]:
     """Enumerate all supported solver backends with descriptions."""
     return {
         "GLOP": "Google Linear Optimization Package (Linear Programming only)",
@@ -116,13 +116,13 @@ class SolverFactory:
 
     @staticmethod
     def create_solver(
-        problem: Problem, solver_preference: Optional[str] = None
+        problem: Problem, solver_preference: str | None = None
     ) -> OrToolsBackend:
         """Create the best solver for the given problem."""
         return select_optimal_solver_for_problem(problem, solver_preference)
 
     @staticmethod
-    def get_available_solvers() -> Dict[str, str]:
+    def get_available_solvers() -> dict[str, str]:
         """Get available solvers and their descriptions."""
         return enumerate_supported_solver_backends()
 
@@ -140,20 +140,22 @@ def execute_problem_with_ortools_backend(
 
     try:
         # Create variables
-        solver_variable_map = initialize_decision_variables_in_solver(solver, problem)
+        solver_variable_map = _initialize_decision_variables_in_solver(solver, problem)
 
         # Add constraints
         for constraint in problem.constraints:
-            apply_constraint_to_solver(solver, solver_variable_map, constraint)
+            _apply_constraint_to_solver(solver, solver_variable_map, constraint)
 
         # Set objective
-        configure_optimization_objective(solver, solver_variable_map, problem.objective)
+        _configure_optimization_objective(
+            solver, solver_variable_map, problem.objective
+        )
 
         # Solve
         status = solver.Solve()
 
         # Extract solution
-        return build_solution_from_solver_results(
+        return _build_solution_from_solver_results(
             solver, solver_variable_map, status, start_time
         )
 
@@ -168,7 +170,9 @@ def execute_problem_with_ortools_backend(
         )
 
 
-def initialize_decision_variables_in_solver(solver, problem: Problem) -> Dict[str, Any]:
+def _initialize_decision_variables_in_solver(
+    solver, problem: Problem
+) -> dict[str, Any]:
     """Initialize decision variables in OR-Tools solver based on problem definition."""
     solver_variable_mapping = {}
     for variable_name, variable_definition in problem.variables.items():
@@ -209,8 +213,8 @@ def initialize_decision_variables_in_solver(solver, problem: Problem) -> Dict[st
     return solver_variable_mapping
 
 
-def apply_constraint_to_solver(
-    solver, solver_variables: Dict[str, Any], constraint: Constraint
+def _apply_constraint_to_solver(
+    solver, solver_variables: dict[str, Any], constraint: Constraint
 ) -> None:
     """Apply linear constraint to OR-Tools solver with proper bounds."""
     # Build linear expression
@@ -232,8 +236,8 @@ def apply_constraint_to_solver(
         solver.Add(constraint_left_hand_side == constraint_right_hand_side)
 
 
-def configure_optimization_objective(
-    solver, solver_variables: Dict[str, Any], objective
+def _configure_optimization_objective(
+    solver, solver_variables: dict[str, Any], objective
 ) -> None:
     """Configure objective function coefficients and optimization direction."""
     objective_function = solver.Objective()
@@ -252,9 +256,9 @@ def configure_optimization_objective(
         objective_function.SetMinimization()
 
 
-def build_solution_from_solver_results(
+def _build_solution_from_solver_results(
     solver,
-    solver_variables: Dict[str, Any],
+    solver_variables: dict[str, Any],
     solver_status_code,
     optimization_start_time: float,
 ) -> Solution:

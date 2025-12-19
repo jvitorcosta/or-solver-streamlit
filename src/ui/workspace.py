@@ -3,8 +3,8 @@ import streamlit as st
 from config import language, settings
 from solver import engine
 
-# Example template configuration for better maintainability
-EXAMPLE_TEMPLATES = {
+# Example template configuration for better maintainability.
+_EXAMPLE_TEMPLATES = {
     "production_planning": ":material/factory: Production",
     "transportation": ":material/local_shipping: Transport",
     "diet_optimization": ":material/restaurant: Diet",
@@ -12,8 +12,8 @@ EXAMPLE_TEMPLATES = {
     "facility_location": ":material/location_on: Location",
 }
 
-# Detection keywords for variable types
-INTEGER_KEYWORDS = frozenset(["integer", "binary"])
+# Detection keywords for variable types.
+_INTEGER_KEYWORDS = frozenset(["integer", "binary"])
 
 
 def display_optimization_problem_gallery(
@@ -32,8 +32,8 @@ def display_optimization_problem_gallery(
 
     user_selected_example_key = st.pills(
         translations.gallery.choose_text,
-        options=list(EXAMPLE_TEMPLATES.keys()),
-        format_func=EXAMPLE_TEMPLATES.get,
+        options=list(_EXAMPLE_TEMPLATES.keys()),
+        format_func=_EXAMPLE_TEMPLATES.get,
         help=translations.gallery.select_help,
     )
 
@@ -274,7 +274,7 @@ def analyze_text_for_variable_type_hints(*, problem_text: str) -> str:
         "integer"
         if any(
             integer_keyword in problem_text_lowercase
-            for integer_keyword in INTEGER_KEYWORDS
+            for integer_keyword in _INTEGER_KEYWORDS
         )
         else "continuous"
     )

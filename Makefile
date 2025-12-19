@@ -15,6 +15,15 @@ dev: ## Complete development setup with pre-commit hooks
 .PHONY: setup
 setup: dev ## Alias for dev (backward compatibility)
 
+.PHONY: hello
+hello: ## Quick demo setup - install dependencies and run (perfect for recruiters!)
+	@echo "🚀 Setting up OR-Solver for demo..."
+	uv sync
+	@echo "✅ Dependencies installed!"
+	@echo "🌐 Starting web interface at http://localhost:8501"
+	@echo "💡 Try the example problems in the gallery!"
+	uv run streamlit run src/app.py
+
 ##@ Development
 .PHONY: run
 run: ## Start the web interface

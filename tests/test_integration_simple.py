@@ -6,16 +6,17 @@ to solution generation, using simple working problems without UI components.
 
 import pytest
 
+from solver import parser
 from solver.backends import SolverFactory
 from solver.models import SolverStatus, VariableType
 
 # Import only the core functions without UI dependencies
-from solver.parser import ParseError, parse_lp_problem
+from solver.parser import ParseError
 
 
 def parse_and_solve_without_ui_dependencies(problem_text: str):
     """Parse LP text and solve without UI dependencies for testing."""
-    problem = parse_lp_problem(problem_text)
+    problem = parser.parse_lp_problem(problem_text)
     solver = SolverFactory.create_solver(problem)
     solution = solver.execute_optimization_with_backend(problem)
     return problem, solution

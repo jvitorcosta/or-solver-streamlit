@@ -15,6 +15,23 @@ explanations.
 
 ## Quick Start
 
+### 🎯 **Quick Demo**
+
+```sh
+git clone https://github.com/jvitorcosta/or-solver-streamlit.git
+cd or-solver-streamlit
+make hello
+```
+
+That's it! 🚀 The app will automatically setup and launch at `http://localhost:8501`
+
+> [!TIP]
+> Try the **Gallery** examples for instant optimization problems!
+
+---
+
+### 🔧 **For Development**
+
 1. **Clone the repository**:
 
    ```sh

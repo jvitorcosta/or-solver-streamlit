@@ -4,8 +4,8 @@ import streamlit as st
 
 from config import language
 
-# Language display configuration
-LANGUAGE_DISPLAY = {"en": "🇺🇸 English", "pt": "🇵🇹 Português"}
+# Language display configuration.
+_LANGUAGE_DISPLAY = {"en": "🇺🇸 English", "pt": "🇵🇹 Português"}
 
 
 def display_language_selection_sidebar(
@@ -28,7 +28,7 @@ def display_language_selection_sidebar(
         user_selected_language = st.selectbox(
             "",
             options=available_language_codes,
-            format_func=lambda code: LANGUAGE_DISPLAY[code],
+            format_func=lambda code: _LANGUAGE_DISPLAY[code],
             index=current_language_index,
             label_visibility="collapsed",
         )
