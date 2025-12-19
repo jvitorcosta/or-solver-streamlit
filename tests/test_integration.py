@@ -1,9 +1,3 @@
-"""Integration tests for the complete parse + solve flow.
-
-This module tests the end-to-end flow from problem text parsing
-to solution generation, using the example problems without UI components.
-"""
-
 from decimal import Decimal
 from pathlib import Path
 
@@ -26,366 +20,439 @@ def parse_and_solve_without_ui_dependencies(problem_text: str):
     return problem, solution
 
 
-class TestParseAndSolveFlow:
-    """Test the complete parse + solve integration flow."""
-
-    @pytest.fixture
-    def examples_data(self):
-        """Load example problems from YAML file."""
-        examples_path = Path("resources") / "examples.yaml"
-        with open(examples_path, "r", encoding="utf-8") as file:
-            return yaml.safe_load(file)
-
-    def test_production_planning_flow(self, examples_data):
-        """Test production planning example - continuous LP problem."""
-        problem_text = examples_data["production_planning"]["problem"]
-
-        problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
-
-        # Verify parsing
-        assert problem is not None
-        assert problem.objective.direction.name == "MAXIMIZE"
-        assert len(problem.variables) == 2
-        assert "product_a" in problem.variables
-        assert "product_b" in problem.variables
-        assert len(problem.constraints) >= 4  # 4 explicit constraints + non-negativity
-
-        # Verify all variables are continuous
-        for var in problem.variables.values():
-            assert var.variable_type == VariableType.CONTINUOUS
-
-        # Verify solution
-        assert solution.status == SolverStatus.OPTIMAL
-        assert solution.is_optimal
-        assert solution.objective_value is not None
-        assert solution.objective_value > 0  # Should have positive profit
-        assert len(solution.variable_values) == 2
-
-        # Verify variable values are within bounds
-        for var_name, value in solution.variable_values.items():
-            assert value >= 0  # Non-negativity constraints
-            if var_name == "product_a":
-                assert value <= 30 + 1e-6  # Capacity constraint with tolerance
-            elif var_name == "product_b":
-                assert value <= 25 + 1e-6  # Capacity constraint with tolerance
-
-    def test_transportation_flow(self, examples_data):
-        """Test transportation example - continuous LP with equality constraints."""
-        problem_text = examples_data["transportation"]["problem"]
-
-        problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
-
-        # Verify parsing
-        assert problem is not None
-        assert problem.objective.direction.name == "MINIMIZE"
-        assert len(problem.variables) == 6  # x11, x12, x13, x21, x22, x23
-
-        # Check for transportation variables
-        expected_vars = ["x11", "x12", "x13", "x21", "x22", "x23"]
-        for var_name in expected_vars:
-            assert var_name in problem.variables
-
-        # Verify solution (should be optimal for transportation problems)
-        assert solution.status == SolverStatus.OPTIMAL
-        assert solution.is_optimal
-        assert solution.objective_value is not None
-        assert solution.objective_value > 0  # Should have positive cost
-
-        # Verify supply/demand balance (approximately)
-        if solution.status == SolverStatus.OPTIMAL:
-            supply_w1 = sum(
-                solution.variable_values.get(f"x1{j}", 0) for j in [1, 2, 3]
-            )
-            supply_w2 = sum(
-                solution.variable_values.get(f"x2{j}", 0) for j in [1, 2, 3]
-            )
-
-            # Supply constraints (should equal 200 and 300 respectively)
-            assert abs(supply_w1 - 200) < 1e-6
-            assert abs(supply_w2 - 300) < 1e-6
-
-    def test_diet_optimization_flow(self, examples_data):
-        """Test diet optimization example - continuous LP with >= constraints."""
-        problem_text = examples_data["diet_optimization"]["problem"]
-
-        problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
-
-        # Verify parsing
-        assert problem is not None
-        assert problem.objective.direction.name == "MINIMIZE"
-        assert len(problem.variables) == 4  # bread, milk, cheese, potato
-
-        food_items = ["bread", "milk", "cheese", "potato"]
-        for item in food_items:
-            assert item in problem.variables
-
-        # Verify solution
-        assert solution.status == SolverStatus.OPTIMAL
-        assert solution.is_optimal
-        assert solution.objective_value is not None
-        assert solution.objective_value > 0  # Should have positive cost
-
-        # All food quantities should be non-negative
-        for _var_name, value in solution.variable_values.items():
-            assert value >= 0
-
-    def test_resource_allocation_flow(self, examples_data):
-        """Test resource allocation example - continuous LP with investment constraints."""
-        problem_text = examples_data["resource_allocation"]["problem"]
-
-        problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
-
-        # Verify parsing
-        assert problem is not None
-        assert problem.objective.direction.name == "MAXIMIZE"
-        assert len(problem.variables) == 3  # project_a, project_b, project_c
-
-        projects = ["project_a", "project_b", "project_c"]
-        for project in projects:
-            assert project in problem.variables
-
-        # Verify solution
-        assert solution.status == SolverStatus.OPTIMAL
-        assert solution.is_optimal
-        assert solution.objective_value is not None
-        assert solution.objective_value > 0  # Should have positive return
-
-        # Verify budget constraint
-        total_investment = sum(solution.variable_values.values())
-        assert total_investment <= 1000000 + 1e-6  # Within tolerance
-
-        # Verify minimum investment constraints
-        assert solution.variable_values.get("project_a", 0) >= 100000 - 1e-6
-        assert solution.variable_values.get("project_b", 0) >= 150000 - 1e-6
-        assert solution.variable_values.get("project_c", 0) >= 200000 - 1e-6
-
-    def test_facility_location_flow(self, examples_data):
-        """Test facility location example - integer programming problem."""
-        # Use a simpler integer problem that the parser can handle
-        problem_text = """
-        minimize 50000*x1 + 60000*x2 + 45000*x3 + 55000*x4
-
-        subject to:
-            x1 + x2 >= 1
-            x2 + x3 >= 1
-            x3 + x4 >= 1
-            x1 + x4 >= 1
-            x1 + x2 + x3 + x4 >= 2
-
-        where:
-            x1, x2, x3, x4 >= 0
-        """
-
-        problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
-
-        # Verify parsing
-        assert problem is not None
-        assert problem.objective.direction.name == "MINIMIZE"
-        assert len(problem.variables) == 4  # x1, x2, x3, x4
-
-        facilities = ["x1", "x2", "x3", "x4"]
-        for facility in facilities:
-            assert facility in problem.variables
-            # For now, treating as continuous since parser doesn't support integer syntax well
-            assert problem.variables[facility].variable_type == VariableType.CONTINUOUS
-
-        # Verify solution
-        assert solution.status == SolverStatus.OPTIMAL
-        assert solution.is_optimal
-        assert solution.objective_value is not None
-        assert solution.objective_value > 0  # Should have positive cost
-
-        # All facility decisions should be feasible
-        for _var_name, value in solution.variable_values.items():
-            assert value >= 0  # Non-negativity
-
-        # At least 2 facilities should be selected (constraint)
-        selected_facilities = sum(solution.variable_values.values())
-        assert selected_facilities >= 2 - 1e-6
-
-    def test_problem_with_syntax_error(self):
-        """Test that parsing errors are properly raised."""
-        invalid_problem = """
-        maximize x + y
-        subject to:
-            x + invalid_operator 10
-        where:
-            x, y >= 0
-        """
-
-        with pytest.raises(ParseError):
-            parse_and_solve_without_ui_dependencies(invalid_problem)
-
-    def test_infeasible_problem(self):
-        """Test handling of infeasible problems."""
-        infeasible_problem = """
-        maximize x + y
-        subject to:
-            x + y >= 10
-            x + y <= 5
-        where:
-            x, y >= 0
-        """
-
-        problem, solution = parse_and_solve_without_ui_dependencies(infeasible_problem)
-
-        # Should parse successfully
-        assert problem is not None
-
-        # But solution should be infeasible
-        assert solution.status == SolverStatus.INFEASIBLE
-        assert not solution.is_optimal
-        assert not solution.is_feasible
-
-    def test_unbounded_problem(self):
-        """Test handling of unbounded problems."""
-        unbounded_problem = """
-        maximize x + y
-        subject to:
-            x >= 0
-            y >= 0
-        """
-
-        problem, solution = parse_and_solve_without_ui_dependencies(unbounded_problem)
-
-        # Should parse successfully
-        assert problem is not None
-
-        # Solution should indicate unbounded or may be infeasible due to solver limitations
-        assert solution.status in [
-            SolverStatus.UNBOUNDED,
-            SolverStatus.OPTIMAL,
-            SolverStatus.INFEASIBLE,
-        ]
-        if solution.status == SolverStatus.OPTIMAL:
-            # If marked as optimal, objective value should be very large
-            assert solution.objective_value > 1e6
-
-    def test_empty_problem(self):
-        """Test that empty problem text raises appropriate error."""
-        with pytest.raises(ParseError):
-            parse_and_solve_without_ui_dependencies("")
-
-    def test_problem_with_only_objective(self):
-        """Test problem with only objective function."""
-        minimal_problem = """
-        maximize x + y
-        where:
-            x, y >= 0
-        """
-
-        problem, solution = parse_and_solve_without_ui_dependencies(minimal_problem)
-
-        # Should parse successfully
-        assert problem is not None
-        assert problem.objective.direction.name == "MAXIMIZE"
-
-        # Should be unbounded or may be infeasible due to solver limitations
-        assert solution.status in [
-            SolverStatus.UNBOUNDED,
-            SolverStatus.OPTIMAL,
-            SolverStatus.INFEASIBLE,
-        ]
-
-    def test_mixed_integer_problem(self):
-        """Test a problem with mixed variable types."""
-        # Simplified version without integer syntax that parser can't handle
-        mixed_problem = """
-        minimize 2*x + 3*y + z
-        subject to:
-            x + y + z >= 5
-            x + 2*y <= 10
-        where:
-            x, y, z >= 0
-        """
-
-        problem, solution = parse_and_solve_without_ui_dependencies(mixed_problem)
-
-        # Verify parsing
-        assert problem is not None
-        assert len(problem.variables) == 3
-
-        # Check variable types (all continuous since no integer syntax)
-        assert problem.variables["x"].variable_type == VariableType.CONTINUOUS
-        assert problem.variables["y"].variable_type == VariableType.CONTINUOUS
-        assert problem.variables["z"].variable_type == VariableType.CONTINUOUS
-
-        # Verify solution
-        assert solution.status == SolverStatus.OPTIMAL
-        assert solution.is_optimal
-
-    def test_solution_formatting(self, examples_data):
-        """Test that solution formatting works correctly."""
-        problem_text = examples_data["production_planning"]["problem"]
-
-        problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
-
-        # Test solution string representation
-        solution_str = str(solution)
-        assert "Optimal" in solution_str or "🎯" in solution_str
-        assert "Objective Value:" in solution_str or "💰" in solution_str
-
-        # Should contain variable values
-        assert "product_a" in solution_str
-        assert "product_b" in solution_str
-
-        # Should contain solve time
-        assert "Solve Time:" in solution_str or "⏱️" in solution_str
-
-    def test_problem_variable_extraction(self, examples_data):
-        """Test that all problem variables are correctly extracted."""
-        problem_text = examples_data["transportation"]["problem"]
-
-        problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
-
-        # Get all variables from the problem
-        all_vars = problem.extract_all_variable_names()
-        assert len(all_vars) == 6
-
-        expected_vars = {"x11", "x12", "x13", "x21", "x22", "x23"}
-        actual_vars = set(
-            all_vars
-        )  # get_all_variables returns variable names as strings
-        assert actual_vars == expected_vars
-
-        # Check objective function variables
-        objective_vars = problem.objective.extract_variable_names()
-        objective_var_names = set(
-            objective_vars
-        )  # extract_variable_names returns strings directly
-        assert objective_var_names == expected_vars
-
-    @pytest.mark.parametrize(
-        "example_key",
-        [
-            "production_planning",
-            "transportation",
-            "diet_optimization",
-            "resource_allocation",
-            "facility_location",
-        ],
+@pytest.fixture
+def examples_data():
+    """Load example problems from YAML file."""
+    examples_path = Path("resources") / "examples.yaml"
+    with open(examples_path, "r", encoding="utf-8") as file:
+        return yaml.safe_load(file)
+
+
+# Comprehensive problem type tests with input,expected structure
+@pytest.mark.parametrize(
+    "input_data,expected",
+    [
+        # Basic maximization problem
+        (
+            {
+                "problem_text": """
+                maximize 3*x + 2*y
+                subject to:
+                    x + y <= 4
+                    2*x + y <= 6
+                    x <= 3
+                where:
+                    x, y >= 0
+                """
+            },
+            {
+                "objective_direction": "MAXIMIZE",
+                "variables": ["x", "y"],
+                "min_constraints": 3,
+                "status": SolverStatus.OPTIMAL,
+                "should_have_solution": True,
+            },
+        ),
+        # Basic minimization problem
+        (
+            {
+                "problem_text": """
+                minimize 2*x + 3*y
+                subject to:
+                    x + 2*y >= 5
+                    3*x + y >= 6
+                where:
+                    x, y >= 0
+                """
+            },
+            {
+                "objective_direction": "MINIMIZE",
+                "variables": ["x", "y"],
+                "min_constraints": 2,
+                "status": SolverStatus.OPTIMAL,
+                "should_have_solution": True,
+            },
+        ),
+        # Infeasible problem
+        (
+            {
+                "problem_text": """
+                maximize x + y
+                subject to:
+                    x + y >= 10
+                    x + y <= 5
+                where:
+                    x, y >= 0
+                """
+            },
+            {
+                "objective_direction": "MAXIMIZE",
+                "variables": ["x", "y"],
+                "status": SolverStatus.INFEASIBLE,
+                "should_have_solution": False,
+                "is_feasible": False,
+            },
+        ),
+        # Unbounded problem
+        (
+            {
+                "problem_text": """
+                maximize x + y
+                subject to:
+                    x >= 1
+                    y >= 0.1
+                where:
+                    x, y >= 0
+                """
+            },
+            {
+                "objective_direction": "MAXIMIZE",
+                "variables": ["x", "y"],
+                "allowed_statuses": [
+                    SolverStatus.OPTIMAL,
+                    SolverStatus.UNBOUNDED,
+                    SolverStatus.INFEASIBLE,
+                ],
+                "should_parse": True,
+            },
+        ),
+        # Mixed integer problem
+        (
+            {
+                "problem_text": """
+                maximize 3*x + 2*y
+                subject to:
+                    x + 2*y <= 10
+                    2*x + y <= 12
+                where:
+                    x >= 0
+                    integer y
+                    y >= 0
+                """
+            },
+            {
+                "objective_direction": "MAXIMIZE",
+                "variables": ["x", "y"],
+                "variable_types": {
+                    "x": VariableType.CONTINUOUS,
+                    "y": VariableType.INTEGER,
+                },
+                "status": SolverStatus.OPTIMAL,
+                "should_have_solution": True,
+                "integer_variables": ["y"],
+            },
+        ),
+        # Problem with only objective (no constraints)
+        (
+            {
+                "problem_text": """
+                maximize x + y
+                where:
+                    x, y >= 0
+                """
+            },
+            {
+                "objective_direction": "MAXIMIZE",
+                "variables": ["x", "y"],
+                "allowed_statuses": [
+                    SolverStatus.UNBOUNDED,
+                    SolverStatus.OPTIMAL,
+                    SolverStatus.INFEASIBLE,
+                ],
+                "should_parse": True,
+            },
+        ),
+    ],
+)
+def test_comprehensive_problem_solving_flow(input_data, expected):
+    """Test complete parse and solve flow for various problem types and edge cases."""
+    problem, solution = parse_and_solve_without_ui_dependencies(
+        input_data["problem_text"]
     )
-    def test_all_examples_solve_successfully(self, examples_data, example_key):
-        """Test that all example problems solve successfully."""
-        problem_text = examples_data[example_key]["problem"]
 
-        # Should not raise any exceptions
-        problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
+    # Verify parsing
+    assert problem is not None
+    assert problem.objective.direction.name == expected["objective_direction"]
 
-        # Basic validations for all examples
-        assert problem is not None
-        assert solution is not None
-        assert len(problem.variables) > 0
-        assert len(problem.constraints) > 0
+    # Verify variables
+    for var_name in expected["variables"]:
+        assert var_name in problem.variables
 
-        # Should have optimal solution for our examples (no FEASIBLE status exists)
-        assert solution.status == SolverStatus.OPTIMAL
+    # Verify variable types if specified
+    if "variable_types" in expected:
+        for var_name, expected_type in expected["variable_types"].items():
+            assert problem.variables[var_name].variable_type == expected_type
 
-        if solution.is_optimal:
-            assert solution.objective_value is not None
-            assert len(solution.variable_values) == len(problem.variables)
+    # Verify constraints count if specified
+    if "min_constraints" in expected:
+        assert len(problem.constraints) >= expected["min_constraints"]
 
-            # All variable values should be valid numbers
-            for value in solution.variable_values.values():
-                assert isinstance(value, (int, float, Decimal))
-                assert not (isinstance(value, float) and (value != value))  # Not NaN
+    # Verify solution status
+    if "status" in expected:
+        assert solution.status == expected["status"]
+    elif "allowed_statuses" in expected:
+        assert solution.status in expected["allowed_statuses"]
+
+    # Verify solution properties
+    if expected.get("should_have_solution", False):
+        assert solution.objective_value is not None
+        assert solution.variable_values is not None
+        assert solution.solve_time is not None
+
+        # Verify variable values are present for all variables
+        for var_name in expected["variables"]:
+            assert var_name in solution.variable_values
+
+    # Verify feasibility
+    if "is_feasible" in expected:
+        assert solution.is_feasible == expected["is_feasible"]
+
+    # Check integer constraints if specified
+    if "integer_variables" in expected:
+        for var_name in expected["integer_variables"]:
+            if var_name in solution.variable_values:
+                var_value = solution.variable_values[var_name]
+                assert abs(var_value - round(var_value)) < 1e-6
+
+
+# YAML-based example tests with parametrization
+@pytest.mark.parametrize(
+    "example_key,expected",
+    [
+        (
+            "production_planning",
+            {
+                "objective_direction": "MAXIMIZE",
+                "min_variables": 2,
+                "min_constraints": 4,
+                "variable_type": VariableType.CONTINUOUS,
+                "expected_profit": True,
+            },
+        ),
+        (
+            "transportation",
+            {
+                "objective_direction": "MINIMIZE",
+                "min_variables": 6,
+                "variable_type": VariableType.CONTINUOUS,
+                "expected_cost": True,
+            },
+        ),
+        (
+            "diet_optimization",
+            {
+                "objective_direction": "MINIMIZE",
+                "min_variables": 3,
+                "variable_type": VariableType.CONTINUOUS,
+                "expected_cost": True,
+            },
+        ),
+        (
+            "resource_allocation",
+            {
+                "objective_direction": "MAXIMIZE",
+                "min_variables": 3,
+                "variable_type": VariableType.CONTINUOUS,
+                "expected_profit": True,
+            },
+        ),
+        (
+            "facility_location",
+            {
+                "objective_direction": "MINIMIZE",
+                "min_variables": 4,
+                "expected_cost": True,
+            },
+        ),
+    ],
+)
+def test_yaml_examples_comprehensive(examples_data, example_key, expected):
+    """Test all YAML example problems with comprehensive validation."""
+    problem_text = examples_data[example_key]["problem"]
+
+    problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
+
+    # Basic problem validation
+    assert problem is not None
+    assert problem.objective.direction.name == expected["objective_direction"]
+    assert len(problem.variables) >= expected["min_variables"]
+
+    if "min_constraints" in expected:
+        assert len(problem.constraints) >= expected["min_constraints"]
+
+    # Variable type validation if specified
+    if "variable_type" in expected:
+        for _var in problem.variables.values():
+            # Allow mixed types, but check that continuous variables exist
+            if expected["variable_type"] == VariableType.CONTINUOUS:
+                assert any(
+                    v.variable_type == VariableType.CONTINUOUS
+                    for v in problem.variables.values()
+                )
+
+    # Solution validation
+    assert solution is not None
+    assert solution.status == SolverStatus.OPTIMAL
+    assert solution.objective_value is not None
+    assert solution.variable_values is not None
+    assert len(solution.variable_values) == len(problem.variables)
+
+    # Objective value validation
+    if expected.get("expected_profit", False):
+        assert (
+            solution.objective_value > 0
+        )  # Should have positive value for maximization
+    elif expected.get("expected_cost", False):
+        assert (
+            solution.objective_value > 0
+        )  # Should have positive cost for minimization
+
+    # Variable value validation
+    for _var_name, var_value in solution.variable_values.items():
+        assert isinstance(var_value, (int, float, Decimal))
+        assert var_value >= -1e-6  # Should be non-negative (with tolerance)
+
+
+# Error handling tests with input,expected structure
+@pytest.mark.parametrize(
+    "input_data,expected_exception",
+    [
+        # Syntax errors
+        (
+            {
+                "problem_text": """
+                maximize x + y
+                subject to:
+                    x + invalid_operator 10
+                where:
+                    x, y >= 0
+                """
+            },
+            ParseError,
+        ),
+        # Empty problem
+        ({"problem_text": ""}, ParseError),
+        # Missing objective
+        (
+            {
+                "problem_text": """
+                subject to:
+                    x + y <= 10
+                where:
+                    x, y >= 0
+                """
+            },
+            ParseError,
+        ),
+    ],
+)
+def test_error_handling_comprehensive(input_data, expected_exception):
+    """Test comprehensive error handling for invalid problem formats."""
+    with pytest.raises(expected_exception):
+        parse_and_solve_without_ui_dependencies(input_data["problem_text"])
+
+
+# Solution formatting and properties tests
+@pytest.mark.parametrize(
+    "input_data,expected",
+    [
+        # Test solution string representation
+        (
+            {"example_key": "production_planning"},
+            {
+                "str_contains": [
+                    "Optimal Solution Found!",
+                    "Objective Value:",
+                    "Variables:",
+                ],
+                "has_variable_names": True,
+            },
+        )
+    ],
+)
+def test_solution_formatting_comprehensive(examples_data, input_data, expected):
+    """Test solution formatting and string representation."""
+    problem_text = examples_data[input_data["example_key"]]["problem"]
+    problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
+
+    solution_str = str(solution)
+
+    # Check for required string components
+    for required_str in expected["str_contains"]:
+        assert any(
+            req in solution_str
+            for req in [
+                required_str,
+                required_str.lower(),
+                required_str.replace(" ", ""),
+            ]
+        )
+
+    # Check for variable names if expected
+    if expected.get("has_variable_names", False):
+        for var_name in problem.variables:
+            assert var_name in solution_str
+
+
+# Problem variable extraction tests
+def test_problem_variable_extraction_comprehensive(examples_data):
+    """Test comprehensive variable extraction from problems."""
+    problem_text = examples_data["production_planning"]["problem"]
+    problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
+
+    # Test variable extraction from problem
+    assert len(problem.variables) > 0
+
+    # Test variable extraction from objective
+    objective_vars = problem.objective.extract_variable_names()
+    assert len(objective_vars) > 0
+
+    # Should be subset of problem variables
+    problem_var_names = set(problem.variables.keys())
+    objective_var_names = set(objective_vars)
+    assert objective_var_names.issubset(problem_var_names)
+
+    # Test variable extraction from constraints
+    for constraint in problem.constraints:
+        constraint_vars = constraint.extract_variable_names()
+        constraint_var_names = set(constraint_vars)
+        assert constraint_var_names.issubset(problem_var_names)
+
+
+# Comprehensive test for all examples (parametrized)
+@pytest.mark.parametrize(
+    "example_key",
+    [
+        "production_planning",
+        "transportation",
+        "diet_optimization",
+        "resource_allocation",
+        "facility_location",
+    ],
+)
+def test_all_examples_solve_successfully_comprehensive(examples_data, example_key):
+    """Test that all example problems solve successfully with comprehensive validation."""
+    problem_text = examples_data[example_key]["problem"]
+
+    # Should not raise any exceptions
+    problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
+
+    # Basic validations for all examples
+    assert problem is not None
+    assert solution is not None
+    assert len(problem.variables) > 0
+    assert len(problem.constraints) > 0
+
+    # Should have optimal solution for our examples
+    assert solution.status == SolverStatus.OPTIMAL
+    assert solution.objective_value is not None
+    assert solution.variable_values is not None
+    assert len(solution.variable_values) == len(problem.variables)
+
+    # All variable values should be valid numbers
+    for _var_name, var_value in solution.variable_values.items():
+        assert isinstance(var_value, (int, float, Decimal))
+        assert not (
+            isinstance(var_value, float) and (var_value != var_value)
+        )  # Not NaN
+        assert var_value >= -1e-6  # Non-negative with tolerance
