@@ -1,5 +1,3 @@
-"""Tests for solver functions."""
-
 from solver import engine
 from solver.models import Problem, SolverStatus
 

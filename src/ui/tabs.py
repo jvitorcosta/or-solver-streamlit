@@ -2,20 +2,31 @@ from pathlib import Path
 
 import streamlit as st
 
+from config import language
 
-def display_research_thesis_with_viewer() -> None:
+
+def display_research_thesis_with_viewer(
+    translations: language.TranslationSchema | None = None,
+) -> None:
     """Display research thesis PDF with integrated viewer and download functionality."""
     project_resources_directory = Path(__file__).parents[2] / "resources"
     thesis_pdf_file_path = project_resources_directory / "solvedor_article.pdf"
 
+    # Load translations if not provided
+    if translations is None:
+        language_code = st.session_state.get("language", "en")
+        translations = language.load_language_translations(language_code=language_code)
+
     if thesis_pdf_file_path.exists():
         display_thesis_header_with_download_button(
-            thesis_file_path=thesis_pdf_file_path
+            thesis_file_path=thesis_pdf_file_path, translations=translations
         )
         st.markdown("")
-        display_pdf_in_streamlit_viewer(pdf_file_path=thesis_pdf_file_path)
+        display_pdf_in_streamlit_viewer(
+            pdf_file_path=thesis_pdf_file_path, translations=translations
+        )
     else:
-        st.warning("Thesis PDF not found.")
+        st.warning(translations.errors.thesis_not_found)
 
 
 def display_visualization_elements_guide() -> None:
@@ -79,28 +90,39 @@ def display_visualization_elements_guide() -> None:
     """)
 
 
-def display_markdown_content_from_file(file_name: str) -> None:
+def display_markdown_content_from_file(
+    file_name: str, translations: language.TranslationSchema | None = None
+) -> None:
     """Display markdown file content from project root directory.
 
     Args:
         file_name: Name of the markdown file to render.
+        translations: Translation schema for localized text.
     """
+    # Load translations if not provided
+    if translations is None:
+        language_code = st.session_state.get("language", "en")
+        translations = language.load_language_translations(language_code=language_code)
+
     markdown_file_path = Path(__file__).parents[2] / file_name
 
     try:
         markdown_file_content = markdown_file_path.read_text(encoding="utf-8")
         st.markdown(markdown_file_content)
     except FileNotFoundError:
-        st.warning(f"📄 {file_name} not found.")
+        st.warning(f"📄 {file_name} {translations.errors.file_not_found}")
     except OSError:
-        st.warning(f"⚠️ Could not read {file_name}.")
+        st.warning(f"⚠️ {translations.errors.file_read_error} {file_name}.")
 
 
-def display_thesis_header_with_download_button(*, thesis_file_path: Path) -> None:
+def display_thesis_header_with_download_button(
+    *, thesis_file_path: Path, translations: language.TranslationSchema
+) -> None:
     """Display thesis header section with interactive download button.
 
     Args:
         thesis_file_path: Path to the thesis PDF file.
+        translations: Translation schema for localized text.
     """
     col1, col2 = st.columns([3, 1])
 
@@ -119,7 +141,7 @@ def display_thesis_header_with_download_button(*, thesis_file_path: Path) -> Non
         try:
             thesis_pdf_binary_data = thesis_file_path.read_bytes()
             download_button_clicked = st.download_button(
-                ":material/download: Download PDF",
+                f":material/download: {translations.resources.download_pdf}",
                 thesis_pdf_binary_data,
                 file_name="solvedor_article.pdf",
                 mime="application/pdf",
@@ -132,22 +154,20 @@ def display_thesis_header_with_download_button(*, thesis_file_path: Path) -> Non
                     icon=":material/download:",
                 )
         except OSError:
-            st.error("📚 Could not load PDF for download.")
+            st.error(f":material/error: {translations.errors.pdf_load_error}")
 
 
-def display_pdf_in_streamlit_viewer(*, pdf_file_path: Path) -> None:
+def display_pdf_in_streamlit_viewer(
+    *, pdf_file_path: Path, translations: language.TranslationSchema
+) -> None:
     """Display PDF using Streamlit's built-in viewer with error handling.
 
     Args:
         pdf_file_path: Path to the PDF file to display.
+        translations: Translation schema for localized text.
     """
     try:
         st.pdf(str(pdf_file_path))
     except Exception as pdf_display_error:
-        st.warning(
-            (
-                "PDF viewer not available. You can download the thesis "
-                "using the button above."
-            )
-        )
+        st.warning(translations.errors.pdf_display_error)
         st.info(f"Error: {str(pdf_display_error)}")

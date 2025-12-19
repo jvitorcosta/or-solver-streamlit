@@ -116,7 +116,7 @@ def display_optimization_workspace_interface(
     active_language_code = st.session_state.get("language", "en")
 
     display_workspace_header_with_example_status(
-        example_is_loaded=example_currently_loaded
+        example_is_loaded=example_currently_loaded, translations=translations
     )
     display_problem_input_form_with_buttons(
         initial_text=initial_workspace_text, language_code=active_language_code
@@ -225,16 +225,21 @@ def get_workspace_initial_state_from_session() -> tuple[str, bool]:
     return initial_text_content, example_currently_loaded
 
 
-def display_workspace_header_with_example_status(*, example_is_loaded: bool) -> None:
+def display_workspace_header_with_example_status(
+    *, example_is_loaded: bool, translations: language.TranslationSchema
+) -> None:
     """Display workspace header showing current example status.
 
     Args:
         example_is_loaded: Whether an example is currently loaded in workspace.
+        translations: Translation schema for localized text.
     """
-    st.markdown("#### :material/edit_note: Workspace")
+    st.markdown(f"#### :material/edit_note: {translations.interface.workspace_title}")
     if example_is_loaded and "example_name" in st.session_state:
         st.caption(
-            (f":material/lightbulb: Using example: **{st.session_state.example_name}**")
+            (
+                f":material/lightbulb: {translations.interface.using_example}: **{st.session_state.example_name}**"
+            )
         )
 
 

@@ -69,16 +69,16 @@ def display_tabbed_application_interface(
         workspace.display_optimization_workspace_interface(translations=translations)
 
     with streamlit_tabs_dictionary["paper"]:
-        tabs.display_research_thesis_with_viewer()
+        tabs.display_research_thesis_with_viewer(translations)
 
     with streamlit_tabs_dictionary["guide"]:
         tabs.display_visualization_elements_guide()
 
     with streamlit_tabs_dictionary["readme"]:
-        tabs.display_markdown_content_from_file("README.md")
+        tabs.display_markdown_content_from_file("README.md", translations)
 
     with streamlit_tabs_dictionary["contributing"]:
-        tabs.display_markdown_content_from_file("CONTRIBUTING.md")
+        tabs.display_markdown_content_from_file("CONTRIBUTING.md", translations)
 
 
 if __name__ == "__main__":
