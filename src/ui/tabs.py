@@ -6,7 +6,7 @@ from config import language
 
 
 def display_research_thesis_with_viewer(
-    translations: language.TranslationSchema = None,
+    translations: language.TranslationSchema | None = None,
 ) -> None:
     """Display research thesis PDF with integrated viewer and download functionality."""
     project_resources_directory = Path(__file__).parents[2] / "resources"
@@ -14,10 +14,6 @@ def display_research_thesis_with_viewer(
 
     # Load translations if not provided
     if translations is None:
-        import streamlit as st
-
-        from config import language
-
         language_code = st.session_state.get("language", "en")
         translations = language.load_language_translations(language_code=language_code)
 
@@ -94,21 +90,29 @@ def display_visualization_elements_guide() -> None:
     """)
 
 
-def display_markdown_content_from_file(file_name: str) -> None:
+def display_markdown_content_from_file(
+    file_name: str, translations: language.TranslationSchema | None = None
+) -> None:
     """Display markdown file content from project root directory.
 
     Args:
         file_name: Name of the markdown file to render.
+        translations: Translation schema for localized text.
     """
+    # Load translations if not provided
+    if translations is None:
+        language_code = st.session_state.get("language", "en")
+        translations = language.load_language_translations(language_code=language_code)
+
     markdown_file_path = Path(__file__).parents[2] / file_name
 
     try:
         markdown_file_content = markdown_file_path.read_text(encoding="utf-8")
         st.markdown(markdown_file_content)
     except FileNotFoundError:
-        st.warning(f"📄 {file_name} not found.")
+        st.warning(f"📄 {file_name} {translations.errors.file_not_found}")
     except OSError:
-        st.warning(f"⚠️ Could not read {file_name}.")
+        st.warning(f"⚠️ {translations.errors.file_read_error} {file_name}.")
 
 
 def display_thesis_header_with_download_button(
