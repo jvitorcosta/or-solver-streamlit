@@ -128,7 +128,8 @@ def test_parse_linear_programs(input_data, expected):
                 subject to:
                     x + y <= 10
                 where:
-                    integer x, y >= 0
+                    integer x, y
+                    x, y >= 0
                 """
             },
             {
@@ -164,9 +165,10 @@ def test_parse_linear_programs(input_data, expected):
                 subject to:
                     x + y + z <= 10
                 where:
-                    x >= 0
-                    integer y >= 0
+                    integer y
                     binary z
+                    x >= 0
+                    y >= 0
                 """
             },
             {
