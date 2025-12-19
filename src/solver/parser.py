@@ -220,19 +220,19 @@ def _setup_complete_parser_grammar():
 
     def _build_problem(self, parsed_data) -> Problem:
         """Build a Problem object from parsed data (deprecated - use standalone function)."""
-        return construct_problem_from_parsed_structure(parsed_data)
+        return _construct_problem_from_parsed_structure(parsed_data)
 
     def _build_objective(self, obj_data) -> ObjectiveFunction:
         """Build an ObjectiveFunction from parsed data (deprecated - use standalone function)."""
-        return construct_objective_from_parsed_data(obj_data)
+        return _construct_objective_from_parsed_data(obj_data)
 
     def _build_constraint(self, constraint_data) -> Constraint:
         """Build a Constraint from parsed data (deprecated - use standalone function)."""
-        return construct_constraint_from_parsed_data(constraint_data)
+        return _construct_constraint_from_parsed_data(constraint_data)
 
     def _build_expression(self, expr_data) -> LinearExpression:
         """Build a LinearExpression from parsed data (deprecated - use standalone function)."""
-        return construct_linear_expression_from_parsed_data(expr_data)
+        return _construct_linear_expression_from_parsed_data(expr_data)
 
     def _process_bounds(self, problem: Problem, bounds_data):
         """Process variable bounds and type declarations (deprecated - use standalone function)."""
@@ -240,15 +240,15 @@ def _setup_complete_parser_grammar():
 
     def _process_integer_variables(self, problem: Problem, var_list):
         """Process integer variable declarations (deprecated - use standalone function)."""
-        return set_variables_as_integer_type(problem, var_list)
+        return _set_variables_as_integer_type(problem, var_list)
 
     def _process_binary_variables(self, problem: Problem, var_list):
         """Process binary variable declarations (deprecated - use standalone function)."""
-        return set_variables_as_binary_type(problem, var_list)
+        return _set_variables_as_binary_type(problem, var_list)
 
     def _process_non_negative_variables(self, problem: Problem, var_list):
         """Process non-negative variable bounds (deprecated - use standalone function)."""
-        return set_variables_non_negative_bounds(problem, var_list)
+        return _set_variables_non_negative_bounds(problem, var_list)
 
 
 def parse_lp_problem(problem_text: str) -> Problem:
@@ -279,7 +279,7 @@ def parse_lp_text_with_grammar(problem_text: str, parsing_grammar) -> Problem:
         preprocessed_text = clean_and_normalize_problem_text(problem_text)
 
         parsed_structure = parsing_grammar.parseString(preprocessed_text, parseAll=True)
-        return construct_problem_from_parsed_structure(parsed_structure)
+        return _construct_problem_from_parsed_structure(parsed_structure)
 
     except ParseException as e:
         # Provide more detailed error information
@@ -319,17 +319,17 @@ def clean_and_normalize_problem_text(text: str) -> str:
     return result.strip()
 
 
-def construct_problem_from_parsed_structure(parsed_structure) -> Problem:
+def _construct_problem_from_parsed_structure(parsed_structure) -> Problem:
     """Build a Problem object from parsed data."""
     optimization_problem = Problem(
-        objective=construct_objective_from_parsed_data(parsed_structure.objective),
+        objective=_construct_objective_from_parsed_data(parsed_structure.objective),
         constraints=[],
         variables={},
     )
 
     if hasattr(parsed_structure, "constraints"):
         for constraint_data in parsed_structure.constraints:
-            new_constraint = construct_constraint_from_parsed_data(constraint_data)
+            new_constraint = _construct_constraint_from_parsed_data(constraint_data)
             optimization_problem.add_constraint(new_constraint)
 
     if hasattr(parsed_structure, "bounds"):
@@ -338,21 +338,21 @@ def construct_problem_from_parsed_structure(parsed_structure) -> Problem:
     return optimization_problem
 
 
-def construct_objective_from_parsed_data(objective_data) -> ObjectiveFunction:
+def _construct_objective_from_parsed_data(objective_data) -> ObjectiveFunction:
     """Build an ObjectiveFunction from parsed data."""
     optimization_direction = objective_data[0]  # "maximize" or "minimize"
     direction_enum = ObjectiveDirection(optimization_direction)
 
-    objective_expression = construct_linear_expression_from_parsed_data(
+    objective_expression = _construct_linear_expression_from_parsed_data(
         objective_data.expression
     )
 
     return ObjectiveFunction(direction=direction_enum, expression=objective_expression)
 
 
-def construct_constraint_from_parsed_data(constraint_data) -> Constraint:
+def _construct_constraint_from_parsed_data(constraint_data) -> Constraint:
     """Build a Constraint from parsed data."""
-    left_hand_side_expression = construct_linear_expression_from_parsed_data(
+    left_hand_side_expression = _construct_linear_expression_from_parsed_data(
         constraint_data.lhs
     )
     comparison_operator = ConstraintOperator(constraint_data.operator)
@@ -365,7 +365,7 @@ def construct_constraint_from_parsed_data(constraint_data) -> Constraint:
     )
 
 
-def construct_linear_expression_from_parsed_data(expression_data) -> LinearExpression:
+def _construct_linear_expression_from_parsed_data(expression_data) -> LinearExpression:
     """Build a LinearExpression from parsed data."""
     linear_expression = LinearExpression()
 
@@ -397,19 +397,19 @@ def apply_variable_bounds_and_types(
 
             match (str(first_element).lower(), str(second_element).lower()):
                 case ("integer", _):
-                    set_variables_as_integer_type(optimization_problem, second_element)
+                    _set_variables_as_integer_type(optimization_problem, second_element)
                 case (_, "integer"):
-                    set_variables_as_integer_type(optimization_problem, first_element)
+                    _set_variables_as_integer_type(optimization_problem, first_element)
                 case ("binary", _):
-                    set_variables_as_binary_type(optimization_problem, second_element)
+                    _set_variables_as_binary_type(optimization_problem, second_element)
                 case (_, "binary"):
-                    set_variables_as_binary_type(optimization_problem, first_element)
+                    _set_variables_as_binary_type(optimization_problem, first_element)
                 case _ if (
                     hasattr(first_element, "__iter__")
                     and not isinstance(first_element, str)
                     and str(second_element) == "0"
                 ):
-                    set_variables_non_negative_bounds(
+                    _set_variables_non_negative_bounds(
                         optimization_problem, first_element
                     )
                 case _ if (
@@ -417,12 +417,12 @@ def apply_variable_bounds_and_types(
                     and not isinstance(second_element, str)
                     and str(first_element) == "0"
                 ):
-                    set_variables_non_negative_bounds(
+                    _set_variables_non_negative_bounds(
                         optimization_problem, second_element
                     )
 
 
-def set_variables_as_integer_type(optimization_problem: Problem, variable_list):
+def _set_variables_as_integer_type(optimization_problem: Problem, variable_list):
     """Process integer variable declarations."""
     if isinstance(variable_list, str):
         variable_list = [variable_list]
@@ -444,7 +444,7 @@ def set_variables_as_integer_type(optimization_problem: Problem, variable_list):
             ].variable_type = VariableType.INTEGER
 
 
-def set_variables_as_binary_type(optimization_problem: Problem, variable_list):
+def _set_variables_as_binary_type(optimization_problem: Problem, variable_list):
     """Process binary variable declarations."""
     if isinstance(variable_list, str):
         variable_list = [variable_list]
@@ -472,7 +472,7 @@ def set_variables_as_binary_type(optimization_problem: Problem, variable_list):
             )
 
 
-def set_variables_non_negative_bounds(optimization_problem: Problem, variable_list):
+def _set_variables_non_negative_bounds(optimization_problem: Problem, variable_list):
     """Process non-negative variable bounds."""
     if isinstance(variable_list, str):
         variable_list = [variable_list]

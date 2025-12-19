@@ -140,20 +140,22 @@ def execute_problem_with_ortools_backend(
 
     try:
         # Create variables
-        solver_variable_map = initialize_decision_variables_in_solver(solver, problem)
+        solver_variable_map = _initialize_decision_variables_in_solver(solver, problem)
 
         # Add constraints
         for constraint in problem.constraints:
-            apply_constraint_to_solver(solver, solver_variable_map, constraint)
+            _apply_constraint_to_solver(solver, solver_variable_map, constraint)
 
         # Set objective
-        configure_optimization_objective(solver, solver_variable_map, problem.objective)
+        _configure_optimization_objective(
+            solver, solver_variable_map, problem.objective
+        )
 
         # Solve
         status = solver.Solve()
 
         # Extract solution
-        return build_solution_from_solver_results(
+        return _build_solution_from_solver_results(
             solver, solver_variable_map, status, start_time
         )
 
@@ -168,7 +170,9 @@ def execute_problem_with_ortools_backend(
         )
 
 
-def initialize_decision_variables_in_solver(solver, problem: Problem) -> dict[str, Any]:
+def _initialize_decision_variables_in_solver(
+    solver, problem: Problem
+) -> dict[str, Any]:
     """Initialize decision variables in OR-Tools solver based on problem definition."""
     solver_variable_mapping = {}
     for variable_name, variable_definition in problem.variables.items():
@@ -209,7 +213,7 @@ def initialize_decision_variables_in_solver(solver, problem: Problem) -> dict[st
     return solver_variable_mapping
 
 
-def apply_constraint_to_solver(
+def _apply_constraint_to_solver(
     solver, solver_variables: dict[str, Any], constraint: Constraint
 ) -> None:
     """Apply linear constraint to OR-Tools solver with proper bounds."""
@@ -232,7 +236,7 @@ def apply_constraint_to_solver(
         solver.Add(constraint_left_hand_side == constraint_right_hand_side)
 
 
-def configure_optimization_objective(
+def _configure_optimization_objective(
     solver, solver_variables: dict[str, Any], objective
 ) -> None:
     """Configure objective function coefficients and optimization direction."""
@@ -252,7 +256,7 @@ def configure_optimization_objective(
         objective_function.SetMinimization()
 
 
-def build_solution_from_solver_results(
+def _build_solution_from_solver_results(
     solver,
     solver_variables: dict[str, Any],
     solver_status_code,

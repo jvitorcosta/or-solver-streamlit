@@ -6,8 +6,8 @@ from solver import parser
 from solver.backends import SolverFactory
 from solver.models import Problem, Solution, SolverStatus, VariableType
 
-# Progress tracking for UI feedback
-PROGRESS_STEPS = {"parsing": 20, "setup": 40, "solving": 80, "complete": 100}
+# Progress tracking for UI feedback.
+_PROGRESS_STEPS = {"parsing": 20, "setup": 40, "solving": 80, "complete": 100}
 
 
 def parse_text_and_solve_with_backend(problem_text: str) -> tuple[Problem, Solution]:
@@ -49,13 +49,13 @@ def execute_optimization_with_ui_feedback(
 
         try:
             progress_text.text(translations.status.parsing)
-            progress_bar.progress(PROGRESS_STEPS["parsing"])
+            progress_bar.progress(_PROGRESS_STEPS["parsing"])
 
             progress_text.text(translations.status.setting_up)
-            progress_bar.progress(PROGRESS_STEPS["setup"])
+            progress_bar.progress(_PROGRESS_STEPS["setup"])
 
             progress_text.text(translations.status.solving)
-            progress_bar.progress(PROGRESS_STEPS["solving"])
+            progress_bar.progress(_PROGRESS_STEPS["solving"])
 
             problem, solution = parse_text_and_solve_with_backend(problem_text)
 
@@ -71,7 +71,7 @@ def execute_optimization_with_ui_feedback(
             solver = SolverFactory.create_solver(problem)
             solver_name = solver.get_solver_name()
 
-            # Complete
+            # Complete.
             progress_text.text(translations.status.solution_found)
             progress_bar.progress(100)
             status.update(label=translations.status.complete, state="complete")
@@ -84,9 +84,9 @@ def execute_optimization_with_ui_feedback(
                 problem, solution, translations, solver_name, problem_type
             )
 
-            # Generate visualization if applicable
+            # Generate visualization if applicable.
             if len(problem.variables) == 2 and solution.status == SolverStatus.OPTIMAL:
-                generate_interactive_2d_plot(problem, solution)
+                _generate_interactive_2d_plot(problem, solution)
 
             # Success toast
             st.toast(
@@ -158,7 +158,7 @@ def render_solution_results_with_metrics(
                 [
                     {
                         "Variable": var_name,
-                        "Value": format_value_by_variable_type(
+                        "Value": _format_value_by_variable_type(
                             var_name, value, problem
                         ),
                         "Type": problem.variables[var_name].variable_type.value.title(),
@@ -206,7 +206,7 @@ def render_solution_results_with_metrics(
                     st.info(f"Details: {solution.solver_message}")
 
 
-def format_value_by_variable_type(variable_name: str, value: float, problem) -> str:
+def _format_value_by_variable_type(variable_name: str, value: float, problem) -> str:
     """Format numeric value according to variable type (integer vs continuous)."""
     if variable_name in problem.variables:
         variable_type_enum = problem.variables[variable_name].variable_type
@@ -217,7 +217,7 @@ def format_value_by_variable_type(variable_name: str, value: float, problem) -> 
     return f"{value:.6f}"
 
 
-def generate_interactive_2d_plot(problem, solution):
+def _generate_interactive_2d_plot(problem, solution):
     """Generate interactive 2D plot with constraints and optimal solution."""
     # Import streamlit when needed to avoid import issues in tests
     import plotly.graph_objects as go
