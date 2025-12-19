@@ -100,8 +100,7 @@ class LinearExpression(pydantic.BaseModel):
                 existing_term.coefficient += decimal_coefficient
                 return
 
-        new_term = Term(coefficient=decimal_coefficient, variable=variable_name)
-        self.terms.append(new_term)
+        self.terms.append(Term(coefficient=decimal_coefficient, variable=variable_name))
 
     def extract_variable_names(self) -> list[str]:
         return [term.variable for term in self.terms]
@@ -152,11 +151,13 @@ class Constraint(pydantic.BaseModel):
 
     def __str__(self) -> str:
         """String representation of the constraint."""
-        op_symbol = {
-            ConstraintOperator.LESS_EQUAL: "<=",
-            ConstraintOperator.GREATER_EQUAL: ">=",
-            ConstraintOperator.EQUAL: "=",
-        }[self.operator]
+        match self.operator:
+            case ConstraintOperator.LESS_EQUAL:
+                op_symbol = "<="
+            case ConstraintOperator.GREATER_EQUAL:
+                op_symbol = ">="
+            case ConstraintOperator.EQUAL:
+                op_symbol = "="
 
         constraint_str = f"{self.expression} {op_symbol} {self.rhs}"
         if self.name:
@@ -178,11 +179,13 @@ class ObjectiveFunction(pydantic.BaseModel):
     )
 
     def __str__(self) -> str:
-        english_direction = self.direction.value
-        if english_direction in ["minimizar", "maximizar"]:
-            english_direction = (
-                "minimize" if english_direction == "minimizar" else "maximize"
-            )
+        match self.direction:
+            case ObjectiveDirection.MINIMIZAR:
+                english_direction = "minimize"
+            case ObjectiveDirection.MAXIMIZAR:
+                english_direction = "maximize"
+            case _:
+                english_direction = self.direction.value
 
         return f"{english_direction} {self.expression}"
 

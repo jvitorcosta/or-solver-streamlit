@@ -395,26 +395,31 @@ def apply_variable_bounds_and_types(
                 bound_specification[1],
             )
 
-            if str(first_element).lower() == "integer":
-                set_variables_as_integer_type(optimization_problem, second_element)
-            elif str(second_element).lower() == "integer":
-                set_variables_as_integer_type(optimization_problem, first_element)
-            elif str(first_element).lower() == "binary":
-                set_variables_as_binary_type(optimization_problem, second_element)
-            elif str(second_element).lower() == "binary":
-                set_variables_as_binary_type(optimization_problem, first_element)
-            elif (
-                hasattr(first_element, "__iter__")
-                and not isinstance(first_element, str)
-                and str(second_element) == "0"
-            ):
-                set_variables_non_negative_bounds(optimization_problem, first_element)
-            elif (
-                hasattr(second_element, "__iter__")
-                and not isinstance(second_element, str)
-                and str(first_element) == "0"
-            ):
-                set_variables_non_negative_bounds(optimization_problem, second_element)
+            match (str(first_element).lower(), str(second_element).lower()):
+                case ("integer", _):
+                    set_variables_as_integer_type(optimization_problem, second_element)
+                case (_, "integer"):
+                    set_variables_as_integer_type(optimization_problem, first_element)
+                case ("binary", _):
+                    set_variables_as_binary_type(optimization_problem, second_element)
+                case (_, "binary"):
+                    set_variables_as_binary_type(optimization_problem, first_element)
+                case _ if (
+                    hasattr(first_element, "__iter__")
+                    and not isinstance(first_element, str)
+                    and str(second_element) == "0"
+                ):
+                    set_variables_non_negative_bounds(
+                        optimization_problem, first_element
+                    )
+                case _ if (
+                    hasattr(second_element, "__iter__")
+                    and not isinstance(second_element, str)
+                    and str(first_element) == "0"
+                ):
+                    set_variables_non_negative_bounds(
+                        optimization_problem, second_element
+                    )
 
 
 def set_variables_as_integer_type(optimization_problem: Problem, variable_list):

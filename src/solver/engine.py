@@ -182,28 +182,28 @@ def render_solution_results_with_metrics(
         else:
             st.info("No variable values to display")
 
-    elif solution.status == SolverStatus.INFEASIBLE:
-        st.error("❌ **Problem is infeasible**")
-        st.info(
-            (
-                "The constraints cannot be satisfied simultaneously. "
-                "Check your constraint definitions."
-            )
-        )
-
-    elif solution.status == SolverStatus.UNBOUNDED:
-        st.warning("⚠️ **Problem is unbounded**")
-        st.info(
-            (
-                "The objective function can be improved infinitely. "
-                "Add upper/lower bounds to variables."
-            )
-        )
-
     else:
-        st.error(f"❌ **Solver Error**: {solution.status.value}")
-        if hasattr(solution, "solver_message") and solution.solver_message:
-            st.info(f"Details: {solution.solver_message}")
+        match solution.status:
+            case SolverStatus.INFEASIBLE:
+                st.error("❌ **Problem is infeasible**")
+                st.info(
+                    (
+                        "The constraints cannot be satisfied simultaneously. "
+                        "Check your constraint definitions."
+                    )
+                )
+            case SolverStatus.UNBOUNDED:
+                st.warning("⚠️ **Problem is unbounded**")
+                st.info(
+                    (
+                        "The objective function can be improved infinitely. "
+                        "Add upper/lower bounds to variables."
+                    )
+                )
+            case _:
+                st.error(f"❌ **Solver Error**: {solution.status.value}")
+                if hasattr(solution, "solver_message") and solution.solver_message:
+                    st.info(f"Details: {solution.solver_message}")
 
 
 def format_value_by_variable_type(variable_name: str, value: float, problem) -> str:
