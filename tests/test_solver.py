@@ -1,6 +1,6 @@
 """Tests for solver functions."""
 
-from solver.engine import parse_text_and_solve_with_backend
+from solver import engine
 from solver.models import Problem, SolverStatus
 
 
@@ -17,7 +17,7 @@ def test_solve_continuous_linear_program_optimally():
         x, y >= 0
     """
 
-    parsed_linear_problem, optimal_solution = parse_text_and_solve_with_backend(
+    parsed_linear_problem, optimal_solution = engine.parse_text_and_solve_with_backend(
         linear_program_text
     )
 
@@ -43,7 +43,7 @@ def test_solve_integer_program_with_discrete_variables():
         integer x, y
     """
 
-    parsed_integer_problem, integer_solution = parse_text_and_solve_with_backend(
+    parsed_integer_problem, integer_solution = engine.parse_text_and_solve_with_backend(
         integer_program_text
     )
 
@@ -68,7 +68,7 @@ def test_solve_minimization_problem_successfully():
     """
 
     parsed_minimization_problem, minimization_solution = (
-        parse_text_and_solve_with_backend(minimization_problem_text)
+        engine.parse_text_and_solve_with_backend(minimization_problem_text)
     )
 
     assert minimization_solution.status == SolverStatus.OPTIMAL

@@ -2,8 +2,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+import pydantic
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
 
 
 class LanguageCode(str, Enum):
@@ -13,7 +13,7 @@ class LanguageCode(str, Enum):
     PORTUGUESE = "pt"
 
 
-class AppTranslations(BaseModel):
+class AppTranslations(pydantic.BaseModel):
     """Application-level translations."""
 
     title: str
@@ -21,14 +21,14 @@ class AppTranslations(BaseModel):
     footer: str
 
 
-class SidebarTranslations(BaseModel):
+class SidebarTranslations(pydantic.BaseModel):
     """Sidebar translations."""
 
     settings: str
     language: str
 
 
-class InterfaceTranslations(BaseModel):
+class InterfaceTranslations(pydantic.BaseModel):
     """Interface translations."""
 
     problem_label: str
@@ -42,7 +42,7 @@ class InterfaceTranslations(BaseModel):
     processing_toast: str
 
 
-class ResourcesTranslations(BaseModel):
+class ResourcesTranslations(pydantic.BaseModel):
     """Resources section translations."""
 
     title: str
@@ -55,7 +55,7 @@ class ResourcesTranslations(BaseModel):
     download_pdf: str
 
 
-class MessagesTranslations(BaseModel):
+class MessagesTranslations(pydantic.BaseModel):
     """Message translations."""
 
     empty_problem_solve: str
@@ -63,7 +63,7 @@ class MessagesTranslations(BaseModel):
     problem_copied: str
 
 
-class StatusTranslations(BaseModel):
+class StatusTranslations(pydantic.BaseModel):
     """Status message translations."""
 
     parsing: str
@@ -75,20 +75,20 @@ class StatusTranslations(BaseModel):
     solving_failed: str
 
 
-class ErrorsTranslations(BaseModel):
+class ErrorsTranslations(pydantic.BaseModel):
     """Error message translations."""
 
     syntax_error: str
     solving_error: str
 
 
-class ResultTabsTranslations(BaseModel):
+class ResultTabsTranslations(pydantic.BaseModel):
     """Result tabs translations."""
 
     summary: str
 
 
-class ResultSummaryTranslations(BaseModel):
+class ResultSummaryTranslations(pydantic.BaseModel):
     """Result summary translations."""
 
     objective: str
@@ -96,7 +96,7 @@ class ResultSummaryTranslations(BaseModel):
     optimal: str
 
 
-class TabsTranslations(BaseModel):
+class TabsTranslations(pydantic.BaseModel):
     """Tab names translations."""
 
     workspace: str
@@ -106,7 +106,7 @@ class TabsTranslations(BaseModel):
     contributing: str
 
 
-class GalleryTranslations(BaseModel):
+class GalleryTranslations(pydantic.BaseModel):
     """Gallery section translations."""
 
     title: str
@@ -117,7 +117,7 @@ class GalleryTranslations(BaseModel):
     copied_toast: str
 
 
-class VisualizationTranslations(BaseModel):
+class VisualizationTranslations(pydantic.BaseModel):
     """Visualization section translations."""
 
     title: str
@@ -129,14 +129,14 @@ class VisualizationTranslations(BaseModel):
     gradient_arrow: str
 
 
-class LanguageLabelsTranslations(BaseModel):
+class LanguageLabelsTranslations(pydantic.BaseModel):
     """Language label translations."""
 
     english: str
     portuguese: str
 
 
-class ResultsTranslations(BaseModel):
+class ResultsTranslations(pydantic.BaseModel):
     """Results section translations."""
 
     solution: str
@@ -151,7 +151,7 @@ class ResultsTranslations(BaseModel):
     summary: ResultSummaryTranslations
 
 
-class TranslationSchema(BaseModel):
+class TranslationSchema(pydantic.BaseModel):
     """Complete translation schema."""
 
     app: AppTranslations
@@ -167,17 +167,17 @@ class TranslationSchema(BaseModel):
     visualization: VisualizationTranslations
     language_labels: LanguageLabelsTranslations
 
-    model_config = ConfigDict(frozen=True)  # Immutable after creation
+    model_config = pydantic.ConfigDict(frozen=True)  # Immutable after creation
 
 
-class LanguageManager(BaseModel):
+class LanguageManager(pydantic.BaseModel):
     """Manages language translations with Pydantic validation and immutable state."""
 
-    translation_schemas: dict[LanguageCode, TranslationSchema] = Field(
+    translation_schemas: dict[LanguageCode, TranslationSchema] = pydantic.Field(
         default_factory=dict
     )
 
-    model_config = ConfigDict(
+    model_config = pydantic.ConfigDict(
         use_enum_values=True, frozen=True
     )  # Immutable after creation
 

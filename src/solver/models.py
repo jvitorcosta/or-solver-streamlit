@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from enum import Enum
 
-from pydantic import BaseModel, Field, field_validator
+import pydantic
 
 
 class ObjectiveDirection(str, Enum):
@@ -35,13 +35,13 @@ class SolverStatus(str, Enum):
     ABNORMAL = "abnormal"
 
 
-class Variable(BaseModel):
+class Variable(pydantic.BaseModel):
     name: str
     variable_type: VariableType = VariableType.CONTINUOUS
     lower_bound: Decimal | None = None
     upper_bound: Decimal | None = None
 
-    @field_validator("name")
+    @pydantic.field_validator("name")
     @classmethod
     def ensure_valid_variable_name(cls, variable_name):
         if not variable_name or not isinstance(variable_name, str):
@@ -68,7 +68,7 @@ class Variable(BaseModel):
         return self.lower_bound is not None and self.lower_bound >= 0
 
 
-class Term(BaseModel):
+class Term(pydantic.BaseModel):
     coefficient: Decimal
     variable: str
 
@@ -82,11 +82,15 @@ class Term(BaseModel):
             return f"{self.coefficient}*{self.variable}"
 
 
-class LinearExpression(BaseModel):
+class LinearExpression(pydantic.BaseModel):
     """Represents a linear expression as a sum of terms."""
 
-    terms: list[Term] = Field(default_factory=list, description="List of terms")
-    constant: Decimal = Field(default=Decimal("0"), description="Constant term")
+    terms: list[Term] = pydantic.Field(
+        default_factory=list, description="List of terms"
+    )
+    constant: Decimal = pydantic.Field(
+        default=Decimal("0"), description="Constant term"
+    )
 
     def add_term(self, coefficient: Decimal | float | int, variable_name: str) -> None:
         decimal_coefficient = Decimal(str(coefficient))
@@ -134,13 +138,17 @@ class LinearExpression(BaseModel):
         return "".join(expression_parts)
 
 
-class Constraint(BaseModel):
+class Constraint(pydantic.BaseModel):
     """Represents a linear constraint."""
 
-    expression: LinearExpression = Field(..., description="Left-hand side expression")
-    operator: ConstraintOperator = Field(..., description="Constraint operator")
-    rhs: Decimal = Field(..., description="Right-hand side value")
-    name: str | None = Field(default=None, description="Constraint name")
+    expression: LinearExpression = pydantic.Field(
+        ..., description="Left-hand side expression"
+    )
+    operator: ConstraintOperator = pydantic.Field(
+        ..., description="Constraint operator"
+    )
+    rhs: Decimal = pydantic.Field(..., description="Right-hand side value")
+    name: str | None = pydantic.Field(default=None, description="Constraint name")
 
     def __str__(self) -> str:
         """String representation of the constraint."""
@@ -159,11 +167,15 @@ class Constraint(BaseModel):
         return self.expression.extract_variable_names()
 
 
-class ObjectiveFunction(BaseModel):
+class ObjectiveFunction(pydantic.BaseModel):
     """Represents the objective function."""
 
-    direction: ObjectiveDirection = Field(..., description="Optimization direction")
-    expression: LinearExpression = Field(..., description="Objective expression")
+    direction: ObjectiveDirection = pydantic.Field(
+        ..., description="Optimization direction"
+    )
+    expression: LinearExpression = pydantic.Field(
+        ..., description="Objective expression"
+    )
 
     def __str__(self) -> str:
         english_direction = self.direction.value
@@ -178,17 +190,17 @@ class ObjectiveFunction(BaseModel):
         return self.expression.extract_variable_names()
 
 
-class Problem(BaseModel):
+class Problem(pydantic.BaseModel):
     """Represents a complete linear programming problem."""
 
-    objective: ObjectiveFunction = Field(..., description="Objective function")
-    constraints: list[Constraint] = Field(
+    objective: ObjectiveFunction = pydantic.Field(..., description="Objective function")
+    constraints: list[Constraint] = pydantic.Field(
         default_factory=list, description="Problem constraints"
     )
-    variables: dict[str, Variable] = Field(
+    variables: dict[str, Variable] = pydantic.Field(
         default_factory=dict, description="Variable definitions"
     )
-    name: str | None = Field(default=None, description="Problem name")
+    name: str | None = pydantic.Field(default=None, description="Problem name")
 
     def add_constraint(self, new_constraint: Constraint) -> None:
         self.constraints.append(new_constraint)
@@ -296,23 +308,25 @@ class Problem(BaseModel):
         return "\n".join(problem_lines)
 
 
-class Solution(BaseModel):
+class Solution(pydantic.BaseModel):
     """Represents a solution to an optimization problem."""
 
-    status: SolverStatus = Field(..., description="Solver status")
-    objective_value: Decimal | None = Field(
+    status: SolverStatus = pydantic.Field(..., description="Solver status")
+    objective_value: Decimal | None = pydantic.Field(
         default=None, description="Optimal objective value"
     )
-    variable_values: dict[str, float] = Field(
+    variable_values: dict[str, float] = pydantic.Field(
         default_factory=dict, description="Variable values in the solution"
     )
-    solver_message: str | None = Field(
+    solver_message: str | None = pydantic.Field(
         default=None, description="Optional solver message or error details"
     )
-    solve_time: float | None = Field(
+    solve_time: float | None = pydantic.Field(
         default=None, description="Time taken to solve (in seconds)"
     )
-    iterations: int | None = Field(default=None, description="Number of iterations")
+    iterations: int | None = pydantic.Field(
+        default=None, description="Number of iterations"
+    )
 
     @property
     def is_optimal(self) -> bool:

@@ -3,22 +3,11 @@ from __future__ import annotations
 import re
 from decimal import Decimal
 
-from pyparsing import (
-    CaselessKeyword,
-    Forward,
-    Group,
-    Literal,
-    OneOrMore,
+import pyparsing
+from pyparsing import (  # Keep these as they are classes/exceptions
     ParseException,
     ParserElement,
-    Regex,
-    Suppress,
-    Word,
-    ZeroOrMore,
-    alphanums,
-    alphas,
 )
-from pyparsing import Optional as OptionalPP
 
 from solver.models import (
     Constraint,
@@ -82,47 +71,53 @@ class LPParser:
 def _setup_complete_parser_grammar():
     """Setup pyparsing grammar for LP problems."""
     # Basic tokens
-    number = Regex(r"[+-]?\d+(\.\d*)?([eE][+-]?\d+)?").setParseAction(
+    number = pyparsing.Regex(r"[+-]?\d+(\.\d*)?([eE][+-]?\d+)?").setParseAction(
         lambda t: Decimal(t[0])
     )
 
-    variable = Word(alphas, alphanums + "_").setResultsName("variable")
+    variable = pyparsing.Word(
+        pyparsing.alphas, pyparsing.alphanums + "_"
+    ).setResultsName("variable")
 
     # Operators
-    multiply = Literal("*")
-    plus = Literal("+")
-    minus = Literal("-")
+    multiply = pyparsing.Literal("*")
+    plus = pyparsing.Literal("+")
+    minus = pyparsing.Literal("-")
 
     # Constraint operators
-    le = Literal("<=")
-    ge = Literal(">=")
-    eq = Literal("=")
+    le = pyparsing.Literal("<=")
+    ge = pyparsing.Literal(">=")
+    eq = pyparsing.Literal("=")
     constraint_op = (le | ge | eq).setResultsName("operator")
 
     # Coefficient (optional, defaults to 1)
-    coefficient = OptionalPP(number, default=Decimal("1"))
+    coefficient = pyparsing.Optional(number, default=Decimal("1"))
 
     # Expression: term + term + ... (handling signs)
-    expression = Forward()
-    first_term = Group(
-        OptionalPP(plus | minus, default="+").setResultsName("sign")
+    expression = pyparsing.Forward()
+    first_term = pyparsing.Group(
+        pyparsing.Optional(plus | minus, default="+").setResultsName("sign")
         + coefficient.setResultsName("coeff")
-        + OptionalPP(multiply)
+        + pyparsing.Optional(multiply)
         + variable
     )
-    additional_term = Group(
+    additional_term = pyparsing.Group(
         (plus | minus).setResultsName("sign")
         + coefficient.setResultsName("coeff")
-        + OptionalPP(multiply)
+        + pyparsing.Optional(multiply)
         + variable
     )
-    expression <<= first_term + ZeroOrMore(additional_term)
+    expression <<= first_term + pyparsing.ZeroOrMore(additional_term)
 
     # Objective direction keywords (English and Portuguese)
-    maximize_en = CaselessKeyword("maximize") | CaselessKeyword("max")
-    minimize_en = CaselessKeyword("minimize") | CaselessKeyword("min")
-    maximize_pt = CaselessKeyword("maximizar")
-    minimize_pt = CaselessKeyword("minimizar")
+    maximize_en = pyparsing.CaselessKeyword("maximize") | pyparsing.CaselessKeyword(
+        "max"
+    )
+    minimize_en = pyparsing.CaselessKeyword("minimize") | pyparsing.CaselessKeyword(
+        "min"
+    )
+    maximize_pt = pyparsing.CaselessKeyword("maximizar")
+    minimize_pt = pyparsing.CaselessKeyword("minimizar")
 
     maximize_kw = (maximize_en | maximize_pt).setParseAction(lambda: "maximize")
     minimize_kw = (minimize_en | minimize_pt).setParseAction(lambda: "minimize")
@@ -130,66 +125,87 @@ def _setup_complete_parser_grammar():
     objective_direction = (maximize_kw | minimize_kw).setResultsName("direction")
 
     # Objective function
-    objective = Group(
+    objective = pyparsing.Group(
         objective_direction + expression.setResultsName("expression")
     ).setResultsName("objective")
 
     # Constraint keywords
     subject_to_en = (
-        CaselessKeyword("subject") + CaselessKeyword("to") + Suppress(":")
-        | CaselessKeyword("s.t.") + Suppress(":")
-        | CaselessKeyword("st") + Suppress(":")
+        pyparsing.CaselessKeyword("subject")
+        + pyparsing.CaselessKeyword("to")
+        + pyparsing.Suppress(":")
+        | pyparsing.CaselessKeyword("s.t.") + pyparsing.Suppress(":")
+        | pyparsing.CaselessKeyword("st") + pyparsing.Suppress(":")
     )
-    subject_to_pt = CaselessKeyword("sujeito") + CaselessKeyword("a") + Suppress(":")
+    subject_to_pt = (
+        pyparsing.CaselessKeyword("sujeito")
+        + pyparsing.CaselessKeyword("a")
+        + pyparsing.Suppress(":")
+    )
     subject_to = subject_to_en | subject_to_pt
 
     # Single constraint
-    constraint = Group(
+    constraint = pyparsing.Group(
         expression.setResultsName("lhs") + constraint_op + number.setResultsName("rhs")
     )
 
     # Constraints section
-    constraints_section = Group(
-        Suppress(subject_to) + OneOrMore(constraint)
+    constraints_section = pyparsing.Group(
+        pyparsing.Suppress(subject_to) + pyparsing.OneOrMore(constraint)
     ).setResultsName("constraints")
 
     # Variable bounds and types keywords (optional)
-    where_en = CaselessKeyword("where") + Suppress(":")
-    where_pt = CaselessKeyword("onde") + Suppress(":")
+    where_en = pyparsing.CaselessKeyword("where") + pyparsing.Suppress(":")
+    where_pt = pyparsing.CaselessKeyword("onde") + pyparsing.Suppress(":")
     where_kw = where_en | where_pt
 
     # Variable lists
-    var_list = Group(variable + ZeroOrMore(Suppress(",") + variable))
+    var_list = pyparsing.Group(
+        variable + pyparsing.ZeroOrMore(pyparsing.Suppress(",") + variable)
+    )
 
     # Bound specifications
-    non_negative = Group(
-        var_list.setResultsName("variables") + Suppress(">=") + Literal("0")
+    non_negative = pyparsing.Group(
+        var_list.setResultsName("variables")
+        + pyparsing.Suppress(">=")
+        + pyparsing.Literal("0")
     ).setResultsName("non_negative")
 
     # Variable type declarations (support both "integer vars" and "vars integer")
-    integer_decl = Group(
+    integer_decl = pyparsing.Group(
         (
-            (CaselessKeyword("integer") + var_list.setResultsName("variables"))
-            | (var_list.setResultsName("variables") + CaselessKeyword("integer"))
+            (
+                pyparsing.CaselessKeyword("integer")
+                + var_list.setResultsName("variables")
+            )
+            | (
+                var_list.setResultsName("variables")
+                + pyparsing.CaselessKeyword("integer")
+            )
         )
     ).setResultsName("integer")
 
-    binary_decl = Group(
+    binary_decl = pyparsing.Group(
         (
-            (CaselessKeyword("binary") + var_list.setResultsName("variables"))
-            | (var_list.setResultsName("variables") + CaselessKeyword("binary"))
+            (pyparsing.CaselessKeyword("binary") + var_list.setResultsName("variables"))
+            | (
+                var_list.setResultsName("variables")
+                + pyparsing.CaselessKeyword("binary")
+            )
         )
     ).setResultsName("binary")
 
     # Bounds can appear with or without "where:" keyword
-    bounds_content = ZeroOrMore(non_negative | integer_decl | binary_decl)
-    bounds_section = Group(
-        OptionalPP(Suppress(where_kw)) + bounds_content
+    bounds_content = pyparsing.ZeroOrMore(non_negative | integer_decl | binary_decl)
+    bounds_section = pyparsing.Group(
+        pyparsing.Optional(pyparsing.Suppress(where_kw)) + bounds_content
     ).setResultsName("bounds")
 
     # Complete LP problem
     lp_problem = (
-        objective + OptionalPP(constraints_section) + OptionalPP(bounds_section)
+        objective
+        + pyparsing.Optional(constraints_section)
+        + pyparsing.Optional(bounds_section)
     )
 
     return lp_problem
