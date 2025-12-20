@@ -39,35 +39,6 @@ def _get_or_initialize_parser_grammar():
     return _PARSER_GRAMMAR
 
 
-class LPParser:
-    """Parser for modern academic LP syntax.
-
-    Supports both English and Portuguese syntax:
-
-    English:
-        maximize/minimize <expression>
-        subject to: / s.t.:
-            <constraints>
-        where:
-            <variable bounds and types>
-
-    Portuguese:
-        maximizar/minimizar <expression>
-        sujeito a:
-            <constraints>
-        onde:
-            <variable bounds and types>
-    """
-
-    def __init__(self):
-        """Initialize the parser with grammar rules."""
-        self.grammar = _get_or_initialize_parser_grammar()
-
-    def _setup_grammar(self):
-        """Setup pyparsing grammar for LP problems (deprecated - use standalone function)."""
-        return _setup_complete_parser_grammar()
-
-
 def _setup_complete_parser_grammar():
     """Setup pyparsing grammar for LP problems."""
     # Basic tokens
@@ -209,46 +180,6 @@ def _setup_complete_parser_grammar():
     )
 
     return lp_problem
-
-    def parse(self, problem_text: str) -> Problem:
-        """Parse a complete LP problem from text."""
-        return parse_lp_text_with_grammar(problem_text, self.grammar)
-
-    def _preprocess_text(self, text: str) -> str:
-        """Clean and preprocess the input text (deprecated - use standalone function)."""
-        return clean_and_normalize_problem_text(text)
-
-    def _build_problem(self, parsed_data) -> Problem:
-        """Build a Problem object from parsed data (deprecated - use standalone function)."""
-        return _construct_problem_from_parsed_structure(parsed_data)
-
-    def _build_objective(self, obj_data) -> ObjectiveFunction:
-        """Build an ObjectiveFunction from parsed data (deprecated - use standalone function)."""
-        return _construct_objective_from_parsed_data(obj_data)
-
-    def _build_constraint(self, constraint_data) -> Constraint:
-        """Build a Constraint from parsed data (deprecated - use standalone function)."""
-        return _construct_constraint_from_parsed_data(constraint_data)
-
-    def _build_expression(self, expr_data) -> LinearExpression:
-        """Build a LinearExpression from parsed data (deprecated - use standalone function)."""
-        return _construct_linear_expression_from_parsed_data(expr_data)
-
-    def _process_bounds(self, problem: Problem, bounds_data):
-        """Process variable bounds and type declarations (deprecated - use standalone function)."""
-        return apply_variable_bounds_and_types(problem, bounds_data)
-
-    def _process_integer_variables(self, problem: Problem, var_list):
-        """Process integer variable declarations (deprecated - use standalone function)."""
-        return _set_variables_as_integer_type(problem, var_list)
-
-    def _process_binary_variables(self, problem: Problem, var_list):
-        """Process binary variable declarations (deprecated - use standalone function)."""
-        return _set_variables_as_binary_type(problem, var_list)
-
-    def _process_non_negative_variables(self, problem: Problem, var_list):
-        """Process non-negative variable bounds (deprecated - use standalone function)."""
-        return _set_variables_non_negative_bounds(problem, var_list)
 
 
 def parse_lp_problem(problem_text: str) -> Problem:

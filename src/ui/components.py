@@ -1,8 +1,8 @@
-"""UI components for the OR-Solver interface."""
+"""UI components for the SolvedOR interface."""
 
 import streamlit as st
 
-from config import language
+import language
 
 # Language display configuration.
 _LANGUAGE_DISPLAY = {"en": "🇺🇸 English", "pt": "🇵🇹 Português"}

@@ -1,10 +1,12 @@
 import streamlit as st
 
-from config import language
+import language
 from ui import components, tabs, workspace
 
 
-def initialize_streamlit_page_configuration() -> None:
+def initialize_streamlit_page_configuration(
+    translations: language.TranslationSchema,
+) -> None:
     """Initialize Streamlit page configuration with title, layout, and menu options."""
     st.set_page_config(
         page_title="SolvedOR",
@@ -16,7 +18,7 @@ def initialize_streamlit_page_configuration() -> None:
             "Report a bug": (
                 "https://github.com/jvitorcosta/or-solver-streamlit/issues"
             ),
-            "About": "# OR-Solver\nModern Operations Research Solver",
+            "About": translations.app.about,
         },
     )
 
@@ -65,6 +67,13 @@ def display_tabbed_application_interface(
     with streamlit_tabs_dictionary["workspace"]:
         st.markdown(f"#### :material/collections: {translations.gallery.title}")
         workspace.display_optimization_problem_gallery(translations=translations)
+
+        # Display selected example description right below the pills
+        workspace.display_selected_example_description()
+
+        # Display mathematical formulation preview
+        workspace.display_selected_example_preview(translations=translations)
+
         st.markdown("---")
         workspace.display_optimization_workspace_interface(translations=translations)
 
@@ -72,7 +81,7 @@ def display_tabbed_application_interface(
         tabs.display_research_thesis_with_viewer(translations)
 
     with streamlit_tabs_dictionary["guide"]:
-        tabs.display_visualization_elements_guide()
+        tabs.display_visualization_elements_guide(translations)
 
     with streamlit_tabs_dictionary["readme"]:
         tabs.display_markdown_content_from_file("README.md", translations)
@@ -82,12 +91,13 @@ def display_tabbed_application_interface(
 
 
 if __name__ == "__main__":
-    initialize_streamlit_page_configuration()
     setup_default_session_state_variables()
 
     current_language_translations = language.load_language_translations(
         language_code=st.session_state.get("language")
     )
+
+    initialize_streamlit_page_configuration(current_language_translations)
 
     components.display_language_selection_sidebar(
         translations=current_language_translations

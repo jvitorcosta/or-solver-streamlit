@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from config import language
+import language
 from solver import parser
 from solver.backends import SolverFactory
 from solver.models import Problem, Solution, SolverStatus, VariableType

@@ -1,7 +1,32 @@
 app:
-  title: "OR-Solver"
+  title: "SolvedOR"
   subtitle: "Um aplicação de Pesquisa Operacional"
   footer: ":material/favorite: Gostou de usar? Por favor, dê uma estrela no GitHub!"
+  about: |
+    # SolvedOR :material/analytics:
+    **Solucionador Moderno de Pesquisa Operacional**
+
+    SolvedOR é uma plataforma web intuitiva para resolver problemas de programação linear e otimização. Seja você um estudante aprendendo conceitos de PO ou um profissional enfrentando desafios de otimização do mundo real, o SolvedOR torna a modelagem matemática complexa acessível e interativa.
+
+    ### :material/star: Recursos Principais
+    - **Galeria de Problemas Interativa** - Explore cenários de otimização do mundo real
+    - **Sintaxe Intuitiva** - Escreva problemas em notação matemática natural
+    - **Soluções Instantâneas** - Obtenha resultados ótimos com explicações detalhadas
+    - **Suporte Bilíngue** - Disponível em inglês e português
+    - **Foco Educacional** - Perfeito para aprender e ensinar conceitos de PO
+
+    ### :material/code: Tecnologia
+    - **OR-Tools** do Google para resolução robusta de otimização
+    - **Streamlit** para interface web moderna
+    - **Ecossistema Python** para performance confiável
+
+    ### :material/school: Perfeito Para
+    - Estudantes e educadores de Pesquisa Operacional
+    - Analistas de negócios otimizando recursos
+    - Engenheiros resolvendo problemas de alocação
+    - Qualquer pessoa curiosa sobre otimização matemática
+
+    *Construído com :material/favorite: para a comunidade de PO*
 
 sidebar:
   settings: "Configurações"
