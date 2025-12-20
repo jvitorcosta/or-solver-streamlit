@@ -108,7 +108,7 @@ resource_allocation:
 
 facility_location:
   icon: ":material/location_on:"
-  name: "Localização de Instalações (Inteiro)"
+  name: "Localização de Instalações"
   description: |
     Uma empresa de distribuição está planejando expandir sua rede e precisa decidir quais armazéns abrir entre quatro localizações potenciais. Os custos fixos anuais são: Localização 1 (R$ 50k), Localização 2 (R$ 60k), Localização 3 (R$ 45k), e Localização 4 (R$ 55k).
 
@@ -141,7 +141,7 @@ production_with_setup:
   icon: ":material/settings:"
   name: "Produção com Setup"
   description: |
-    Uma empresa manufatureira pode produzir três produtos, mas deve pagar custos fixos de setup para iniciar a produção de cada produto. O Produto A tem custo de setup de R$ 1000 e lucro de R$ 15 por unidade. O Produto B tem custo de setup de R$ 800 e lucro de R$ 12 por unidade. O Produto C tem custo de setup de R$ 1200 e lucro de R$ 20 por unidade.
+    Uma empresa manufatureira pode produzir três produtos, mas deve pagar custos fixos de setup para iniciar a produção de cada produto. O Produto A tem custo de setup de R$ 100 e lucro de R$ 15 por unidade. O Produto B tem custo de setup de R$ 80 e lucro de R$ 12 por unidade. O Produto C tem custo de setup de R$ 120 e lucro de R$ 20 por unidade.
 
     **Restrições de produção:**
     - Mão de obra: 2 horas para A, 1,5 horas para B, 3 horas para C (120 horas totais)
@@ -151,7 +151,7 @@ production_with_setup:
 
     **Questão:** Quais produtos devem ser produzidos e em que quantidades para maximizar o lucro após os custos de setup?
   problem: |
-    maximize 15*prod_a + 12*prod_b + 20*prod_c - 1000*setup_a - 800*setup_b - 1200*setup_c
+    maximize 15*prod_a + 12*prod_b + 20*prod_c - 100*setup_a - 80*setup_b - 120*setup_c
 
     subject to:
         # Restrições de recursos
@@ -159,14 +159,14 @@ production_with_setup:
         3*prod_a + 2*prod_b + 4*prod_c <= 150       # Material kg
 
         # Lógica de setup: não pode produzir sem setup
-        prod_a <= 50*setup_a                        # Produção máx A
-        prod_b <= 50*setup_b                        # Produção máx B
-        prod_c <= 50*setup_c                        # Produção máx C
+        prod_a - 50*setup_a <= 0                    # Produção máx A
+        prod_b - 50*setup_b <= 0                    # Produção máx B
+        prod_c - 50*setup_c <= 0                    # Produção máx C
 
         # Produção mínima se configurado
-        prod_a >= 10*setup_a                        # Produção mín A
-        prod_b >= 10*setup_b                        # Produção mín B
-        prod_c >= 10*setup_c                        # Produção mín C
+        -prod_a + 10*setup_a <= 0                   # Produção mín A
+        -prod_b + 10*setup_b <= 0                   # Produção mín B
+        -prod_c + 10*setup_c <= 0                   # Produção mín C
 
     where:
         prod_a, prod_b, prod_c >= 0                 # Quantidades contínuas de produção
