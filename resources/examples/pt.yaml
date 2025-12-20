@@ -11,7 +11,6 @@ production_planning:
 
     **Questão:** Quantas unidades de cada produto a empresa deve produzir para maximizar o lucro total?
   problem: |
-    # Problema de Programação Linear (Variáveis Contínuas)
     maximize 40*produto_a + 50*produto_b
 
     subject to:
@@ -36,7 +35,6 @@ transportation:
 
     **Questão:** Como a empresa deve alocar os embarques para minimizar os custos totais de transporte enquanto satisfaz todas as demandas das lojas?
   problem: |
-    # Problema de Programação Linear (Variáveis Contínuas)
     minimize 8*x11 + 6*x12 + 10*x13 + 9*x21 + 12*x22 + 13*x23
 
     subject to:
@@ -68,7 +66,6 @@ diet_optimization:
 
     **Questão:** Quantas porções de cada alimento devem ser incluídas no plano alimentar diário para atender a todos os requisitos nutricionais com custo mínimo?
   problem: |
-    # Problema de Programação Linear (Variáveis Contínuas)
     minimize 3*pao + 2*leite + 4*queijo + 1*batata
 
     subject to:
@@ -79,6 +76,7 @@ diet_optimization:
 
     where:
         pao, leite, queijo, batata >= 0                # Não-negatividade
+        pao, leite, queijo, batata integer              # Apenas porções inteiras
 
 resource_allocation:
   icon: ":material/account_balance:"
@@ -88,12 +86,11 @@ resource_allocation:
 
     **Restrições de investimento:**
     - Orçamento total: R$ 1.000.000 máximo disponível
-    - Gestão de risco: 0,6A + 0,8B + 0,9C ≤ R$ 750.000 (limite de risco ponderado)
+    - Gestão de risco: 0,6A + 0,8B + 0,9C <= R$ 750.000 (limite de risco ponderado)
     - Investimentos mínimos: A ≥ R$ 100k, B ≥ R$ 150k, C ≥ R$ 200k
 
     **Questão:** Quanto a empresa deve investir em cada projeto para maximizar o retorno anual total esperado?
   problem: |
-    # Problema de Programação Linear (Variáveis Contínuas)
     maximize 0.12*projeto_a + 0.15*projeto_b + 0.18*projeto_c
 
     subject to:
@@ -124,7 +121,6 @@ facility_location:
 
     **Questão:** Quais localizações de armazém a empresa deve abrir para atender a todos os requisitos de serviço minimizando os custos fixos totais?
   problem: |
-    # Problema de Programação Inteira (Variáveis Binárias)
     minimize 50000*x1 + 60000*x2 + 45000*x3 + 55000*x4
 
     subject to:
@@ -140,3 +136,39 @@ facility_location:
     where:
         x1, x2, x3, x4 >= 0
         x1, x2, x3, x4 integer  # Variáveis de decisão binárias (0 ou 1)
+
+production_with_setup:
+  icon: ":material/settings:"
+  name: "Produção com Setup"
+  description: |
+    Uma empresa manufatureira pode produzir três produtos, mas deve pagar custos fixos de setup para iniciar a produção de cada produto. O Produto A tem custo de setup de R$ 1000 e lucro de R$ 15 por unidade. O Produto B tem custo de setup de R$ 800 e lucro de R$ 12 por unidade. O Produto C tem custo de setup de R$ 1200 e lucro de R$ 20 por unidade.
+
+    **Restrições de produção:**
+    - Mão de obra: 2 horas para A, 1,5 horas para B, 3 horas para C (120 horas totais)
+    - Materiais: 3 kg para A, 2 kg para B, 4 kg para C (150 kg disponíveis)
+    - Capacidade de setup: Se produzindo, mínimo 10 unidades por produto
+    - Produção máxima: 50 unidades por produto se configurado
+
+    **Questão:** Quais produtos devem ser produzidos e em que quantidades para maximizar o lucro após os custos de setup?
+  problem: |
+    maximize 15*prod_a + 12*prod_b + 20*prod_c - 1000*setup_a - 800*setup_b - 1200*setup_c
+
+    subject to:
+        # Restrições de recursos
+        2*prod_a + 1.5*prod_b + 3*prod_c <= 120     # Horas de trabalho
+        3*prod_a + 2*prod_b + 4*prod_c <= 150       # Material kg
+
+        # Lógica de setup: não pode produzir sem setup
+        prod_a <= 50*setup_a                        # Produção máx A
+        prod_b <= 50*setup_b                        # Produção máx B
+        prod_c <= 50*setup_c                        # Produção máx C
+
+        # Produção mínima se configurado
+        prod_a >= 10*setup_a                        # Produção mín A
+        prod_b >= 10*setup_b                        # Produção mín B
+        prod_c >= 10*setup_c                        # Produção mín C
+
+    where:
+        prod_a, prod_b, prod_c >= 0                 # Quantidades contínuas de produção
+        setup_a, setup_b, setup_c >= 0              # Decisões binárias de setup
+        setup_a, setup_b, setup_c integer           # Variáveis binárias (0 ou 1)

@@ -11,7 +11,6 @@ production_planning:
 
     **Question:** How many units of each product should the company produce to maximize total profit?
   problem: |
-    # Linear Programming Problem (Continuous Variables)
     maximize 40*product_a + 50*product_b
 
     subject to:
@@ -36,7 +35,6 @@ transportation:
 
     **Question:** How should the company allocate shipments to minimize total transportation costs while satisfying all store demands?
   problem: |
-    # Linear Programming Problem (Continuous Variables)
     minimize 8*x11 + 6*x12 + 10*x13 + 9*x21 + 12*x22 + 13*x23
 
     subject to:
@@ -68,7 +66,6 @@ diet_optimization:
 
     **Question:** How many servings of each food should be included in the daily meal plan to meet all nutritional requirements at minimum cost?
   problem: |
-    # Linear Programming Problem (Continuous Variables)
     minimize 3*bread + 2*milk + 4*cheese + 1*potato
 
     subject to:
@@ -79,6 +76,7 @@ diet_optimization:
 
     where:
         bread, milk, cheese, potato >= 0                # Non-negativity
+        bread, milk, cheese, potato integer              # Whole servings only
 
 resource_allocation:
   icon: ":material/account_balance:"
@@ -88,12 +86,11 @@ resource_allocation:
 
     **Investment constraints:**
     - Total budget: \$1,000,000 maximum available
-    - Risk management: 0.6A + 0.8B + 0.9C ≤ \$750,000 (weighted risk limit)
+    - Risk management: 0.6A + 0.8B + 0.9C <= \$750,000 (weighted risk limit)
     - Minimum investments: A ≥ \$100k, B ≥ \$150k, C ≥ \$200k
 
     **Question:** How much should the firm invest in each project to maximize total expected annual returns?
   problem: |
-    # Linear Programming Problem (Continuous Variables)
     maximize 0.12*project_a + 0.15*project_b + 0.18*project_c
 
     subject to:
@@ -124,7 +121,6 @@ facility_location:
 
     **Question:** Which warehouse locations should the company open to meet all service requirements while minimizing total fixed costs?
   problem: |
-    # Integer Programming Problem (Binary Variables)
     minimize 50000*x1 + 60000*x2 + 45000*x3 + 55000*x4
 
     subject to:
@@ -140,3 +136,39 @@ facility_location:
     where:
         x1, x2, x3, x4 >= 0
         x1, x2, x3, x4 integer  # Binary decision variables (0 or 1)
+
+production_with_setup:
+  icon: ":material/settings:"
+  name: "Production with Setup"
+  description: |
+    A manufacturing company can produce three products but must pay fixed setup costs to begin production of each product. Product A has a setup cost of \$1000 and profit of \$15 per unit. Product B has a setup cost of \$800 and profit of \$12 per unit. Product C has a setup cost of \$1200 and profit of \$20 per unit.
+
+    **Production constraints:**
+    - Labor: 2 hours for A, 1.5 hours for B, 3 hours for C (120 total hours)
+    - Materials: 3 kg for A, 2 kg for B, 4 kg for C (150 kg available)
+    - Setup capacity: If producing, minimum 10 units per product
+    - Maximum production: 50 units per product if setup
+
+    **Question:** Which products should be produced and in what quantities to maximize profit after setup costs?
+  problem: |
+    maximize 15*prod_a + 12*prod_b + 20*prod_c - 1000*setup_a - 800*setup_b - 1200*setup_c
+
+    subject to:
+        # Resource constraints
+        2*prod_a + 1.5*prod_b + 3*prod_c <= 120     # Labor hours
+        3*prod_a + 2*prod_b + 4*prod_c <= 150       # Material kg
+
+        # Setup logic: can't produce without setup
+        prod_a <= 50*setup_a                        # Max production A
+        prod_b <= 50*setup_b                        # Max production B
+        prod_c <= 50*setup_c                        # Max production C
+
+        # Minimum production if setup
+        prod_a >= 10*setup_a                        # Min production A
+        prod_b >= 10*setup_b                        # Min production B
+        prod_c >= 10*setup_c                        # Min production C
+
+    where:
+        prod_a, prod_b, prod_c >= 0                 # Continuous production quantities
+        setup_a, setup_b, setup_c >= 0              # Binary setup decisions
+        setup_a, setup_b, setup_c integer           # Binary variables (0 or 1)
