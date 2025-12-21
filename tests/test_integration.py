@@ -6,13 +6,15 @@ import yaml
 
 from solver import parser
 from solver.backends import SolverFactory
-from solver.models import SolverStatus, VariableType
+from solver.models import Problem, Solution, SolverStatus, VariableType
 
 # Import only the core functions without UI dependencies
 from solver.parser import ParseError
 
 
-def parse_and_solve_without_ui_dependencies(problem_text: str):
+def parse_and_solve_without_ui_dependencies(
+    problem_text: str,
+) -> tuple[Problem, Solution]:
     """Parse LP text and solve without UI dependencies for testing."""
     problem = parser.parse_lp_problem(problem_text)
     solver = SolverFactory.create_solver(problem)
@@ -21,9 +23,8 @@ def parse_and_solve_without_ui_dependencies(problem_text: str):
 
 
 @pytest.fixture
-def examples_data():
-    """Load example problems from YAML file."""
-    examples_path = Path("resources") / "examples.yaml"
+def examples_data() -> dict:
+    examples_path = Path("resources") / "examples" / "en.yaml"
     with open(examples_path, "r", encoding="utf-8") as file:
         return yaml.safe_load(file)
 
@@ -164,7 +165,7 @@ def examples_data():
         ),
     ],
 )
-def test_comprehensive_problem_solving_flow(input_data, expected):
+def test_comprehensive_problem_solving_flow(input_data: dict, expected: dict) -> None:
     """Test complete parse and solve flow for various problem types and edge cases."""
     problem, solution = parse_and_solve_without_ui_dependencies(
         input_data["problem_text"]
@@ -242,8 +243,8 @@ def test_comprehensive_problem_solving_flow(input_data, expected):
             "diet_optimization",
             {
                 "objective_direction": "MINIMIZE",
-                "min_variables": 3,
-                "variable_type": VariableType.CONTINUOUS,
+                "min_variables": 4,
+                "variable_type": VariableType.INTEGER,
                 "expected_cost": True,
             },
         ),
@@ -266,7 +267,9 @@ def test_comprehensive_problem_solving_flow(input_data, expected):
         ),
     ],
 )
-def test_yaml_examples_comprehensive(examples_data, example_key, expected):
+def test_yaml_examples_comprehensive(
+    examples_data: dict, example_key: str, expected: dict
+) -> None:
     """Test all YAML example problems with comprehensive validation."""
     problem_text = examples_data[example_key]["problem"]
 
@@ -346,7 +349,9 @@ def test_yaml_examples_comprehensive(examples_data, example_key, expected):
         ),
     ],
 )
-def test_error_handling_comprehensive(input_data, expected_exception):
+def test_error_handling_comprehensive(
+    input_data: dict, expected_exception: type
+) -> None:
     """Test comprehensive error handling for invalid problem formats."""
     with pytest.raises(expected_exception):
         parse_and_solve_without_ui_dependencies(input_data["problem_text"])
@@ -370,7 +375,9 @@ def test_error_handling_comprehensive(input_data, expected_exception):
         )
     ],
 )
-def test_solution_formatting_comprehensive(examples_data, input_data, expected):
+def test_solution_formatting_comprehensive(
+    examples_data: dict, input_data: dict, expected: dict
+) -> None:
     """Test solution formatting and string representation."""
     problem_text = examples_data[input_data["example_key"]]["problem"]
     problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
@@ -395,7 +402,7 @@ def test_solution_formatting_comprehensive(examples_data, input_data, expected):
 
 
 # Problem variable extraction tests
-def test_problem_variable_extraction_comprehensive(examples_data):
+def test_problem_variable_extraction_comprehensive(examples_data: dict) -> None:
     """Test comprehensive variable extraction from problems."""
     problem_text = examples_data["production_planning"]["problem"]
     problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
@@ -430,7 +437,9 @@ def test_problem_variable_extraction_comprehensive(examples_data):
         "facility_location",
     ],
 )
-def test_all_examples_solve_successfully_comprehensive(examples_data, example_key):
+def test_all_examples_solve_successfully_comprehensive(
+    examples_data: dict, example_key: str
+) -> None:
     """Test that all example problems solve successfully with comprehensive validation."""
     problem_text = examples_data[example_key]["problem"]
 

@@ -43,7 +43,7 @@ class Variable(pydantic.BaseModel):
 
     @pydantic.field_validator("name")
     @classmethod
-    def ensure_valid_variable_name(cls, variable_name):
+    def ensure_valid_variable_name(cls: type[Variable], variable_name: str) -> str:
         if not variable_name or not isinstance(variable_name, str):
             raise ValueError(
                 f"Variable name must be a non-empty string: {variable_name}"
