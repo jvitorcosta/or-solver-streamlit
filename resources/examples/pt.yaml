@@ -1,0 +1,174 @@
+production_planning:
+  icon: ":material/factory:"
+  name: "Planejamento de Produção"
+  description: |
+    Uma empresa manufatureira produz dois produtos: Produto A e Produto B. A empresa obtém lucro de R$ 40 por unidade do Produto A e R$ 50 por unidade do Produto B.
+
+    **Restrições de produção:**
+    - Mão de obra: Cada unidade de A requer 2 horas, cada unidade de B requer 3 horas (100 horas disponíveis)
+    - Materiais: Cada unidade de A precisa de 4 kg, cada unidade de B precisa de 2 kg (120 kg disponíveis)
+    - Capacidade: Máximo de 30 unidades de A e 25 unidades de B podem ser produzidas
+
+    **Questão:** Quantas unidades de cada produto a empresa deve produzir para maximizar o lucro total?
+  problem: |
+    maximize 40*produto_a + 50*produto_b
+
+    subject to:
+        # Restrições de recursos
+        2*produto_a + 3*produto_b <= 100  # Horas de trabalho disponíveis
+        4*produto_a + 2*produto_b <= 120  # Limite de matérias-primas
+        produto_a <= 30                   # Capacidade do Produto A
+        produto_b <= 25                   # Capacidade do Produto B
+
+    where:
+        produto_a, produto_b >= 0         # Não-negatividade
+
+transportation:
+  icon: ":material/local_shipping:"
+  name: "Problema de Transporte"
+  description: |
+    Uma empresa de logística opera dois armazéns e precisa abastecer três lojas de varejo. O Armazém 1 tem 200 unidades em estoque, e o Armazém 2 tem 300 unidades. As lojas têm as seguintes demandas: Loja 1 precisa de 150 unidades, Loja 2 precisa de 200 unidades, e Loja 3 precisa de 150 unidades.
+
+    **Custos de envio por unidade:**
+    - A1→L1: R$ 8, A1→L2: R$ 6, A1→L3: R$ 10
+    - A2→L1: R$ 9, A2→L2: R$ 12, A2→L3: R$ 13
+
+    **Questão:** Como a empresa deve alocar os embarques para minimizar os custos totais de transporte enquanto satisfaz todas as demandas das lojas?
+  problem: |
+    minimize 8*x11 + 6*x12 + 10*x13 + 9*x21 + 12*x22 + 13*x23
+
+    subject to:
+        # Restrições de oferta (armazéns)
+        x11 + x12 + x13 = 200  # Oferta do Armazém 1
+        x21 + x22 + x23 = 300  # Oferta do Armazém 2
+
+        # Restrições de demanda (lojas)
+        x11 + x21 = 150         # Demanda da Loja 1
+        x12 + x22 = 200         # Demanda da Loja 2
+        x13 + x23 = 150         # Demanda da Loja 3
+
+    where:
+        x11, x12, x13, x21, x22, x23 >= 0  # Não-negatividade
+
+diet_optimization:
+  icon: ":material/restaurant:"
+  name: "Otimização de Dieta"
+  description: |
+    Um nutricionista está projetando um plano alimentar econômico para um centro de saúde usando quatro alimentos: pão (R$ 3), leite (R$ 2), queijo (R$ 4), e batata (R$ 1) por porção.
+
+    **Conteúdo nutricional por porção:**
+    - Pão: 4 calorias, 2g proteína, 2 unidades de vitaminas
+    - Leite: 8 calorias, 12g proteína, 3 unidades de vitaminas
+    - Queijo: 2 calorias, 10g proteína, 8 unidades de vitaminas
+    - Batata: 2 calorias, 4g proteína, 2 unidades de vitaminas
+
+    **Necessidades diárias:** mínimo de 2000 calorias, 55g de proteína, 800 unidades de vitaminas
+
+    **Questão:** Quantas porções de cada alimento devem ser incluídas no plano alimentar diário para atender a todos os requisitos nutricionais com custo mínimo?
+  problem: |
+    minimize 3*pao + 2*leite + 4*queijo + 1*batata
+
+    subject to:
+        # Requisitos nutricionais
+        4*pao + 8*leite + 2*queijo + 2*batata >= 2000  # Calorias mínimas
+        2*pao + 12*leite + 10*queijo + 4*batata >= 55  # Proteína mínima (g)
+        2*pao + 3*leite + 8*queijo + 2*batata >= 800   # Vitaminas mínimas
+
+    where:
+        pao, leite, queijo, batata >= 0                # Não-negatividade
+        pao, leite, queijo, batata integer              # Apenas porções inteiras
+
+resource_allocation:
+  icon: ":material/account_balance:"
+  name: "Alocação de Recursos"
+  description: |
+    Uma empresa de gestão de investimentos tem R$ 1.000.000 para alocar em três projetos com diferentes taxas de retorno anual: Projeto A oferece 12% de retorno, Projeto B oferece 15% de retorno, e Projeto C oferece 18% de retorno.
+
+    **Restrições de investimento:**
+    - Orçamento total: R$ 1.000.000 máximo disponível
+    - Gestão de risco: 0,6A + 0,8B + 0,9C <= R$ 750.000 (limite de risco ponderado)
+    - Investimentos mínimos: A ≥ R$ 100k, B ≥ R$ 150k, C ≥ R$ 200k
+
+    **Questão:** Quanto a empresa deve investir em cada projeto para maximizar o retorno anual total esperado?
+  problem: |
+    maximize 0.12*projeto_a + 0.15*projeto_b + 0.18*projeto_c
+
+    subject to:
+        # Restrições de recursos
+        projeto_a + projeto_b + projeto_c <= 1000000      # Limite do orçamento total
+        0.6*projeto_a + 0.8*projeto_b + 0.9*projeto_c <= 750000  # Orçamento de risco
+
+        # Requisitos mínimos de investimento
+        projeto_a >= 100000                               # Investimento mínimo A
+        projeto_b >= 150000                               # Investimento mínimo B
+        projeto_c >= 200000                               # Investimento mínimo C
+
+    where:
+        projeto_a, projeto_b, projeto_c >= 0             # Não-negatividade
+
+facility_location:
+  icon: ":material/location_on:"
+  name: "Localização de Instalações"
+  description: |
+    Uma empresa de distribuição está planejando expandir sua rede e precisa decidir quais armazéns abrir entre quatro localizações potenciais. Os custos fixos anuais são: Localização 1 (R$ 50k), Localização 2 (R$ 60k), Localização 3 (R$ 45k), e Localização 4 (R$ 55k).
+
+    **Requisitos de cobertura de serviço:**
+    - Região 1 deve ser servida pela Localização 1 ou Localização 2
+    - Região 2 deve ser servida pela Localização 2 ou Localização 3
+    - Região 3 deve ser servida pela Localização 3 ou Localização 4
+    - Região 4 deve ser servida pela Localização 1 ou Localização 4
+    - Política da empresa exige que pelo menos 2 instalações operem
+
+    **Questão:** Quais localizações de armazém a empresa deve abrir para atender a todos os requisitos de serviço minimizando os custos fixos totais?
+  problem: |
+    minimize 50000*x1 + 60000*x2 + 45000*x3 + 55000*x4
+
+    subject to:
+        # Requisitos de cobertura de serviço
+        x1 + x2 >= 1           # Deve cobrir região 1
+        x2 + x3 >= 1           # Deve cobrir região 2
+        x3 + x4 >= 1           # Deve cobrir região 3
+        x1 + x4 >= 1           # Deve cobrir região 4
+
+        # Restrição de capacidade
+        x1 + x2 + x3 + x4 >= 2 # Precisa de pelo menos 2 instalações
+
+    where:
+        x1, x2, x3, x4 >= 0
+        x1, x2, x3, x4 integer  # Variáveis de decisão binárias (0 ou 1)
+
+production_with_setup:
+  icon: ":material/settings:"
+  name: "Produção com Setup"
+  description: |
+    Uma empresa manufatureira pode produzir três produtos, mas deve pagar custos fixos de setup para iniciar a produção de cada produto. O Produto A tem custo de setup de R$ 100 e lucro de R$ 15 por unidade. O Produto B tem custo de setup de R$ 80 e lucro de R$ 12 por unidade. O Produto C tem custo de setup de R$ 120 e lucro de R$ 20 por unidade.
+
+    **Restrições de produção:**
+    - Mão de obra: 2 horas para A, 1,5 horas para B, 3 horas para C (120 horas totais)
+    - Materiais: 3 kg para A, 2 kg para B, 4 kg para C (150 kg disponíveis)
+    - Capacidade de setup: Se produzindo, mínimo 10 unidades por produto
+    - Produção máxima: 50 unidades por produto se configurado
+
+    **Questão:** Quais produtos devem ser produzidos e em que quantidades para maximizar o lucro após os custos de setup?
+  problem: |
+    maximize 15*prod_a + 12*prod_b + 20*prod_c - 100*setup_a - 80*setup_b - 120*setup_c
+
+    subject to:
+        # Restrições de recursos
+        2*prod_a + 1.5*prod_b + 3*prod_c <= 120     # Horas de trabalho
+        3*prod_a + 2*prod_b + 4*prod_c <= 150       # Material kg
+
+        # Lógica de setup: não pode produzir sem setup
+        prod_a - 50*setup_a <= 0                    # Produção máx A
+        prod_b - 50*setup_b <= 0                    # Produção máx B
+        prod_c - 50*setup_c <= 0                    # Produção máx C
+
+        # Produção mínima se configurado
+        -prod_a + 10*setup_a <= 0                   # Produção mín A
+        -prod_b + 10*setup_b <= 0                   # Produção mín B
+        -prod_c + 10*setup_c <= 0                   # Produção mín C
+
+    where:
+        prod_a, prod_b, prod_c >= 0                 # Quantidades contínuas de produção
+        setup_a, setup_b, setup_c >= 0              # Decisões binárias de setup
+        setup_a, setup_b, setup_c integer           # Variáveis binárias (0 ou 1)

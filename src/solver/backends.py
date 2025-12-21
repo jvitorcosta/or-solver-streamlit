@@ -50,7 +50,7 @@ def check_solver_compatibility_with_problem(
 class OrToolsBackend:
     """OR-Tools solver backend for linear and mixed-integer programming."""
 
-    def __init__(self, solver_name: str = "GLOP"):
+    def __init__(self, solver_name: str = "GLOP") -> None:
         """Initialize with specific OR-Tools solver.
 
         Args:
@@ -171,7 +171,7 @@ def execute_problem_with_ortools_backend(
 
 
 def _initialize_decision_variables_in_solver(
-    solver, problem: Problem
+    solver: pywraplp.Solver, problem: Problem
 ) -> dict[str, Any]:
     """Initialize decision variables in OR-Tools solver based on problem definition."""
     solver_variable_mapping = {}
@@ -214,7 +214,7 @@ def _initialize_decision_variables_in_solver(
 
 
 def _apply_constraint_to_solver(
-    solver, solver_variables: dict[str, Any], constraint: Constraint
+    solver: pywraplp.Solver, solver_variables: dict[str, Any], constraint: Constraint
 ) -> None:
     """Apply linear constraint to OR-Tools solver with proper bounds."""
     # Build linear expression
@@ -237,7 +237,7 @@ def _apply_constraint_to_solver(
 
 
 def _configure_optimization_objective(
-    solver, solver_variables: dict[str, Any], objective
+    solver: pywraplp.Solver, solver_variables: dict[str, Any], objective: Any
 ) -> None:
     """Configure objective function coefficients and optimization direction."""
     objective_function = solver.Objective()
@@ -257,9 +257,9 @@ def _configure_optimization_objective(
 
 
 def _build_solution_from_solver_results(
-    solver,
+    solver: pywraplp.Solver,
     solver_variables: dict[str, Any],
-    solver_status_code,
+    solver_status_code: int,
     optimization_start_time: float,
 ) -> Solution:
     """Build solution object from OR-Tools solver results and variable values."""

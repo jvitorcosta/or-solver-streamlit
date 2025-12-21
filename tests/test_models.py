@@ -76,7 +76,7 @@ from solver.models import (
         ),
     ],
 )
-def test_variable_creation_and_properties(input_data, expected):
+def test_variable_creation_and_properties(input_data: dict, expected: dict) -> None:
     """Test variable creation with different configurations and property validation."""
     variable = Variable(**input_data)
 
@@ -99,7 +99,7 @@ def test_variable_creation_and_properties(input_data, expected):
         ({"name": "valid_name"}, None),  # Should not raise
     ],
 )
-def test_variable_name_validation(input_data, expected_exception):
+def test_variable_name_validation(input_data: dict, expected_exception: type) -> None:
     """Test variable name validation."""
     if expected_exception is None:
         # Should not raise exception
@@ -156,7 +156,7 @@ def test_variable_name_validation(input_data, expected_exception):
         ),
     ],
 )
-def test_linear_expression_operations(input_data, expected):
+def test_linear_expression_operations(input_data: dict, expected: dict) -> None:
     """Test linear expression creation, term addition, and properties."""
     expression = LinearExpression()
 
@@ -214,7 +214,7 @@ def test_linear_expression_operations(input_data, expected):
         ),
     ],
 )
-def test_constraint_creation_and_properties(input_data, expected):
+def test_constraint_creation_and_properties(input_data: dict, expected: dict) -> None:
     """Test constraint creation with different operators and expressions."""
     # Create expression
     expr = LinearExpression()
@@ -265,7 +265,9 @@ def test_constraint_creation_and_properties(input_data, expected):
         ),
     ],
 )
-def test_objective_function_creation_and_properties(input_data, expected):
+def test_objective_function_creation_and_properties(
+    input_data: dict, expected: dict
+) -> None:
     """Test objective function creation with different directions."""
     # Create expression
     expr = LinearExpression()
@@ -312,7 +314,7 @@ def test_objective_function_creation_and_properties(input_data, expected):
         )
     ],
 )
-def test_problem_creation_and_properties(input_data, expected):
+def test_problem_creation_and_properties(input_data: dict, expected: dict) -> None:
     """Test complete problem creation and validation."""
     # Create objective
     obj_expr = LinearExpression()
@@ -394,7 +396,7 @@ def test_problem_creation_and_properties(input_data, expected):
         ),
     ],
 )
-def test_solution_status_and_properties(input_data, expected):
+def test_solution_status_and_properties(input_data: dict, expected: dict) -> None:
     """Test solution creation with different statuses and property validation."""
     solution = Solution(**input_data)
 

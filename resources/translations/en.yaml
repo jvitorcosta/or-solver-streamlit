@@ -1,7 +1,32 @@
 app:
-  title: "OR-Solver"
+  title: "SolvedOR"
   subtitle: "An Operations Research app"
   footer: ":material/favorite: Did you enjoy using it? Please star the project on GitHub!"
+  about: |
+    # SolvedOR :material/analytics:
+    **Modern Operations Research Solver**
+
+    SolvedOR is an intuitive web-based platform for solving linear programming and optimization problems. Whether you're a student learning OR concepts or a professional tackling real-world optimization challenges, SolvedOR makes complex mathematical modeling accessible and interactive.
+
+    ### :material/star: Key Features
+    - **Interactive Problem Gallery** - Explore real-world optimization scenarios
+    - **Intuitive Syntax** - Write problems in natural mathematical notation
+    - **Instant Solutions** - Get optimal results with detailed explanations
+    - **Bilingual Support** - Available in English and Portuguese
+    - **Educational Focus** - Perfect for learning and teaching OR concepts
+
+    ### :material/code: Powered By
+    - **OR-Tools** by Google for robust optimization solving
+    - **Streamlit** for the modern web interface
+    - **Python** ecosystem for reliable performance
+
+    ### :material/school: Perfect For
+    - Operations Research students and educators
+    - Business analysts optimizing resources
+    - Engineers solving allocation problems
+    - Anyone curious about mathematical optimization
+
+    *Built with :material/favorite: for the OR community*
 sidebar:
   settings: "Settings"
   language: "Language"

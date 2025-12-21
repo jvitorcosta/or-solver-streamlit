@@ -2,7 +2,7 @@ from solver import engine
 from solver.models import Problem, SolverStatus
 
 
-def test_solve_continuous_linear_program_optimally():
+def test_solve_continuous_linear_program_optimally() -> None:
     """Test solving continuous linear programming problem to optimal solution."""
     linear_program_text = """
     maximize 3*x + 2*y
@@ -27,7 +27,7 @@ def test_solve_continuous_linear_program_optimally():
     assert "y" in optimal_solution.variable_values
 
 
-def test_solve_integer_program_with_discrete_variables():
+def test_solve_integer_program_with_discrete_variables() -> None:
     """Test solving integer programming problem with discrete variable constraints."""
     integer_program_text = """
     maximize 3*x + 2*y
@@ -52,7 +52,7 @@ def test_solve_integer_program_with_discrete_variables():
         assert abs(variable_value - round(variable_value)) < 1e-6
 
 
-def test_solve_minimization_problem_successfully():
+def test_solve_minimization_problem_successfully() -> None:
     """Test solving minimization problem to find lowest objective value."""
     minimization_problem_text = """
     minimize x + y

@@ -1,19 +1,35 @@
+from pathlib import Path
+from typing import Any
+
 import streamlit as st
+import yaml
 
-from config import language, settings
+import language
 from solver import engine
-
-# Example template configuration for better maintainability.
-_EXAMPLE_TEMPLATES = {
-    "production_planning": ":material/factory: Production",
-    "transportation": ":material/local_shipping: Transport",
-    "diet_optimization": ":material/restaurant: Diet",
-    "resource_allocation": ":material/account_balance: Resource",
-    "facility_location": ":material/location_on: Location",
-}
 
 # Detection keywords for variable types.
 _INTEGER_KEYWORDS = frozenset(["integer", "binary"])
+
+
+def _extract_examples_from_resources_directory(*, language_code: str) -> dict[str, Any]:
+    """Extract optimization problem examples from language-specific YAML file.
+
+    Args:
+        language_code: Language code (e.g., 'en', 'pt') to load examples for.
+
+    Returns:
+        Dictionary containing example optimization problems.
+        Returns empty dict if examples file is not found or invalid.
+    """
+    examples_yaml_file_path = (
+        Path(__file__).parents[2] / "resources" / "examples" / f"{language_code}.yaml"
+    )
+
+    try:
+        examples_file_content = examples_yaml_file_path.read_text(encoding="utf-8")
+        return yaml.safe_load(examples_file_content) or {}
+    except (FileNotFoundError, yaml.YAMLError, OSError):
+        return {}
 
 
 def display_optimization_problem_gallery(
@@ -24,18 +40,35 @@ def display_optimization_problem_gallery(
     Args:
         translations: Translation schema for the current language.
     """
-    optimization_examples_dictionary = (
-        settings.extract_examples_from_resources_directory()
+    # Extract language code from translations (default to 'en' if not found)
+    language_code = getattr(st.session_state, "language", "en")
+    optimization_examples_dictionary = _extract_examples_from_resources_directory(
+        language_code=language_code
     )
     if not optimization_examples_dictionary:
         return
 
+    # Create format function that combines icon with translated name from YAML
+    def format_example_name(key: str) -> str:
+        example_data = optimization_examples_dictionary.get(key, {})
+        icon = example_data.get("icon", ":material/help:")
+        name = example_data.get("name", key)
+        return f"{icon} {name}"
+
     user_selected_example_key = st.pills(
         translations.gallery.choose_text,
-        options=list(_EXAMPLE_TEMPLATES.keys()),
-        format_func=_EXAMPLE_TEMPLATES.get,
+        options=list(optimization_examples_dictionary.keys()),
+        format_func=format_example_name,
         help=translations.gallery.select_help,
     )
+
+    # Store selected example in session state for description display
+    if user_selected_example_key:
+        st.session_state["selected_example"] = optimization_examples_dictionary.get(
+            user_selected_example_key
+        )
+    else:
+        st.session_state["selected_example"] = None
 
     # Early return if no selection
     if (
@@ -44,8 +77,7 @@ def display_optimization_problem_gallery(
     ):
         return
 
-    chosen_example_data = optimization_examples_dictionary[user_selected_example_key]
-    display_example_preview_with_copy_button(chosen_example_data, translations)
+    # Example preview will be handled separately in the app flow
 
 
 def display_example_preview_with_copy_button(
@@ -100,6 +132,22 @@ def copy_example_to_active_workspace(
         icon=":material/content_copy:",
     )
     st.rerun()
+
+
+def display_selected_example_description() -> None:
+    """Display description of the currently selected example."""
+    selected_example = st.session_state.get("selected_example")
+    if selected_example and "description" in selected_example:
+        with st.container(border=True):
+            st.markdown(f"**:material/info: {selected_example['name']}**")
+            st.markdown(selected_example["description"])
+
+
+def display_selected_example_preview(translations: language.TranslationSchema) -> None:
+    """Display mathematical formulation preview of the currently selected example."""
+    selected_example = st.session_state.get("selected_example")
+    if selected_example and "problem" in selected_example:
+        display_example_preview_with_copy_button(selected_example, translations)
 
 
 def display_optimization_workspace_interface(

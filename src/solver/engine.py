@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from config import language
+import language
 from solver import parser
 from solver.backends import SolverFactory
 from solver.models import Problem, Solution, SolverStatus, VariableType
@@ -118,8 +118,12 @@ def execute_optimization_with_ui_feedback(
 
 
 def render_solution_results_with_metrics(
-    problem, solution, translations, solver_name, problem_type
-):
+    problem: Problem,
+    solution: Solution,
+    translations: language.AppTranslations,
+    solver_name: str,
+    problem_type: str,
+) -> None:
     """Render comprehensive solution results with metrics in Streamlit UI."""
 
     st.subheader(f"🎯 {translations.results.solution}")
@@ -204,7 +208,9 @@ def render_solution_results_with_metrics(
                     )
 
 
-def _format_value_by_variable_type(variable_name: str, value: float, problem) -> str:
+def _format_value_by_variable_type(
+    variable_name: str, value: float, problem: Problem
+) -> str:
     """Format numeric value according to variable type (integer vs continuous)."""
     if variable_name in problem.variables:
         variable_type_enum = problem.variables[variable_name].variable_type
@@ -215,7 +221,7 @@ def _format_value_by_variable_type(variable_name: str, value: float, problem) ->
     return f"{value:.6f}"
 
 
-def _generate_interactive_2d_plot(problem, solution):
+def _generate_interactive_2d_plot(problem: "Problem", solution: "Solution") -> None:
     """Generate interactive 2D plot with constraints and optimal solution."""
     # Import streamlit when needed to avoid import issues in tests
     import plotly.graph_objects as go

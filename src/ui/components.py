@@ -1,8 +1,8 @@
-"""UI components for the OR-Solver interface."""
+"""UI components for the SolvedOR interface."""
 
 import streamlit as st
 
-from config import language
+import language
 
 # Language display configuration.
 _LANGUAGE_DISPLAY = {"en": "🇺🇸 English", "pt": "🇵🇹 Português"}
@@ -26,7 +26,7 @@ def display_language_selection_sidebar(
         current_language_index = available_language_codes.index(active_language_code)
 
         user_selected_language = st.selectbox(
-            "",
+            "Language Selection",
             options=available_language_codes,
             format_func=lambda code: _LANGUAGE_DISPLAY[code],
             index=current_language_index,
