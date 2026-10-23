@@ -1,0 +1,12 @@
+# For Streamlit Community Cloud (main file: src/app.py). Mirrors [project].dependencies in pyproject.toml.
+typer
+rich
+pydantic
+pyparsing
+pyyaml
+streamlit[pdf]
+plotly>=5.0.0
+matplotlib>=3.5.0
+numpy>=1.21.0
+pandas>=1.3.0
+ortools>=9.8.0
