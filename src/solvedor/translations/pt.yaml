@@ -1,123 +1,96 @@
 app:
   title: "OR-Solver"
-  subtitle: "Um aplicação de Pesquisa Operacional"
+  subtitle: "Uma aplicação de Pesquisa Operacional"
+  about: "Escreva um programa linear ou inteiro em notação de livro-texto e resolva com o Google OR-Tools."
   footer: ":material/favorite: Gostou de usar? Por favor, dê uma estrela no GitHub!"
 
 sidebar:
   settings: "Configurações"
   language: "Idioma"
 
-interface:
-  problem_label: ":material/code: **Escreva seu problema:**"
-  solve_button: "Solucionar"
-  loaded_example: "Exemplo carregado"
-  placeholder: "Digite seu modelo aqui..."
-  help_text: "Digite seu modelo usando notação matemática"
-  clear_workspace: "Limpar workspace"
-  clear_help: "Limpar workspace e começar do zero"
-  solve_help: "Analisar e resolver seu problema de otimização"
-  processing_toast: "Resolvendo seu modelo..."
-  workspace_title: "Workspace"
-  using_example: "Usando exemplo"
-
-tabs:
-  workspace: "Workspace"
-  paper: "Artigo"
-  guide: "Guia"
-  readme: "Readme"
-  contributing: "Contribuição"
-
-gallery:
-  title: "Galeria"
-  choose_text: "Escolha um modelo para começar:"
-  select_help: "Selecione um problema da galeria para carregar no seu workspace"
-  copy_button: "Copiar para workspace"
-  copy_help: "Copiar este exemplo para seu workspace"
-  copied_toast: "copiado para workspace!"
-
-visualization:
-  title: "Visualização"
-  integer_info: "Visualização mostra relaxamento contínuo para variáveis inteiras/binárias"
-  guide_title: "Guia de Visualização:"
-  feasible_region: "Área verde: Região viável onde todas as restrições são satisfeitas"
-  constraint_lines: "Linhas tracejadas: Fronteiras de restrições individuais"
-  optimal_point: "Estrela dourada: Ponto da solução ótima"
-  gradient_arrow: "Seta azul: Direção de otimização (gradiente)"
-  region_label: "Região viável"
-  optimum_label: "Solução"
-  direction_label: "melhora"
-
 language_labels:
   english: "🇺🇸 English"
   portuguese: "🇧🇷 Português"
 
+interface:
+  solve_button: "Resolver"
+  placeholder: "Digite seu modelo aqui..."
+  help_text: "Digite seu modelo usando notação matemática (veja a aba Guia)"
+  clear_workspace: "Limpar área de trabalho"
+  clear_help: "Limpar a área de trabalho e começar do zero"
+  solve_help: "Analisar e resolver seu problema de otimização"
+  workspace_title: "Área de trabalho"
+  using_example: "Usando exemplo"
+
+tabs:
+  workspace: "Área de trabalho"
+  paper: "Artigo"
+  guide: "Guia"
+  readme: "Leia-me"
+  contributing: "Como contribuir"
+
+gallery:
+  title: "Galeria"
+  choose_text: "Escolha um modelo para começar:"
+  select_help: "Selecione um problema da galeria para carregar na sua área de trabalho"
+  copy_button: "Copiar para a área de trabalho"
+  copy_help: "Copiar este exemplo para a sua área de trabalho"
+  examples:
+    production_planning: "Planejamento de Produção"
+    transportation: "Transporte"
+    diet_optimization: "Otimização de Dieta"
+    resource_allocation: "Alocação de Recursos"
+    facility_location: "Localização de Instalações"
+
+visualization:
+  title: "Visualização"
+  integer_info: "O gráfico mostra a relaxação contínua; variáveis inteiras e binárias só assumem valores inteiros dentro dela."
+  region_label: "Região viável"
+  optimum_label: "Solução"
+  direction_label: "melhora"
+
 resources:
-  title: "Recursos e Documentação"
-  thesis: "Tese de Pesquisa"
-  readme: "README do Projeto"
-  contributing: "Guia de Contribuição"
-  changelog: "Log de Alterações"
-  structure: "Estrutura do Projeto"
-  view_pdf: "Ver PDF"
+  thesis: "Tese de Pesquisa - SolvedOR: Interface Moderna de Pesquisa Operacional"
+  thesis_caption: "Esta tese apresenta a aplicação OR-Solver e sua metodologia."
   download_pdf: "Baixar PDF"
+
 messages:
   empty_problem_solve: "Por favor, digite um problema para resolver"
-  solution_found: "Solução Ótima Encontrada!"
-  problem_copied: "Copiado para o workspace!"
 
 status:
-  parsing: "Analisando problema..."
-  setting_up: "Configurando solver..."
-  solving: "Resolvendo otimização..."
-  solution_found: "Solução encontrada!"
-  complete: "Otimização completa!"
-  syntax_error: "Erro de sintaxe encontrado"
-  solving_failed: "Resolução falhou"
+  solving: "Resolvendo..."
 
 errors:
   syntax_error: "Erro de Sintaxe"
-  solving_error: "Erro na Resolução"
+  solving_error: "Algo deu errado ao resolver. Por favor, avise no GitHub."
   thesis_not_found: "PDF da tese não encontrado."
   file_not_found: "não encontrado."
   file_read_error: "Não foi possível ler"
   pdf_load_error: "Não foi possível carregar o PDF para download."
   pdf_display_error: "Não foi possível exibir o PDF. Seu navegador pode não suportar visualização de PDF."
-  visualization_error: "Não foi possível gerar a visualização"
-  debug_info: "Info de debug"
 
 results:
   solution: "Solução"
   optimal_found: "Solução ótima encontrada"
+  feasible_found: "Melhor solução encontrada antes do limite de tempo (sem prova de otimalidade)"
   objective_value: "Valor Objetivo"
+  objective_value_help: "Valor da função objetivo nesta solução"
   solve_time: "Tempo de Resolução"
+  solve_time_help: "Tempo gasto para resolver o problema"
   variables: "Variáveis"
   variable_values: "Valores das Variáveis"
-  constraints: "Restrições"
-  solution_variables: "Variáveis da Solução"
-  no_variable_values: "Nenhum valor de variável para exibir"
-  problem_infeasible: "Problema é inviável"
-  infeasible_help: "As restrições não podem ser satisfeitas simultaneamente. Verifique suas definições de restrição."
-  problem_unbounded: "Problema é ilimitado"
-  unbounded_help: "A função objetivo pode ser melhorada infinitamente. Adicione limites superiores/inferiores às variáveis."
-  solver_error: "Erro do Solver"
-  error_details: "Detalhes"
-  problem_type: "Tipo de Problema"
-  solver: "Solver"
-  objective_value_help: "Valor ótimo da função objetivo"
-  solve_time_help: "Tempo gasto para resolver o problema"
   variable: "Variável"
   value: "Valor"
   type: "Tipo"
-  feasible_found: "Melhor solução encontrada antes do limite de tempo (sem prova de otimalidade)"
-  time_limit: "Nenhuma solução encontrada dentro do limite de tempo"
-  time_limit_help: "Tente um modelo menor ou limites mais apertados nas variáveis."
+  problem_type: "Tipo de Problema"
   linear: "Linear"
   mixed_integer: "Inteiro misto"
-
-  tabs:
-    summary: "Resumo"
-
-  summary:
-    objective: "Objetivo"
-    status: "Estado"
-    optimal: "ÓTIMO"
+  solver: "Solver"
+  problem_infeasible: "Problema é inviável"
+  infeasible_help: "As restrições não podem ser satisfeitas simultaneamente. Verifique suas definições de restrição."
+  problem_unbounded: "Problema é ilimitado"
+  unbounded_help: "O objetivo pode melhorar para sempre. Adicione uma restrição ou um limite superior/inferior que o limite."
+  time_limit: "Nenhuma solução encontrada dentro do limite de tempo"
+  time_limit_help: "Tente um modelo menor ou limites mais apertados nas variáveis."
+  solver_error: "Erro do Solver"
+  error_details: "Detalhes"

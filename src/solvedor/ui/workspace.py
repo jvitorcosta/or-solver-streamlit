@@ -48,7 +48,7 @@ def display_optimization_problem_gallery(*, translations: language.TranslationSc
     selected = st.pills(
         translations.gallery.choose_text,
         options=[key for key in _EXAMPLE_ICONS if key in examples],
-        format_func=lambda key: f"{_EXAMPLE_ICONS[key]} {examples[key]['name']}",
+        format_func=lambda key: f"{_EXAMPLE_ICONS[key]} {translations.gallery.examples[key]}",
         help=translations.gallery.select_help,
         key="example_key",
     )
@@ -57,7 +57,7 @@ def display_optimization_problem_gallery(*, translations: language.TranslationSc
 
     example = examples[selected]
     with st.container(border=True):
-        st.markdown(f"**:material/assignment: {example['name']}**")
+        st.markdown(f"**:material/assignment: {translations.gallery.examples[selected]}**")
         st.code(example["problem"], language="text")
         _, center, _ = st.columns([1, 2, 1])
         with center:
@@ -89,11 +89,10 @@ def _clear_workspace() -> None:
 def display_optimization_workspace_interface(*, translations: language.TranslationSchema) -> None:
     st.markdown(f"#### :material/edit_note: {translations.interface.workspace_title}")
     loaded = st.session_state.loaded_example
-    examples = settings.extract_examples_from_resources_directory()
-    if loaded in examples:
+    if loaded in translations.gallery.examples:
         st.caption(
             f":material/lightbulb: {translations.interface.using_example}: "
-            f"**{examples[loaded]['name']}**"
+            f"**{translations.gallery.examples[loaded]}**"
         )
 
     with st.form("problem_form", border=False):

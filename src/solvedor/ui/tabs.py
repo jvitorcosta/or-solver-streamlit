@@ -1,8 +1,17 @@
+"""The Paper, Guide, Readme and Contributing tabs."""
+
+import logging
 from pathlib import Path
 
 import streamlit as st
 
 from solvedor.config import language
+
+logger = logging.getLogger(__name__)
+
+_RESOURCES = Path(__file__).parents[1] / "resources"
+_THESIS = _RESOURCES / "solvedor_article.pdf"
+_REPO_ROOT = Path(__file__).parents[3]
 
 
 @st.cache_data(show_spinner=False)
@@ -11,154 +20,51 @@ def _read_bytes(path: str) -> bytes:
     return Path(path).read_bytes()
 
 
-def display_research_thesis_with_viewer(
-    translations: language.TranslationSchema,
-) -> None:
-    """Display research thesis PDF with integrated viewer and download functionality."""
-    project_resources_directory = Path(__file__).parents[1] / "resources"
-    thesis_pdf_file_path = project_resources_directory / "solvedor_article.pdf"
-
-    if thesis_pdf_file_path.exists():
-        display_thesis_header_with_download_button(
-            thesis_file_path=thesis_pdf_file_path, translations=translations
-        )
-        st.markdown("")
-        display_pdf_in_streamlit_viewer(
-            pdf_file_path=thesis_pdf_file_path, translations=translations
-        )
-    else:
+def display_research_thesis_with_viewer(translations: language.TranslationSchema) -> None:
+    if not _THESIS.exists():
         st.warning(translations.errors.thesis_not_found)
+        return
+
+    title_column, download_column = st.columns([3, 1])
+    with title_column:
+        st.markdown(f"**:material/school: {translations.resources.thesis}**")
+        st.caption(translations.resources.thesis_caption)
+    with download_column:
+        try:
+            st.download_button(
+                f":material/download: {translations.resources.download_pdf}",
+                _read_bytes(str(_THESIS)),
+                file_name="solvedor_article.pdf",
+                mime="application/pdf",
+                width="stretch",
+            )
+        except OSError:
+            st.error(f":material/error: {translations.errors.pdf_load_error}")
+
+    st.markdown("")
+    try:
+        st.pdf(str(_THESIS))
+    except Exception:
+        # st.pdf needs the optional streamlit[pdf] component; show a message, log the cause.
+        logger.exception("could not display the thesis PDF")
+        st.warning(translations.errors.pdf_display_error)
 
 
-def display_visualization_elements_guide() -> None:
-    """Display comprehensive guide explaining visualization elements and their meaning."""
-    st.markdown("### :material/help: Visual Elements Guide")
-    st.markdown("Understanding the optimization visualization components:")
-
-    st.markdown("""
-    #### :material/search: Visual Elements Explained
-
-    ---
-
-    ##### :material/circle: **Feasible Region (Green Area)**
-    - All points that satisfy **ALL** constraints simultaneously
-    - The optimal solution must lie within or on the boundary
-    - Represents the solution space where all requirements are met
-
-    ---
-
-    ##### :material/straighten: **Constraint Lines (Dashed)**
-    - Each colored line represents one constraint boundary
-    - Different colors help distinguish between constraints
-    - Lines separate feasible from infeasible regions
-    - Intersections often contain optimal solutions
-
-    ---
-
-    ##### :material/navigation: **Gradient Arrows (Navy Blue)**
-    - Show the direction of steepest increase in objective value
-    - Point toward higher objective function values
-    - Arrow demonstrates optimization direction
-    - Help visualize how the algorithm "climbs" toward optimum
-
-    ---
-
-    ##### :material/star: **Optimal Solution (Gold Star)**
-    - The **best possible solution** within the feasible region
-    - Located at vertex where gradient direction is blocked by constraints
-    - Point where you cannot improve without violating constraints
-    - Hover to see exact values and objective score
-
-    ---
-
-    #### :material/target: **How They Work Together**
-
-    1. **Follow gradient arrows** from any point in feasible region
-    2. **Arrows guide you** toward increasing objective values
-    3. **Optimal star marks** where this process terminates
-    4. **Mathematical guarantee**: This vertex gives the best possible solution
-
-    ---
-
-    #### :material/lightbulb: **Pro Tips**
-
-    - **Vertices matter**: Optimal solutions for linear programs always occur
-      at vertices
-    - **Direction matters**: Gradient shows which way to improve the objective
-    - **Constraints define limits**: Feasible region boundaries prevent
-      further improvement
-    - **Interactive exploration**: Hover over points to see exact coordinates and values
-    """)
+def display_guide(language_code: str) -> None:
+    """The syntax and plot guide in the page's language (English if there is none)."""
+    guide = _RESOURCES / f"guide.{language_code}.md"
+    if not guide.exists():
+        guide = _RESOURCES / f"guide.{language.LanguageCode.ENGLISH.value}.md"
+    st.markdown(guide.read_text(encoding="utf-8"))
 
 
 def display_markdown_content_from_file(
     file_name: str, translations: language.TranslationSchema
 ) -> None:
-    """Display markdown file content from project root directory.
-
-    Args:
-        file_name: Name of the markdown file to render.
-        translations: Translation schema for localized text.
-    """
-    markdown_file_path = Path(__file__).parents[3] / file_name
-
+    """A Markdown file from the repository root (README.md, CONTRIBUTING.md)."""
     try:
-        markdown_file_content = markdown_file_path.read_text(encoding="utf-8")
-        st.markdown(markdown_file_content)
+        st.markdown((_REPO_ROOT / file_name).read_text(encoding="utf-8"))
     except FileNotFoundError:
         st.warning(f"📄 {file_name} {translations.errors.file_not_found}")
     except OSError:
         st.warning(f"⚠️ {translations.errors.file_read_error} {file_name}.")
-
-
-def display_thesis_header_with_download_button(
-    *, thesis_file_path: Path, translations: language.TranslationSchema
-) -> None:
-    """Display thesis header section with interactive download button.
-
-    Args:
-        thesis_file_path: Path to the thesis PDF file.
-        translations: Translation schema for localized text.
-    """
-    col1, col2 = st.columns([3, 1])
-
-    with col1:
-        st.markdown(
-            "**:material/school: Research Thesis - SolvedOR: Modern Operations Research Interface**"
-        )
-        st.caption("This thesis introduces the OR-Solver application and its methodology.")
-
-    with col2:
-        try:
-            thesis_pdf_binary_data = _read_bytes(str(thesis_file_path))
-            download_button_clicked = st.download_button(
-                f":material/download: {translations.resources.download_pdf}",
-                thesis_pdf_binary_data,
-                file_name="solvedor_article.pdf",
-                mime="application/pdf",
-                width="stretch",
-            )
-
-            if download_button_clicked:
-                st.toast(
-                    ":material/file_download_done: Thesis PDF ready for download!",
-                    icon=":material/download:",
-                )
-        except OSError:
-            st.error(f":material/error: {translations.errors.pdf_load_error}")
-
-
-def display_pdf_in_streamlit_viewer(
-    *, pdf_file_path: Path, translations: language.TranslationSchema
-) -> None:
-    """Display PDF using Streamlit's built-in viewer with error handling.
-
-    Args:
-        pdf_file_path: Path to the PDF file to display.
-        translations: Translation schema for localized text.
-    """
-    try:
-        st.pdf(str(pdf_file_path))
-    except Exception as pdf_display_error:
-        st.warning(translations.errors.pdf_display_error)
-        st.info(f"Error: {pdf_display_error!s}")
