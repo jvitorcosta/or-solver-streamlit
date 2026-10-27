@@ -89,3 +89,45 @@ def test_render_unbounded() -> None:
 def test_render_two_variable_problem_draws_the_plot() -> None:
     at = _render("max 3x + 2y\nsubject to:\nx + 2y <= 4\n2x + y <= 4\n")
     assert len(at.get("plotly_chart")) == 1
+
+
+def _render_status(status: str, values: dict[str, float]) -> AppTest:
+    """Render a two-variable problem with a given solver status (statuses the page can't force)."""
+
+    def app(status: str, values: dict[str, float]) -> None:
+        from solvedor.config import language
+        from solvedor.solver.api import SolveResult
+        from solvedor.solver.models import Solution, SolverStatus
+        from solvedor.solver.parser import parse_lp_problem
+        from solvedor.ui.results import render_results
+
+        problem = parse_lp_problem("max x + y\nsubject to:\nx + y <= 4\nwhere:\ninteger x, y\n")
+        objective = sum(values.values()) if values else None
+        solution = Solution(
+            status=SolverStatus(status),
+            objective_value=objective,
+            variable_values=values,
+            solver_name="SCIP",
+        )
+        translations = language.load_language_translations(language_code="en")
+        render_results(SolveResult(problem=problem, solution=solution), translations)
+
+    at = AppTest.from_function(app, kwargs={"status": status, "values": values})
+    at.run()
+    assert not at.exception
+    return at
+
+
+def test_render_best_found_before_time_limit_shows_values_and_warning() -> None:
+    at = _render_status(SolverStatus.FEASIBLE.value, {"x": 3.0, "y": 0.0})
+
+    assert any("not proven optimal" in w.value for w in at.warning)
+    assert any(m.value == "3" for m in at.metric)
+
+
+def test_render_time_limit_without_solution_shows_the_hint() -> None:
+    at = _render_status(SolverStatus.TIME_LIMIT.value, {})
+
+    assert any("time limit" in w.value for w in at.warning)
+    assert any("smaller model" in i.value for i in at.info)
+    assert len(at.dataframe) == 0
