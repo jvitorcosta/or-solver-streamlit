@@ -8,7 +8,8 @@ from streamlit.testing.v1.element_tree import Button
 
 from solvedor.config.settings import extract_examples_from_resources_directory
 
-_APP = str(Path(__file__).parents[1] / "streamlit_app.py")
+_ROOT = Path(__file__).parents[1]
+_APP = str(_ROOT / "streamlit_app.py")
 _TEXTBOOK = "max 3x + 2y\nsubject to:\nx + 2y <= 4\n2x + y <= 4\n"
 
 
@@ -105,3 +106,54 @@ def test_every_gallery_example_loads_and_solves(app: AppTest, language_code: str
         assert not app.exception, key
         assert _objective(app) is not None, key
         assert len(app.error) == 0, key
+
+
+def test_infeasible_problem_shows_the_infeasible_message(app: AppTest) -> None:
+    _solve(app, "max x\nsubject to:\nx <= 1\nx >= 2\n")
+
+    assert any("infeasible" in e.value.lower() for e in app.error)
+    assert _objective(app) is None
+    assert len(app.get("plotly_chart")) == 0
+
+
+def test_integer_problem_shows_whole_values_and_the_relaxation_note(app: AppTest) -> None:
+    _solve(app, "max 3x + 2y\nsubject to:\nx + 2y <= 4\n2x + y <= 4\nwhere:\ninteger x, y\n")
+
+    assert app.dataframe[0].value["value"].tolist() == ["2", "0"]  # x, y without decimals
+    assert _objective(app) == "6"
+    assert any("continuous relaxation" in c.value for c in app.caption)
+    assert len(app.get("plotly_chart")) == 1
+
+
+def test_gallery_names_follow_the_language(app: AppTest) -> None:
+    app.selectbox(key="language").set_value("pt").run()
+
+    app.button_group[0].set_value("production_planning").run()
+
+    assert any("Planejamento de Produção" in m.value for m in app.markdown)
+
+
+@pytest.mark.parametrize(
+    ("language_code", "heading"),
+    [("en", "How to write a problem"), ("pt", "Como escrever um problema")],
+)
+def test_guide_tab_is_in_the_page_language(app: AppTest, language_code: str, heading: str) -> None:
+    app.selectbox(key="language").set_value(language_code).run()
+
+    assert any(heading in m.value for m in app.markdown)
+
+
+def test_paper_tab_offers_the_pdf(app: AppTest) -> None:
+    downloads = app.get("download_button")
+
+    assert len(downloads) == 1
+    assert "Download PDF" in downloads[0].proto.label
+    assert not any("not found" in w.value for w in app.warning)
+
+
+@pytest.mark.parametrize("file_name", ["README.md", "CONTRIBUTING.md"])
+def test_readme_and_contributing_tabs_render_the_files(app: AppTest, file_name: str) -> None:
+    content = (_ROOT / file_name).read_text(encoding="utf-8")
+
+    # st.markdown drops the final newline
+    assert any(m.value == content.strip() for m in app.markdown)
