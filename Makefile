@@ -12,7 +12,7 @@ run: ## Run the app locally
 	uv run streamlit run streamlit_app.py
 
 requirements: ## Regenerate requirements.txt (Streamlit Community Cloud) from uv.lock
-	uv export --no-hashes --no-dev -q -o requirements.txt
+	uv export --no-hashes --no-dev --no-header -q -o requirements.txt
 
 install: ## Install deps and git hooks (first-time setup)
 	uv sync --all-groups

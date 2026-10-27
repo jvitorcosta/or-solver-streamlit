@@ -29,7 +29,7 @@ jobs:
       - name: requirements.txt matches uv.lock
         if: runner.os == 'Linux'
         run: |
-          uv export --no-hashes --no-dev -q -o /tmp/req.txt
+          uv export --no-hashes --no-dev --no-header -q -o /tmp/req.txt
           diff /tmp/req.txt requirements.txt
 
       - name: Lint
