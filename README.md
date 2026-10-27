@@ -3,10 +3,11 @@
 [![CI](https://github.com/jvitorcosta/or-solver-streamlit/actions/workflows/ci.yml/badge.svg)](https://github.com/jvitorcosta/or-solver-streamlit/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://solvedor.streamlit.app)
 
 Write a linear or integer program the way a textbook does, and solve it in the browser.
 
-<!-- Live demo: add the Streamlit Community Cloud URL here once it is deployed. -->
+**Live demo: [solvedor.streamlit.app](https://solvedor.streamlit.app)**
 
 OR-Solver is a Streamlit app. It parses the model you type, solves it with
 [Google OR-Tools](https://developers.google.com/optimization) (GLOP for linear programs,
