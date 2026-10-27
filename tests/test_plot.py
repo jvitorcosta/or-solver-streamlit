@@ -132,3 +132,16 @@ def test_direction_arrow_is_readable_on_light_and_dark_themes(background: str) -
     arrow = figure.layout.annotations[0]
     assert _contrast(arrow.arrowcolor, background) >= 3
     assert _contrast(arrow.font.color, background) >= 3
+
+
+def test_legend_sits_above_the_chart_clear_of_the_axis_title() -> None:
+    t = load_language_translations(language_code="en")
+    result = solve_text("max 3x + 2y\nsubject to:\nx + 2y <= 4\n2x + y <= 4\n")
+    assert result.problem is not None
+
+    figure = build_figure(result.problem, result.solution, t)
+
+    assert figure is not None
+    assert figure.layout.legend.yanchor == "bottom"
+    assert figure.layout.legend.y >= 1
+    assert figure.layout.margin.t >= 60  # room for the legend above the plot area
