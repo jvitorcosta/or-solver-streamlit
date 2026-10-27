@@ -1,5 +1,6 @@
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
 import pytest
 import yaml
@@ -89,7 +90,7 @@ from solvedor.solver.parser import ParseError
         ),
     ],
 )
-def test_parse_linear_programs(input_data, expected) -> None:
+def test_parse_linear_programs(input_data: dict[str, Any], expected: dict[str, Any]) -> None:
     """Test parsing linear programs with different objective directions and formats."""
     problem = parser.parse_lp_problem(input_data["problem_text"])
 
@@ -185,7 +186,7 @@ def test_parse_linear_programs(input_data, expected) -> None:
         ),
     ],
 )
-def test_variable_type_declarations(input_data, expected) -> None:
+def test_variable_type_declarations(input_data: dict[str, Any], expected: dict[str, Any]) -> None:
     """Test parsing of different variable type declarations."""
     problem = parser.parse_lp_problem(input_data["problem_text"])
 
@@ -243,7 +244,7 @@ def test_variable_type_declarations(input_data, expected) -> None:
         ),
     ],
 )
-def test_problem_formatting_tolerance(input_data, expected) -> None:
+def test_problem_formatting_tolerance(input_data: dict[str, Any], expected: dict[str, Any]) -> None:
     """Test parsing tolerance for comments and whitespace."""
     if expected["should_parse"]:
         problem = parser.parse_lp_problem(input_data["problem_text"])
@@ -302,7 +303,9 @@ def test_problem_formatting_tolerance(input_data, expected) -> None:
         ),
     ],
 )
-def test_parsing_error_handling(input_data, expected_exception) -> None:
+def test_parsing_error_handling(
+    input_data: dict[str, Any], expected_exception: type[Exception]
+) -> None:
     """Test that invalid syntax raises appropriate parsing errors."""
     with pytest.raises(expected_exception):
         parser.parse_lp_problem(input_data["problem_text"])
@@ -353,7 +356,7 @@ def test_parsing_error_handling(input_data, expected_exception) -> None:
         ),
     ],
 )
-def test_complex_problem_structures(input_data, expected) -> None:
+def test_complex_problem_structures(input_data: dict[str, Any], expected: dict[str, Any]) -> None:
     """Test parsing of complex problems with multiple variables and constraints."""
     problem = parser.parse_lp_problem(input_data["problem_text"])
 
@@ -380,7 +383,7 @@ def test_complex_problem_structures(input_data, expected) -> None:
         )
     ],
 )
-def test_parse_coefficients(input_data, expected_vars) -> None:
+def test_parse_coefficients(input_data: str, expected_vars: int) -> None:
     """Test parsing with implicit and negative coefficients."""
     problem = parser.parse_lp_problem(input_data)
     obj_vars = problem.objective.extract_variable_names()

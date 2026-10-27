@@ -1,30 +1,34 @@
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
 import pytest
 import yaml
 
 from solvedor.solver.api import solve_text
-from solvedor.solver.models import SolverStatus, VariableType
+from solvedor.solver.models import Problem, Solution, SolverStatus, VariableType
 
 # Import only the core functions without UI dependencies
 from solvedor.solver.parser import ParseError
 
 
-def parse_and_solve(problem_text: str):
+def parse_and_solve(problem_text: str) -> tuple[Problem, Solution]:
     """Go through the public solve_text API; re-raise its parse error for pytest.raises."""
     result = solve_text(problem_text)
     if result.error is not None:
         raise result.error
+    assert result.problem is not None
+    assert result.solution is not None
     return result.problem, result.solution
 
 
 @pytest.fixture
-def examples_data():
+def examples_data() -> dict[str, Any]:
     """Load example problems from YAML file."""
     examples_path = Path(__file__).parents[1] / "src" / "solvedor" / "resources" / "examples.yaml"
     with examples_path.open(encoding="utf-8") as file:
-        return yaml.safe_load(file)
+        data: dict[str, Any] = yaml.safe_load(file)
+    return data
 
 
 # Comprehensive problem type tests with input,expected structure
@@ -163,7 +167,9 @@ def examples_data():
         ),
     ],
 )
-def test_comprehensive_problem_solving_flow(input_data, expected) -> None:
+def test_comprehensive_problem_solving_flow(
+    input_data: dict[str, Any], expected: dict[str, Any]
+) -> None:
     """Test complete parse and solve flow for various problem types and edge cases."""
     problem, solution = parse_and_solve(input_data["problem_text"])
 
@@ -263,7 +269,9 @@ def test_comprehensive_problem_solving_flow(input_data, expected) -> None:
         ),
     ],
 )
-def test_yaml_examples_comprehensive(examples_data, example_key, expected) -> None:
+def test_yaml_examples_comprehensive(
+    examples_data: dict[str, Any], example_key: str, expected: dict[str, Any]
+) -> None:
     """Test all YAML example problems with comprehensive validation."""
     problem_text = examples_data[example_key]["problem"]
 
@@ -338,7 +346,9 @@ def test_yaml_examples_comprehensive(examples_data, example_key, expected) -> No
         ),
     ],
 )
-def test_error_handling_comprehensive(input_data, expected_exception) -> None:
+def test_error_handling_comprehensive(
+    input_data: dict[str, Any], expected_exception: type[Exception]
+) -> None:
     """Test comprehensive error handling for invalid problem formats."""
     with pytest.raises(expected_exception):
         parse_and_solve(input_data["problem_text"])
@@ -361,7 +371,9 @@ def test_error_handling_comprehensive(input_data, expected_exception) -> None:
         )
     ],
 )
-def test_solution_formatting_comprehensive(examples_data, input_data, expected) -> None:
+def test_solution_formatting_comprehensive(
+    examples_data: dict[str, Any], input_data: dict[str, Any], expected: dict[str, Any]
+) -> None:
     """Test solution formatting and string representation."""
     problem_text = examples_data[input_data["example_key"]]["problem"]
     problem, solution = parse_and_solve(problem_text)
@@ -386,7 +398,7 @@ def test_solution_formatting_comprehensive(examples_data, input_data, expected) 
 
 
 # Problem variable extraction tests
-def test_problem_variable_extraction_comprehensive(examples_data) -> None:
+def test_problem_variable_extraction_comprehensive(examples_data: dict[str, Any]) -> None:
     """Test comprehensive variable extraction from problems."""
     problem_text = examples_data["production_planning"]["problem"]
     problem, _solution = parse_and_solve(problem_text)
@@ -421,7 +433,9 @@ def test_problem_variable_extraction_comprehensive(examples_data) -> None:
         "facility_location",
     ],
 )
-def test_all_examples_solve_successfully_comprehensive(examples_data, example_key) -> None:
+def test_all_examples_solve_successfully_comprehensive(
+    examples_data: dict[str, Any], example_key: str
+) -> None:
     """Test that all example problems solve successfully with comprehensive validation."""
     problem_text = examples_data[example_key]["problem"]
 

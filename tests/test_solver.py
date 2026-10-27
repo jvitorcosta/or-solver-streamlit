@@ -14,6 +14,7 @@ from solvedor.solver.models import (
     ObjectiveDirection,
     ObjectiveFunction,
     Problem,
+    Solution,
     SolverStatus,
     Variable,
     VariableType,
@@ -23,7 +24,7 @@ from solvedor.solver.parser import parse_lp_problem
 _EXAMPLES = Path(__file__).parents[1] / "src" / "solvedor" / "resources" / "examples.yaml"
 
 
-def _solve(text: str):
+def _solve(text: str) -> Solution:
     return solve(parse_lp_problem(text))
 
 

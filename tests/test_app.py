@@ -6,6 +6,8 @@ import pytest
 from streamlit.testing.v1 import AppTest
 from streamlit.testing.v1.element_tree import Button
 
+from solvedor.config.settings import extract_examples_from_resources_directory
+
 _APP = str(Path(__file__).parents[1] / "streamlit_app.py")
 _TEXTBOOK = "max 3x + 2y\nsubject to:\nx + 2y <= 4\n2x + y <= 4\n"
 
@@ -91,3 +93,15 @@ def test_pill_keeps_selection_across_language_switch(app: AppTest) -> None:
 def test_empty_solve_does_not_crash(app: AppTest) -> None:
     _solve(app, "   ")
     assert _objective(app) is None
+
+
+@pytest.mark.parametrize("language_code", ["en", "pt"])
+def test_every_gallery_example_loads_and_solves(app: AppTest, language_code: str) -> None:
+    app.selectbox(key="language").set_value(language_code).run()
+    for key in extract_examples_from_resources_directory():
+        app.button_group[0].set_value(key).run()
+        _button(app, "load_example").click().run()
+        _button(app, "solve").click().run()
+        assert not app.exception, key
+        assert _objective(app) is not None, key
+        assert len(app.error) == 0, key

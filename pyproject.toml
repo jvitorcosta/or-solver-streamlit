@@ -81,14 +81,6 @@ files = ["src", "tests"]
 module = ["ortools.*", "plotly.*"]  # no type stubs published
 ignore_missing_imports = true
 
-# TEMPORARY: modules rewritten by later refactor tasks (parser: Task 2, backends: Task 4,
-# engine: Task 5, tests: Task 10). Each task removes its entry; none may remain at the end.
-[[tool.mypy.overrides]]
-module = ["tests.*"]
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-disallow_untyped_calls = false
-
 # ---------------------------------------------------------------- pytest
 [tool.pytest.ini_options]
 addopts = ["-ra", "--strict-markers", "--strict-config"]
@@ -101,4 +93,4 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-fail_under = 55  # TEMPORARY: raised to 80 in Task 10 (AppTest covers the UI)
+fail_under = 80
