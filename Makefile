@@ -1,56 +1,57 @@
-.PHONY: help
+.DEFAULT_GOAL := help
+.PHONY: help run requirements install sync lock upgrade format lint typecheck test cov check pre-commit build clean
+
+# Recipes use only `uv ...` and Python one-liners, so they behave the same in
+# bash/zsh (macOS, Linux) and cmd/PowerShell (Windows): no awk, rm or find.
+PY := uv run --no-project --quiet python -c
+
 help: ## Show this help
-	@awk 'BEGIN {FS = ":.*##"; printf "usage: make \033[36m\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@$(PY) "import re; [print(f'  {t:<12} {d}') for t, d in re.findall(r'^([a-zA-Z_-]+):.*?## (.*)$$', open('Makefile').read(), re.M)]"
 
-##@ Setup
-.PHONY: install
-install: ## Install project dependencies
-	uv sync
+run: ## Run the app locally
+	uv run streamlit run streamlit_app.py
 
-.PHONY: dev
-dev: ## Complete development setup with pre-commit hooks
-	uv sync --frozen --extra dev --extra test
+requirements: ## Regenerate requirements.txt (Streamlit Community Cloud) from uv.lock
+	uv export --no-hashes --no-dev --no-header -q -o requirements.txt
+
+install: ## Install deps and git hooks (first-time setup)
+	uv sync --all-groups
 	uv run pre-commit install
 
-.PHONY: setup
-setup: dev ## Alias for dev (backward compatibility)
+sync: ## Sync the environment with uv.lock
+	uv sync --all-groups
 
-.PHONY: hello
-hello: ## Quick demo setup - install dependencies and run (perfect for recruiters!)
-	@echo "🚀 Setting up OR-Solver for demo..."
-	uv sync
-	@echo "✅ Dependencies installed!"
-	@echo "🌐 Starting web interface at http://localhost:8501"
-	@echo "💡 Try the example problems in the gallery!"
-	uv run streamlit run src/app.py
+lock: ## Re-resolve uv.lock
+	uv lock
 
-##@ Development
-.PHONY: run
-run: ## Start the web interface
-	uv run streamlit run src/app.py
+upgrade: ## Upgrade all dependencies to their latest allowed versions
+	uv lock --upgrade
+	uv sync --all-groups
 
-.PHONY: format
-format: ## Format code with ruff
-	uv run ruff format src tests
-	uv run ruff check --fix src tests
+format: ## Auto-format and apply safe lint fixes
+	uv run ruff format .
+	uv run ruff check --fix .
 
-##@ Quality & Testing
-.PHONY: lint
-lint: ## Run pre-commit hooks
+lint: ## Lint and check formatting (no changes)
+	uv run ruff check .
+	uv run ruff format --check .
+
+typecheck: ## Static type checking
+	uv run mypy
+
+test: ## Run tests
+	uv run pytest
+
+cov: ## Run tests with coverage
+	uv run pytest --cov --cov-report=term-missing
+
+check: lint typecheck cov ## Everything CI runs
+
+pre-commit: ## Run all pre-commit hooks on all files
 	uv run pre-commit run --all-files
 
-.PHONY: test
-test: ## Run all tests
-	uv run pytest -v
+build: ## Build sdist + wheel into dist/
+	uv build
 
-##@ Maintenance
-.PHONY: clean
-clean: ## Remove build and cache files
-	find . -type f -name "*.DS_Store" -ls -delete
-	find . | grep -E "(__pycache__|\.pytest_cache|\.pyc|\.pyo)" | xargs rm -rf
-	find . | grep -E ".ipynb_checkpoints" | xargs rm -rf
-	find . | grep -E "dist" | xargs rm -rf
-	find . | grep -E ".egg-info" | xargs rm -rf
-	find . | grep -E "htmlcov" | xargs rm -rf
-	rm -rf .coverage*
-	rm -rf build/
+clean: ## Remove caches and build artifacts
+	@$(PY) "import shutil, pathlib as p; [shutil.rmtree(d, ignore_errors=True) for d in ['dist', 'build', '.pytest_cache', '.mypy_cache', '.ruff_cache', 'htmlcov', *(x for x in p.Path('.').rglob('__pycache__') if '.venv' not in x.parts)]]; p.Path('.coverage').unlink(missing_ok=True)"

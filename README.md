@@ -1,127 +1,88 @@
 # OR-Solver
 
-[![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/jvitorcosta/or-solver-streamlit/actions/workflows/ci.yml/badge.svg)](https://github.com/jvitorcosta/or-solver-streamlit/actions/workflows/ci.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Modern Operations Research solver with academic-standard syntax for
-linear programming problems.
+Write a linear or integer program the way a textbook does, and solve it in the browser.
 
-## Overview
+<!-- Live demo: add the Streamlit Community Cloud URL here once it is deployed. -->
 
-OR-Solver is a web-based Linear Programming solver that accepts
-textbook-style mathematical syntax. The application provides an intuitive
-interface for solving optimization problems with detailed step-by-step
-explanations.
+OR-Solver is a Streamlit app. It parses the model you type, solves it with
+[Google OR-Tools](https://developers.google.com/optimization) (GLOP for linear programs,
+SCIP for integer ones), and shows the solution. For two-variable problems it also draws the
+feasible region, the constraint lines, the direction the objective improves and the solution.
+The interface is in English and Portuguese.
 
-## Quick Start
+## Quick start
 
-### 🎯 **Quick Demo**
+Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
 ```sh
 git clone https://github.com/jvitorcosta/or-solver-streamlit.git
 cd or-solver-streamlit
-make hello
+make install
+make run
 ```
 
-That's it! 🚀 The app will automatically setup and launch at `http://localhost:8501`
+The app opens at `http://localhost:8501`. Pick an example from the gallery to start.
 
-> [!TIP]
-> Try the **Gallery** examples for instant optimization problems!
-
----
-
-### 🔧 **For Development**
-
-1. **Clone the repository**:
-
-   ```sh
-   git clone https://github.com/jvitorcosta/or-solver-streamlit.git
-   cd or-solver-streamlit
-   ```
-
-2. **Setup development environment**:
-
-   > [!NOTE]
-   > Requires Python 3.11+ and `uv` package manager
-
-   ```sh
-   make dev
-   ```
-
-3. **Run the application**:
-
-   ```sh
-   make run
-   ```
-
-   Visit `http://localhost:8501` to access the web interface.
-
-## Usage
-
-Write optimization problems using academic-standard mathematical syntax:
-
-### Linear Programming Example
+## Writing a problem
 
 ```text
-# Production Planning Problem
 maximize 40*product_a + 50*product_b
 
 subject to:
-    # Resource constraints
-    2*product_a + 3*product_b <= 100    # Labor hours
-    4*product_a + 2*product_b <= 120    # Raw materials
-    product_a <= 30                     # Capacity A
-    product_b <= 25                     # Capacity B
+    2*product_a + 3*product_b <= 100    # labor hours
+    4*product_a + 2*product_b <= 120    # raw materials
 
 where:
-    product_a, product_b >= 0           # Non-negativity
+    product_a <= 30
+    product_b <= 25
 ```
 
-### Integer Programming Example
+- **Objective**: `maximize` / `max` / `minimize` / `min` (Portuguese `maximizar` / `minimizar`
+  also work). It may span several lines.
+- **Constraints** go after `subject to`, `s.t.`, `st` or `sujeito a` (the colon is optional).
+  Operators are `<=`, `>=`, `=`, `≤` and `≥`. Constants and variables can sit on either side.
+- **Numbers** can be signed, decimal (`0.5`) or scientific (`1e3`). Write coefficients as
+  `3x`, `3*x` or `3 x`. `2e1` is the number 20, so for a variable named `e1` write `2*e1`.
+- **A constant in the objective** (`max 3x + 5`) is added to the objective value.
+- **Bounds and types** go after `where` or `onde` (optional):
+  - `x, y >= 0`, `x <= 30`, `0 <= z <= 10`, `w = 5`
+  - `free x` lets a variable be negative
+  - `integer a, b` or `binary c` (also `a, b integer`); a binary variable takes no other bounds
+- **Every variable is non-negative** unless it is declared `free` or given a lower bound.
+- `#` starts a comment. A syntax error message names the line it happened on.
 
-```text
-# Facility Location Problem
-minimize 50000*location_1 + 60000*location_2 + 45000*location_3
+### Results
 
-subject to:
-    location_1 + location_2 >= 1       # Coverage requirement
-    location_2 + location_3 >= 1       # Service constraint
+| Status | Meaning |
+| --- | --- |
+| Optimal | The best solution, proven. |
+| Best found before the time limit | An integer problem ran out of time (10 s) with a solution that is not proven optimal. |
+| Infeasible | No point satisfies every constraint. |
+| Unbounded | The objective can improve forever. |
+| No solution within the time limit | The solver stopped before finding any solution. |
 
-where:
-    location_1, location_2, location_3 >= 0
-    location_1, location_2, location_3 integer  # Binary variables
+The Guide tab inside the app has the same reference.
+
+## Development
+
+```sh
+make install   # dependencies and git hooks
+make check     # lint, type check and tests with coverage, as CI runs them
+make run       # the app
 ```
 
-### Supported Features
+`make help` lists every target. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-- **Objective Types**: `maximize` / `minimize` (or Portuguese `maximizar` / `minimizar`)
-- **Constraints**: `<=`, `>=`, `=` with mathematical expressions
-- **Variables**: Named variables with coefficients (explicit or implicit)
-- **Comments**: Use `#` for inline documentation
-- **Variable Types**: Continuous (default) or `integer` for discrete optimization
-- **Languages**: English and Portuguese syntax support
-
-The solver provides:
-
-- Optimal solution values and objective function value
-- Step-by-step solution explanations with mathematical reasoning
-- Graphical visualization for 2D problems
-- Detailed constraint analysis and sensitivity information
-
-## Features
-
-- **Interactive Web Interface**: Built with Streamlit for ease of use
-- **Multilingual Support**: Available in English and Portuguese
-- **Problem Templates**: Built-in gallery with common optimization problems
-- **Detailed Solutions**: Step-by-step explanations of the solving process
-- **Responsive Design**: Works on desktop and mobile devices
-- **Academic Syntax**: Accepts standard mathematical optimization notation
+The code lives in `src/solvedor/`: `solver/` turns text into an answer without importing
+Streamlit (`solver.api.solve_text`), and `ui/` draws it.
 
 ## License
 
-This project is licensed under the MIT License - see the
-[LICENSE](LICENSE) file for details.
+MIT, see [LICENSE](LICENSE).
 
-**Maintainer**: João Vitor Pinheiro da Costa -
-[GitHub](https://github.com/jvitorcosta) |
-[LinkedIn](https://linkedin.com/in/jvpro)
+**Maintainer**: Vitor Pinheiro ([GitHub](https://github.com/jvitorcosta) ·
+[LinkedIn](https://linkedin.com/in/jvpro))

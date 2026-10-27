@@ -2,10 +2,10 @@
 
 ## Requirements
 
-1. Ensure you have **Python 3.11+** installed:
+1. Ensure you have **Python 3.12+** installed:
 
    ```sh
-   python --version  # Should be 3.11+
+   python --version  # Should be 3.12+
    ```
 
 2. Ensure that you have `uv` installed.
@@ -37,7 +37,7 @@ Run the following command in the root directory of the repository:
 > to ensure code quality on every commit.
 
 ```sh
-make dev
+make install
 ```
 
 This command will:
@@ -51,24 +51,18 @@ The environment is created at `.venv` directory.
 
 [`Makefile`](./Makefile) has useful commands for development:
 
-```console
-$ make help
-Available commands:
-  dev              Setup development environment
-  run              Run Streamlit web interface
-  test             Run test suite
-  lint             Check code quality
-  format           Format code with ruff
-  clean            Remove build and cache files
+```sh
+make help
 ```
+
+`make check` runs everything CI runs: lint, type check and the tests with coverage.
 
 Use [`uv run`](https://docs.astral.sh/uv/reference/cli/#uv-run) to run commands
 in the project's environment:
 
 ```sh
-uv run streamlit run src/app.py
-uv run pytest tests/ -v
-uv run or-solver --help
+uv run streamlit run streamlit_app.py
+uv run pytest -v
 ```
 
 ## Tests
@@ -79,4 +73,7 @@ Run tests to ensure everything works:
 make test
 ```
 
-1. Commit with [semantic commit](https://www.conventionalcommits.org/)
+Commit with [conventional commit](https://www.conventionalcommits.org/) messages.
+
+If you change dependencies, run `make requirements` so `requirements.txt` (used by
+Streamlit Community Cloud) matches `uv.lock`; CI checks this.

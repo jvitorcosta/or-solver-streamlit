@@ -1,8 +1,11 @@
 from decimal import Decimal
+from pathlib import Path
+from typing import Any
 
 import pytest
+import yaml
 
-from solver.models import (
+from solvedor.solver.models import (
     Constraint,
     ConstraintOperator,
     LinearExpression,
@@ -15,6 +18,7 @@ from solver.models import (
     VariableType,
     add_term_to_linear_expression,
 )
+from solvedor.solver.parser import parse_lp_problem
 
 
 # Variable tests with comprehensive parametrization
@@ -27,9 +31,9 @@ from solver.models import (
             {
                 "name": "x1",
                 "variable_type": VariableType.CONTINUOUS,
-                "lower_bound": None,
+                "lower_bound": Decimal("0"),  # non-negative by default (textbook convention)
                 "upper_bound": None,
-                "is_non_negative": False,
+                "is_non_negative": True,
             },
         ),
         # Integer variable with bounds
@@ -76,7 +80,9 @@ from solver.models import (
         ),
     ],
 )
-def test_variable_creation_and_properties(input_data, expected):
+def test_variable_creation_and_properties(
+    input_data: dict[str, Any], expected: dict[str, Any]
+) -> None:
     """Test variable creation with different configurations and property validation."""
     variable = Variable(**input_data)
 
@@ -99,7 +105,9 @@ def test_variable_creation_and_properties(input_data, expected):
         ({"name": "valid_name"}, None),  # Should not raise
     ],
 )
-def test_variable_name_validation(input_data, expected_exception):
+def test_variable_name_validation(
+    input_data: dict[str, Any], expected_exception: type[Exception] | None
+) -> None:
     """Test variable name validation."""
     if expected_exception is None:
         # Should not raise exception
@@ -120,7 +128,6 @@ def test_variable_name_validation(input_data, expected_exception):
             {},
             {
                 "terms_count": 0,
-                "constant": Decimal("0"),
                 "str_repr": "0",
                 "variables": [],
             },
@@ -156,7 +163,7 @@ def test_variable_name_validation(input_data, expected_exception):
         ),
     ],
 )
-def test_linear_expression_operations(input_data, expected):
+def test_linear_expression_operations(input_data: dict[str, Any], expected: dict[str, Any]) -> None:
     """Test linear expression creation, term addition, and properties."""
     expression = LinearExpression()
 
@@ -165,9 +172,6 @@ def test_linear_expression_operations(input_data, expected):
         add_term_to_linear_expression(expression, coeff, var_name)
 
     assert len(expression.terms) == expected["terms_count"]
-
-    if "constant" in expected:
-        assert expression.constant == expected["constant"]
 
     if "str_repr" in expected:
         assert str(expression) == expected["str_repr"]
@@ -214,16 +218,16 @@ def test_linear_expression_operations(input_data, expected):
         ),
     ],
 )
-def test_constraint_creation_and_properties(input_data, expected):
+def test_constraint_creation_and_properties(
+    input_data: dict[str, Any], expected: dict[str, Any]
+) -> None:
     """Test constraint creation with different operators and expressions."""
     # Create expression
     expr = LinearExpression()
     for coeff, var_name in input_data["terms"]:
         expr.add_term(coeff, var_name)
 
-    constraint = Constraint(
-        expression=expr, operator=input_data["operator"], rhs=input_data["rhs"]
-    )
+    constraint = Constraint(expression=expr, operator=input_data["operator"], rhs=input_data["rhs"])
 
     assert constraint.operator == expected["operator"]
     assert constraint.rhs == expected["rhs"]
@@ -265,7 +269,9 @@ def test_constraint_creation_and_properties(input_data, expected):
         ),
     ],
 )
-def test_objective_function_creation_and_properties(input_data, expected):
+def test_objective_function_creation_and_properties(
+    input_data: dict[str, Any], expected: dict[str, Any]
+) -> None:
     """Test objective function creation with different directions."""
     # Create expression
     expr = LinearExpression()
@@ -312,7 +318,9 @@ def test_objective_function_creation_and_properties(input_data, expected):
         )
     ],
 )
-def test_problem_creation_and_properties(input_data, expected):
+def test_problem_creation_and_properties(
+    input_data: dict[str, Any], expected: dict[str, Any]
+) -> None:
     """Test complete problem creation and validation."""
     # Create objective
     obj_expr = LinearExpression()
@@ -366,7 +374,7 @@ def test_problem_creation_and_properties(input_data, expected):
                 "status": SolverStatus.OPTIMAL,
                 "is_optimal": True,
                 "is_feasible": True,
-                "str_contains": "🎯 Optimal Solution Found!",
+                "str_contains": "Objective: 15.5",
                 "has_variable_values": True,
             },
         ),
@@ -377,7 +385,7 @@ def test_problem_creation_and_properties(input_data, expected):
                 "status": SolverStatus.INFEASIBLE,
                 "is_optimal": False,
                 "is_feasible": False,
-                "str_contains": "🙀 Problem is Infeasible!",
+                "str_contains": "Status: infeasible",
                 "has_variable_values": False,
             },
         ),
@@ -388,13 +396,15 @@ def test_problem_creation_and_properties(input_data, expected):
                 "status": SolverStatus.UNBOUNDED,
                 "is_optimal": False,
                 "is_feasible": False,
-                "str_contains": "😿 Problem is Unbounded!",
+                "str_contains": "Status: unbounded",
                 "has_variable_values": False,
             },
         ),
     ],
 )
-def test_solution_status_and_properties(input_data, expected):
+def test_solution_status_and_properties(
+    input_data: dict[str, Any], expected: dict[str, Any]
+) -> None:
     """Test solution creation with different statuses and property validation."""
     solution = Solution(**input_data)
 
@@ -411,3 +421,48 @@ def test_solution_status_and_properties(input_data, expected):
 
     # Test variable extraction
     assert solution.extract_variable_value("nonexistent") is None
+
+
+# --- Refactor Task 3: variables, defaults and the printed model -------------------------
+
+_EXAMPLES = Path(__file__).parents[1] / "src" / "solvedor" / "resources" / "examples.yaml"
+
+
+def test_variables_default_to_non_negative() -> None:
+    variable = Variable(name="x")
+    assert (variable.lower_bound, variable.upper_bound) == (Decimal("0"), None)
+
+
+def test_problem_is_mip() -> None:
+    lp = parse_lp_problem("max x + y\nsubject to:\nx + y <= 4\n")
+    mip = parse_lp_problem("max x + y\nsubject to:\nx + y <= 4\nwhere:\ninteger x\n")
+    assert (lp.is_mip, mip.is_mip) == (False, True)
+
+
+def test_variable_name_rejects_dash() -> None:
+    with pytest.raises(ValueError):
+        Variable(name="x-1")
+
+
+def test_only_english_directions_exist() -> None:
+    assert {d.value for d in ObjectiveDirection} == {"minimize", "maximize"}
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "max 3x + 2y\nsubject to:\nx + 2y <= 4\n2x + y <= 4\n",
+        "min x - y\nsubject to:\nx + y >= -2\nwhere:\nfree y\n0 <= x <= 10\n",
+        "max a + 2b + c\nsubject to:\na + b + c <= 3.5\nwhere:\ninteger a\nbinary b\nc <= 2\n",
+    ],
+)
+def test_printed_model_parses_back_to_the_same_problem(text: str) -> None:
+    problem = parse_lp_problem(text)
+    assert parse_lp_problem(str(problem)) == problem
+
+
+def test_gallery_examples_round_trip() -> None:
+    examples = yaml.safe_load(_EXAMPLES.read_text(encoding="utf-8"))
+    for key, example in examples.items():
+        problem = parse_lp_problem(example["problem"])
+        assert parse_lp_problem(str(problem)) == problem, key

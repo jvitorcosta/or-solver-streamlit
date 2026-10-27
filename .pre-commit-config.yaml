@@ -1,76 +1,35 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
-#
-# Python lint rules: https://docs.astral.sh/ruff/rules/
-# Markdown lint rules: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
-
-default_language_version:
-  python: python3.12
-
+# Update hook versions with: uv run pre-commit autoupdate
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
-        args: ["--maxkb=1024"]
+        args: [--maxkb=1500]  # the thesis PDF (src/solvedor/resources) is 1.2 MB
       - id: check-merge-conflict
       - id: check-toml
+      - id: check-yaml
+      - id: check-json
       - id: end-of-file-fixer
       - id: trailing-whitespace
+      - id: detect-private-key
 
-  # Lint/Format: Python
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.0
+    rev: v0.17.1
     hooks:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
 
-  # Format: YAML, JSON, Markdown, etc.
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
-    hooks:
-      - id: prettier
-        files: \.(yaml|yml|json|md|html|css|jinja2)$
-        args: ["--end-of-line", "lf", "--tab-width", "2"]
-        # Observed errors in CI (see https://github.com/pre-commit/pre-commit/issues/3409)
-        require_serial: True
-        # prettier>=3.6.0 is giving Markdown diffs in CI
-        additional_dependencies: ["prettier@3.5.3"]
-
-  # Lint: YAML
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.1
-    hooks:
-      - id: yamllint
-        args: ["-d {extends: relaxed, rules: {line-length: disable}}", "-s"]
-        files: \.(yaml|yml)$
-
-  # Lint: Markdown
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.45.0
-    hooks:
-      - id: markdownlint
-        args: ["--fix"]
-        exclude: (.github/PULL_REQUEST_TEMPLATE.md$|^docs/)
-
-  # Lint: Shell scripts
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
-    hooks:
-      - id: shellcheck
-        args: ["-x"]
-
-  # Lint: Check for spelling errors
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
-    hooks:
-      - id: codespell
-        types_or: [python, rst, markdown]
-        additional_dependencies: [tomli]
-
-  # Keep uv.lock in sync with pyproject.toml
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.7.14
+    rev: 0.13.4
     hooks:
       - id: uv-lock
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: false

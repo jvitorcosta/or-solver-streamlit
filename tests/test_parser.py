@@ -1,8 +1,13 @@
-import pytest
+from decimal import Decimal
+from pathlib import Path
+from typing import Any
 
-from solver import parser
-from solver.models import ObjectiveDirection, VariableType
-from solver.parser import ParseError
+import pytest
+import yaml
+
+from solvedor.solver import parser
+from solvedor.solver.models import ConstraintOperator, ObjectiveDirection, VariableType
+from solvedor.solver.parser import ParseError, parse_lp_problem
 
 
 # Core parsing tests with input,expected structure
@@ -85,7 +90,7 @@ from solver.parser import ParseError
         ),
     ],
 )
-def test_parse_linear_programs(input_data, expected):
+def test_parse_linear_programs(input_data: dict[str, Any], expected: dict[str, Any]) -> None:
     """Test parsing linear programs with different objective directions and formats."""
     problem = parser.parse_lp_problem(input_data["problem_text"])
 
@@ -181,7 +186,7 @@ def test_parse_linear_programs(input_data, expected):
         ),
     ],
 )
-def test_variable_type_declarations(input_data, expected):
+def test_variable_type_declarations(input_data: dict[str, Any], expected: dict[str, Any]) -> None:
     """Test parsing of different variable type declarations."""
     problem = parser.parse_lp_problem(input_data["problem_text"])
 
@@ -239,7 +244,7 @@ def test_variable_type_declarations(input_data, expected):
         ),
     ],
 )
-def test_problem_formatting_tolerance(input_data, expected):
+def test_problem_formatting_tolerance(input_data: dict[str, Any], expected: dict[str, Any]) -> None:
     """Test parsing tolerance for comments and whitespace."""
     if expected["should_parse"]:
         problem = parser.parse_lp_problem(input_data["problem_text"])
@@ -298,7 +303,9 @@ def test_problem_formatting_tolerance(input_data, expected):
         ),
     ],
 )
-def test_parsing_error_handling(input_data, expected_exception):
+def test_parsing_error_handling(
+    input_data: dict[str, Any], expected_exception: type[Exception]
+) -> None:
     """Test that invalid syntax raises appropriate parsing errors."""
     with pytest.raises(expected_exception):
         parser.parse_lp_problem(input_data["problem_text"])
@@ -349,7 +356,7 @@ def test_parsing_error_handling(input_data, expected_exception):
         ),
     ],
 )
-def test_complex_problem_structures(input_data, expected):
+def test_complex_problem_structures(input_data: dict[str, Any], expected: dict[str, Any]) -> None:
     """Test parsing of complex problems with multiple variables and constraints."""
     problem = parser.parse_lp_problem(input_data["problem_text"])
 
@@ -376,14 +383,14 @@ def test_complex_problem_structures(input_data, expected):
         )
     ],
 )
-def test_parse_coefficients(input_data, expected_vars):
+def test_parse_coefficients(input_data: str, expected_vars: int) -> None:
     """Test parsing with implicit and negative coefficients."""
     problem = parser.parse_lp_problem(input_data)
     obj_vars = problem.objective.extract_variable_names()
     assert len(obj_vars) == expected_vars
 
 
-def test_comments_ignored():
+def test_comments_ignored() -> None:
     """Test that comments are properly ignored."""
     problem_text = """
         # This is a cat food optimization problem
@@ -406,7 +413,7 @@ def test_comments_ignored():
     assert "cat_toys" in variables
 
 
-def test_invalid_syntax_raises_error():
+def test_invalid_syntax_raises_error() -> None:
     """Test that invalid syntax raises ParseError."""
     invalid_problems = [
         "invalid problem text",
@@ -418,3 +425,146 @@ def test_invalid_syntax_raises_error():
     for invalid_text in invalid_problems:
         with pytest.raises(ParseError):
             parser.parse_lp_problem(invalid_text)
+
+
+# --- Refactor Task 2: parser correctness and error messages -------------------------------
+
+_EXAMPLES = Path(__file__).parents[1] / "src" / "solvedor" / "resources" / "examples.yaml"
+
+
+@pytest.mark.parametrize(
+    ("text", "rhs"),
+    [
+        ("max x\nsubject to:\nx <= -5\n", Decimal("-5")),
+        ("max x\nsubject to:\nx >= -2.5\n", Decimal("-2.5")),
+        ("max x\nsubject to:\nx <= 1e-3\n", Decimal("0.001")),
+    ],
+)
+def test_signed_and_scientific_rhs(text: str, rhs: Decimal) -> None:
+    problem = parser.parse_lp_problem(text)
+    assert problem.constraints[0].rhs == rhs
+
+
+def test_unicode_inequalities() -> None:
+    problem = parser.parse_lp_problem("max x + y\nsubject to:\nx + y ≤ 4\nx ≥ 1\n")
+    assert [c.operator for c in problem.constraints] == [
+        ConstraintOperator.LESS_EQUAL,
+        ConstraintOperator.GREATER_EQUAL,
+    ]
+
+
+@pytest.mark.parametrize(
+    "header", ["subject to", "subject to:", "s.t.", "s.t.:", "st:", "sujeito a"]
+)
+def test_constraint_header_variants(header: str) -> None:
+    problem = parser.parse_lp_problem(f"max x\n{header}\nx <= 4\n")
+    assert len(problem.constraints) == 1
+
+
+def test_general_bounds() -> None:
+    problem = parser.parse_lp_problem(
+        "max x + y + z\nsubject to:\nx + y + z <= 20\nwhere:\n0 <= x <= 10\ny >= 2\nz <= 3\n"
+    )
+    v = problem.variables
+    assert (v["x"].lower_bound, v["x"].upper_bound) == (Decimal("0"), Decimal("10"))
+    assert (v["y"].lower_bound, v["y"].upper_bound) == (Decimal("2"), None)
+    assert (v["z"].lower_bound, v["z"].upper_bound) == (Decimal("0"), Decimal("3"))
+
+
+def test_free_keyword() -> None:
+    problem = parser.parse_lp_problem("min x\nsubject to:\nx >= -3\nwhere:\nfree x\n")
+    assert problem.variables["x"].lower_bound is None
+
+
+def test_objective_only_variable_is_registered() -> None:
+    problem = parser.parse_lp_problem("max x + y\nsubject to:\nx <= 5\n")
+    assert set(problem.variables) == {"x", "y"}
+
+
+def test_unknown_variable_in_where() -> None:
+    with pytest.raises(ParseError, match="yy") as err:
+        parser.parse_lp_problem("min x + y\nsubject to:\nx + y >= 2\nwhere:\nx, yy >= 0\n")
+    assert err.value.line == 5
+
+
+def test_error_points_at_bad_constraint() -> None:
+    with pytest.raises(ParseError) as err:
+        parser.parse_lp_problem("max x\nsubject to:\nx <= 4\nx === 3\n")
+    assert err.value.line == 4
+
+
+def test_two_constraints_on_one_line_rejected() -> None:
+    with pytest.raises(ParseError) as err:
+        parser.parse_lp_problem("max x\nsubject to:\nx <= 4 x >= 1\n")
+    assert err.value.line == 3
+
+
+def test_where_lists_still_parse() -> None:
+    problem = parser.parse_lp_problem(
+        "max x + y + a + b\nsubject to:\nx + y + a + b <= 10\nwhere:\nx, y >= 0\ninteger a, b\n"
+    )
+    assert problem.variables["a"].variable_type.value == "integer"
+    assert problem.variables["b"].variable_type.value == "integer"
+
+
+def test_all_gallery_examples_parse() -> None:
+    examples = yaml.safe_load(_EXAMPLES.read_text(encoding="utf-8"))
+    for key, example in examples.items():
+        problem = parser.parse_lp_problem(example["problem"])
+        assert problem.constraints, key
+
+
+def test_coefficient_values() -> None:
+    problem = parser.parse_lp_problem("max 3x - y + 2.5z\nsubject to:\nx + y + z <= 1\n")
+    coeffs = problem.objective.expression.variable_coefficients_map
+    assert coeffs == {"x": Decimal("3"), "y": Decimal("-1"), "z": Decimal("2.5")}
+
+
+# --- Final review fixes ----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("name", ["st1", "stock", "steel", "wherehouse", "onde2"])
+def test_header_words_inside_names_are_variables(name: str) -> None:
+    problem = parse_lp_problem(f"max x + {name}\nsubject to:\n{name} + x <= 6\nx <= 4\n")
+    assert sorted(problem.variables) == sorted([name, "x"])
+    assert [str(c) for c in problem.constraints] == [f"{name} + x <= 6", "x <= 4"]
+
+
+def test_binary_cannot_take_other_bounds() -> None:
+    for where in ("binary x\nx <= 5", "binary x\nfree x", "x <= 5\nbinary x"):
+        with pytest.raises(ParseError) as error:
+            parse_lp_problem(f"max x\nsubject to:\nx <= 10\nwhere:\n{where}\n")
+        assert error.value.line == 6 and "binary" in str(error.value)
+
+
+def test_lower_bound_above_upper_bound_is_an_error() -> None:
+    with pytest.raises(ParseError) as error:
+        parse_lp_problem("max x\nsubject to:\nx <= 3\nwhere:\n5 <= x <= 1\n")
+    assert error.value.line == 5
+
+
+def test_objective_constant_is_kept() -> None:
+    problem = parse_lp_problem("max x + 5 - 2\nsubject to:\nx <= 3\n")
+    assert problem.objective.constant == Decimal(3)
+    assert parse_lp_problem(str(problem)) == problem
+
+
+@pytest.mark.parametrize(
+    ("text", "line"),
+    [
+        ("max _\nsubject to:\n_ <= 1\n", 1),
+        ("max x - 1e9999999y\nsubject to:\nx <= 1\n", 1),
+        ("max x\nsubject to:\n1e400x <= 1\n", 3),
+    ],
+)
+def test_bad_names_and_huge_numbers_are_parse_errors(text: str, line: int) -> None:
+    with pytest.raises(ParseError) as error:
+        parse_lp_problem(text)
+    assert error.value.line == line
+
+
+def test_package_errors_share_one_base_class() -> None:
+    import solvedor
+
+    with pytest.raises(solvedor.SolvedorError):
+        parse_lp_problem("not a problem")

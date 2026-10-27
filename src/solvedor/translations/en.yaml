@@ -1,0 +1,96 @@
+app:
+  title: "OR-Solver"
+  subtitle: "An Operations Research app"
+  about: "Write a linear or integer program in textbook notation and solve it with Google OR-Tools."
+  footer: ":material/favorite: Did you enjoy using it? Please star the project on GitHub!"
+
+sidebar:
+  settings: "Settings"
+  language: "Language"
+
+language_labels:
+  english: "🇺🇸 English"
+  portuguese: "🇧🇷 Português"
+
+interface:
+  solve_button: "Solve"
+  placeholder: "Enter your model here..."
+  help_text: "Enter your model using mathematical notation (see the Guide tab)"
+  clear_workspace: "Clear workspace"
+  clear_help: "Clear workspace and start fresh"
+  solve_help: "Analyze and solve your optimization problem"
+  workspace_title: "Workspace"
+  using_example: "Using example"
+
+tabs:
+  workspace: "Workspace"
+  paper: "Paper"
+  guide: "Guide"
+  readme: "Readme"
+  contributing: "Contributing"
+
+gallery:
+  title: "Gallery"
+  choose_text: "Choose from gallery to get started:"
+  select_help: "Select a problem from the gallery to load into your workspace"
+  copy_button: "Copy to Workspace"
+  copy_help: "Copy this example to your workspace"
+  examples:
+    production_planning: "Production Planning"
+    transportation: "Transportation"
+    diet_optimization: "Diet Optimization"
+    resource_allocation: "Resource Allocation"
+    facility_location: "Facility Location"
+
+visualization:
+  title: "Problem Visualization"
+  integer_info: "The plot shows the continuous relaxation; integer and binary variables only take whole values inside it."
+  region_label: "Feasible region"
+  optimum_label: "Solution"
+  direction_label: "improves"
+
+resources:
+  thesis: "Research Thesis - SolvedOR: Modern Operations Research Interface"
+  thesis_caption: "This thesis introduces the OR-Solver application and its methodology."
+  download_pdf: "Download PDF"
+
+messages:
+  empty_problem_solve: "Please enter a problem to solve"
+
+status:
+  solving: "Solving..."
+
+errors:
+  syntax_error: "Syntax Error"
+  solving_error: "Something went wrong while solving. Please report it on GitHub."
+  thesis_not_found: "Thesis PDF not found."
+  file_not_found: "not found."
+  file_read_error: "Could not read"
+  pdf_load_error: "Could not load PDF for download."
+  pdf_display_error: "Could not display PDF. Your browser might not support PDF preview."
+
+results:
+  solution: "Solution"
+  optimal_found: "Optimal solution found"
+  feasible_found: "Best solution found before the time limit (not proven optimal)"
+  objective_value: "Objective Value"
+  objective_value_help: "Value of the objective function at this solution"
+  solve_time: "Solve Time"
+  solve_time_help: "Time taken to solve the problem"
+  variables: "Variables"
+  variable_values: "Variable Values"
+  variable: "Variable"
+  value: "Value"
+  type: "Type"
+  problem_type: "Problem Type"
+  linear: "Linear"
+  mixed_integer: "Mixed-integer"
+  solver: "Solver"
+  problem_infeasible: "Problem is infeasible"
+  infeasible_help: "The constraints cannot be satisfied simultaneously. Check your constraint definitions."
+  problem_unbounded: "Problem is unbounded"
+  unbounded_help: "The objective can improve forever. Add a constraint or an upper/lower bound that limits it."
+  time_limit: "No solution found within the time limit"
+  time_limit_help: "Try a smaller model or tighter bounds on the variables."
+  solver_error: "Solver Error"
+  error_details: "Details"

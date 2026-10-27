@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(make:*)",
+      "Bash(uv run:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv add:*)",
+      "Bash(uv remove:*)",
+      "Bash(uv lock:*)",
+      "Bash(uv tree:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git switch:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh pr view:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(uv publish:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.key)",
+      "Bash(pip install:*)",
+      "Bash(sudo:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-project --quiet \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate_bash.py\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-project --quiet \"$CLAUDE_PROJECT_DIR/.claude/hooks/format_python.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

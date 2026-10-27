@@ -1,0 +1,13 @@
+# Changes here will be overwritten by Copier; do NOT edit manually.
+_commit: v0.2.0
+_src_path: gh:jvitorcosta/python-uv-claude-template
+author_email: ''
+author_name: Vitor Pinheiro
+description: Linear and integer programming solver for teaching, with textbook syntax
+github_owner: jvitorcosta
+include_cli: false
+license: MIT
+package_name: solvedor
+project_name: SolvedOR
+project_slug: or-solver-streamlit
+python_version: '3.12'
