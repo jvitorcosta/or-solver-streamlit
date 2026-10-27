@@ -41,6 +41,9 @@ visualization:
   constraint_lines: "Dashed lines: Individual constraint boundaries"
   optimal_point: "Gold star: Optimal solution point"
   gradient_arrow: "Blue arrow: Optimization direction (gradient)"
+  region_label: "Feasible region"
+  optimum_label: "Solution"
+  direction_label: "improves"
 
 language_labels:
   english: "🇺🇸 English"

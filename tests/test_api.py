@@ -84,3 +84,8 @@ def test_render_parse_error_shows_the_input_as_plain_text() -> None:
 def test_render_unbounded() -> None:
     at = _render("max x + y\nsubject to:\nx - y <= 1\n")
     assert "unbounded" in at.warning[0].value.lower()
+
+
+def test_render_two_variable_problem_draws_the_plot() -> None:
+    at = _render("max 3x + 2y\nsubject to:\nx + 2y <= 4\n2x + y <= 4\n")
+    assert len(at.get("plotly_chart")) == 1

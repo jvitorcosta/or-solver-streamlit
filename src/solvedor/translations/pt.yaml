@@ -43,6 +43,9 @@ visualization:
   constraint_lines: "Linhas tracejadas: Fronteiras de restrições individuais"
   optimal_point: "Estrela dourada: Ponto da solução ótima"
   gradient_arrow: "Seta azul: Direção de otimização (gradiente)"
+  region_label: "Região viável"
+  optimum_label: "Solução"
+  direction_label: "melhora"
 
 language_labels:
   english: "🇺🇸 English"

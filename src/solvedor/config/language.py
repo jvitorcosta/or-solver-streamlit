@@ -137,6 +137,9 @@ class VisualizationTranslations(BaseModel):
     constraint_lines: str
     optimal_point: str
     gradient_arrow: str
+    region_label: str
+    optimum_label: str
+    direction_label: str
 
 
 class LanguageLabelsTranslations(BaseModel):

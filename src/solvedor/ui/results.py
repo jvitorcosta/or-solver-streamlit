@@ -8,6 +8,7 @@ import streamlit as st
 from solvedor.config.language import TranslationSchema
 from solvedor.solver.api import SolveResult
 from solvedor.solver.models import Problem, Solution, SolverStatus, VariableType
+from solvedor.ui.plot import build_figure
 
 
 def format_number(value: float, *, whole: bool = False) -> str:
@@ -57,6 +58,13 @@ def render_results(result: SolveResult, t: TranslationSchema) -> None:
 
     if solution.is_feasible:
         _render_values(problem, solution, t)
+
+    figure = build_figure(problem, solution, t)
+    if figure is not None:
+        st.subheader(t.visualization.title)
+        if problem.is_mip:
+            st.caption(t.visualization.integer_info)
+        st.plotly_chart(figure, width="stretch")
 
 
 def _render_values(problem: Problem, solution: Solution, t: TranslationSchema) -> None:
