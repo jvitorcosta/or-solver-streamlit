@@ -67,7 +67,7 @@ pillow==13.0.0
     # via streamlit
 plotly==7.1.0
     # via or-solver-streamlit
-protobuf==6.33.6
+protobuf==7.36.2
     # via
     #   ortools
     #   streamlit
