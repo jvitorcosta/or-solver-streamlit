@@ -1,6 +1,8 @@
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
+import yaml
 
 from solvedor.solver.models import (
     Constraint,
@@ -15,6 +17,7 @@ from solvedor.solver.models import (
     VariableType,
     add_term_to_linear_expression,
 )
+from solvedor.solver.parser import parse_lp_problem
 
 
 # Variable tests with comprehensive parametrization
@@ -27,9 +30,9 @@ from solvedor.solver.models import (
             {
                 "name": "x1",
                 "variable_type": VariableType.CONTINUOUS,
-                "lower_bound": None,
+                "lower_bound": Decimal("0"),  # non-negative by default (textbook convention)
                 "upper_bound": None,
-                "is_non_negative": False,
+                "is_non_negative": True,
             },
         ),
         # Integer variable with bounds
@@ -120,7 +123,6 @@ def test_variable_name_validation(input_data, expected_exception) -> None:
             {},
             {
                 "terms_count": 0,
-                "constant": Decimal("0"),
                 "str_repr": "0",
                 "variables": [],
             },
@@ -165,9 +167,6 @@ def test_linear_expression_operations(input_data, expected) -> None:
         add_term_to_linear_expression(expression, coeff, var_name)
 
     assert len(expression.terms) == expected["terms_count"]
-
-    if "constant" in expected:
-        assert expression.constant == expected["constant"]
 
     if "str_repr" in expected:
         assert str(expression) == expected["str_repr"]
@@ -409,3 +408,48 @@ def test_solution_status_and_properties(input_data, expected) -> None:
 
     # Test variable extraction
     assert solution.extract_variable_value("nonexistent") is None
+
+
+# --- Refactor Task 3: variables, defaults and the printed model -------------------------
+
+_EXAMPLES = Path(__file__).parents[1] / "src" / "solvedor" / "resources" / "examples.yaml"
+
+
+def test_variables_default_to_non_negative() -> None:
+    variable = Variable(name="x")
+    assert (variable.lower_bound, variable.upper_bound) == (Decimal("0"), None)
+
+
+def test_problem_is_mip() -> None:
+    lp = parse_lp_problem("max x + y\nsubject to:\nx + y <= 4\n")
+    mip = parse_lp_problem("max x + y\nsubject to:\nx + y <= 4\nwhere:\ninteger x\n")
+    assert (lp.is_mip, mip.is_mip) == (False, True)
+
+
+def test_variable_name_rejects_dash() -> None:
+    with pytest.raises(ValueError):
+        Variable(name="x-1")
+
+
+def test_only_english_directions_exist() -> None:
+    assert {d.value for d in ObjectiveDirection} == {"minimize", "maximize"}
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "max 3x + 2y\nsubject to:\nx + 2y <= 4\n2x + y <= 4\n",
+        "min x - y\nsubject to:\nx + y >= -2\nwhere:\nfree y\n0 <= x <= 10\n",
+        "max a + 2b + c\nsubject to:\na + b + c <= 3.5\nwhere:\ninteger a\nbinary b\nc <= 2\n",
+    ],
+)
+def test_printed_model_parses_back_to_the_same_problem(text: str) -> None:
+    problem = parse_lp_problem(text)
+    assert parse_lp_problem(str(problem)) == problem
+
+
+def test_gallery_examples_round_trip() -> None:
+    examples = yaml.safe_load(_EXAMPLES.read_text(encoding="utf-8"))
+    for key, example in examples.items():
+        problem = parse_lp_problem(example["problem"])
+        assert parse_lp_problem(str(problem)) == problem, key

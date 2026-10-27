@@ -11,8 +11,6 @@ import pydantic
 class ObjectiveDirection(StrEnum):
     MINIMIZE = "minimize"
     MAXIMIZE = "maximize"
-    MINIMIZAR = "minimizar"  # Portuguese
-    MAXIMIZAR = "maximizar"  # Portuguese
 
 
 class ConstraintOperator(StrEnum):
@@ -38,8 +36,8 @@ class SolverStatus(StrEnum):
 class Variable(pydantic.BaseModel):
     name: str
     variable_type: VariableType = VariableType.CONTINUOUS
-    lower_bound: Decimal | None = None
-    upper_bound: Decimal | None = None
+    lower_bound: Decimal | None = Decimal(0)  # None means unbounded below (a free variable)
+    upper_bound: Decimal | None = None  # None means unbounded above
 
     @pydantic.field_validator("name")
     @classmethod
@@ -47,7 +45,7 @@ class Variable(pydantic.BaseModel):
         if not variable_name or not isinstance(variable_name, str):
             raise ValueError(f"Variable name must be a non-empty string: {variable_name}")
 
-        if not variable_name.replace("_", "").replace("-", "").isalnum():
+        if not variable_name.replace("_", "").isalnum():
             raise ValueError(f"Invalid variable name: {variable_name}")
 
         if variable_name[0].isdigit():
@@ -82,7 +80,6 @@ class LinearExpression(pydantic.BaseModel):
     """Represents a linear expression as a sum of terms."""
 
     terms: list[Term] = pydantic.Field(default_factory=list, description="List of terms")
-    constant: Decimal = pydantic.Field(default=Decimal("0"), description="Constant term")
 
     def add_term(self, coefficient: Decimal | float | int, variable_name: str) -> None:
         decimal_coefficient = Decimal(str(coefficient))
@@ -102,7 +99,7 @@ class LinearExpression(pydantic.BaseModel):
         return {term.variable: term.coefficient for term in self.terms}
 
     def __str__(self) -> str:
-        if not self.terms and self.constant == 0:
+        if not self.terms:
             return "0"
 
         expression_parts = []
@@ -116,15 +113,6 @@ class LinearExpression(pydantic.BaseModel):
                     expression_parts.append(f" + {term_string}")
                 else:
                     expression_parts.append(f" - {str(current_term).lstrip('-')}")
-
-        if self.constant != 0:
-            if expression_parts:
-                if self.constant > 0:
-                    expression_parts.append(f" + {self.constant}")
-                else:
-                    expression_parts.append(f" - {abs(self.constant)}")
-            else:
-                expression_parts.append(str(self.constant))
 
         return "".join(expression_parts)
 
@@ -163,15 +151,7 @@ class ObjectiveFunction(pydantic.BaseModel):
     expression: LinearExpression = pydantic.Field(..., description="Objective expression")
 
     def __str__(self) -> str:
-        match self.direction:
-            case ObjectiveDirection.MINIMIZAR:
-                english_direction = "minimize"
-            case ObjectiveDirection.MAXIMIZAR:
-                english_direction = "maximize"
-            case _:
-                english_direction = self.direction.value
-
-        return f"{english_direction} {self.expression}"
+        return f"{self.direction.value} {self.expression}"
 
     def extract_variable_names(self) -> list[str]:
         return self.expression.extract_variable_names()
@@ -213,78 +193,57 @@ class Problem(pydantic.BaseModel):
 
         return sorted(all_variable_names)
 
+    @property
+    def is_mip(self) -> bool:
+        """True when any variable is integer or binary (solved with SCIP instead of GLOP)."""
+        return any(v.variable_type is not VariableType.CONTINUOUS for v in self.variables.values())
+
     def __str__(self) -> str:
-        problem_lines = []
-
-        problem_lines.append(str(self.objective))
-        problem_lines.append("")
-
+        """The model in the same syntax the parser reads, so it can be pasted back."""
+        lines = [str(self.objective), ""]
         if self.constraints:
-            problem_lines.append("subject to:")
-            for constraint in self.constraints:
-                problem_lines.append(f"    {constraint}")
+            lines.append("subject to:")
+            lines.extend(f"    {constraint}" for constraint in self.constraints)
 
-        non_negative_variable_names = []
-        bounded_variable_constraints = []
-        integer_variable_names = []
-        binary_variable_names = []
-
-        all_variables = self.extract_all_variable_names()
-        for variable_name in all_variables:
-            if variable_name in self.variables:
-                variable_definition = self.variables[variable_name]
-
-                if variable_definition.variable_type == VariableType.INTEGER:
-                    integer_variable_names.append(variable_name)
-                elif variable_definition.variable_type == VariableType.BINARY:
-                    binary_variable_names.append(variable_name)
-
-                if variable_definition.is_bounded:
-                    if (
-                        variable_definition.lower_bound == 0
-                        and variable_definition.upper_bound is None
-                    ):
-                        non_negative_variable_names.append(variable_name)
-                    else:
-                        bound_constraint_parts = []
-                        if variable_definition.lower_bound is not None:
-                            bound_constraint_parts.append(str(variable_definition.lower_bound))
-                        bound_constraint_parts.append("<=")
-                        bound_constraint_parts.append(variable_name)
-                        if variable_definition.upper_bound is not None:
-                            bound_constraint_parts.append("<=")
-                            bound_constraint_parts.append(str(variable_definition.upper_bound))
-                        bounded_variable_constraints.append(" ".join(bound_constraint_parts))
+        non_negative: list[str] = []
+        bounds: list[str] = []
+        free: list[str] = []
+        integer: list[str] = []
+        binary: list[str] = []
+        for name in self.extract_all_variable_names():
+            variable = self.variables.get(name, Variable(name=name))
+            low, high = variable.lower_bound, variable.upper_bound
+            if variable.variable_type is VariableType.BINARY:
+                binary.append(name)
+                continue
+            if variable.variable_type is VariableType.INTEGER:
+                integer.append(name)
+            if low is None:
+                free.append(name)
+                if high is not None:
+                    bounds.append(f"{name} <= {high}")
+            elif high is None:
+                if low == 0:
+                    non_negative.append(name)
                 else:
-                    non_negative_variable_names.append(variable_name)
+                    bounds.append(f"{name} >= {low}")
             else:
-                non_negative_variable_names.append(variable_name)
+                bounds.append(f"{low} <= {name} <= {high}")
 
-        has_variable_constraints = any(
-            [
-                non_negative_variable_names,
-                bounded_variable_constraints,
-                integer_variable_names,
-                binary_variable_names,
-            ]
-        )
-        if has_variable_constraints:
-            problem_lines.append("")
-            problem_lines.append("where:")
-
-            if non_negative_variable_names:
-                problem_lines.append(f"    {', '.join(non_negative_variable_names)} >= 0")
-
-            for bound_constraint in bounded_variable_constraints:
-                problem_lines.append(f"    {bound_constraint}")
-
-            if integer_variable_names:
-                problem_lines.append(f"    integer {', '.join(integer_variable_names)}")
-
-            if binary_variable_names:
-                problem_lines.append(f"    binary {', '.join(binary_variable_names)}")
-
-        return "\n".join(problem_lines)
+        where: list[str] = []
+        if non_negative:
+            where.append(f"{', '.join(non_negative)} >= 0")
+        where.extend(bounds)
+        if free:
+            where.append(f"free {', '.join(free)}")
+        if integer:
+            where.append(f"integer {', '.join(integer)}")
+        if binary:
+            where.append(f"binary {', '.join(binary)}")
+        if where:
+            lines.extend(["", "where:"])
+            lines.extend(f"    {item}" for item in where)
+        return "\n".join(lines)
 
 
 class Solution(pydantic.BaseModel):
