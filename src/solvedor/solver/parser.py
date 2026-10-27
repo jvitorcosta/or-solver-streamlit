@@ -1,13 +1,27 @@
+"""Parse linear and integer programs written in textbook syntax.
+
+The input is read line by line, so every error points at the line that caused it:
+
+    maximize 3x + 2y            (or max / minimize / min / maximizar / minimizar)
+    subject to:                 (or s.t. / st / sujeito a; the colon is optional)
+        x + 2y <= 4             (<=, >=, =, ≤, ≥; constants and variables on either side)
+    where:                      (or onde; optional)
+        x, y >= 0               (lists share a bound)
+        0 <= z <= 10            (both bounds)
+        free w                  (no lower bound)
+        integer a, b            (or "a, b integer"; same for binary)
+
+Variables are non-negative unless declared otherwise. Comments start with ``#``.
+Each line is parsed with a small pyparsing grammar.
+"""
+
 from __future__ import annotations
 
 import re
 from decimal import Decimal
+from functools import cache
 
-import pyparsing
-from pyparsing import (  # Keep these as they are classes/exceptions
-    ParseException,
-    ParserElement,
-)
+import pyparsing as pp
 
 from solvedor.solver.models import (
     Constraint,
@@ -18,425 +32,222 @@ from solvedor.solver.models import (
     Problem,
     Variable,
     VariableType,
-    add_term_to_linear_expression,
 )
 
 
 class ParseError(Exception):
-    """Exception raised when parsing fails."""
+    """A problem text that cannot be parsed, with the 1-based line it failed on."""
+
+    def __init__(self, message: str, line: int = 0, column: int = 0) -> None:
+        location = f"line {line}: " if line else ""
+        super().__init__(f"{location}{message}")
+        self.message = message
+        self.line = line
+        self.column = column
 
 
-# Configuration for LP Parser
-_PARSER_GRAMMAR = None
+_DIRECTIONS = {
+    "max": ObjectiveDirection.MAXIMIZE,
+    "maximize": ObjectiveDirection.MAXIMIZE,
+    "maximizar": ObjectiveDirection.MAXIMIZE,
+    "min": ObjectiveDirection.MINIMIZE,
+    "minimize": ObjectiveDirection.MINIMIZE,
+    "minimizar": ObjectiveDirection.MINIMIZE,
+}
+_OPERATORS = {
+    "<=": ConstraintOperator.LESS_EQUAL,
+    "≤": ConstraintOperator.LESS_EQUAL,
+    ">=": ConstraintOperator.GREATER_EQUAL,
+    "≥": ConstraintOperator.GREATER_EQUAL,
+    "=": ConstraintOperator.EQUAL,
+}
+_KEYWORDS = {"integer", "binary", "free"}
+_CONSTRAINTS_HEADER = re.compile(r"^(subject\s+to|s\.t\.|st|sujeito\s+a)\s*:?\s*(.*)$", re.I)
+_WHERE_HEADER = re.compile(r"^(where|onde)\s*:?\s*(.*)$", re.I)
+_OBJECTIVE_START = re.compile(r"^(maximize|maximizar|max|minimize|minimizar|min)\b\s*(.*)$", re.I)
+
+Term = tuple[Decimal, str | None]  # (coefficient, variable name or None for a constant)
 
 
-def _get_or_initialize_parser_grammar():
-    """Get or initialize the parser grammar."""
-    global _PARSER_GRAMMAR
-    if _PARSER_GRAMMAR is None:
-        ParserElement.enablePackrat()
-        _PARSER_GRAMMAR = _setup_complete_parser_grammar()
-    return _PARSER_GRAMMAR
-
-
-class LPParser:
-    """Parser for modern academic LP syntax.
-
-    Supports both English and Portuguese syntax:
-
-    English:
-        maximize/minimize <expression>
-        subject to: / s.t.:
-            <constraints>
-        where:
-            <variable bounds and types>
-
-    Portuguese:
-        maximizar/minimizar <expression>
-        sujeito a:
-            <constraints>
-        onde:
-            <variable bounds and types>
-    """
-
-    def __init__(self):
-        """Initialize the parser with grammar rules."""
-        self.grammar = _get_or_initialize_parser_grammar()
-
-    def _setup_grammar(self):
-        """Setup pyparsing grammar for LP problems (deprecated - use standalone function)."""
-        return _setup_complete_parser_grammar()
-
-
-def _setup_complete_parser_grammar():
-    """Setup pyparsing grammar for LP problems."""
-    # Basic tokens
-    number = pyparsing.Regex(r"[+-]?\d+(\.\d*)?([eE][+-]?\d+)?").setParseAction(
+@cache
+def _grammar() -> dict[str, pp.ParserElement]:
+    """Build the per-line grammars once."""
+    number = pp.Regex(r"(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?").set_parse_action(
         lambda t: Decimal(t[0])
     )
-
-    variable = pyparsing.Word(pyparsing.alphas, pyparsing.alphanums + "_").setResultsName(
-        "variable"
+    name = pp.Regex(r"[A-Za-z_][A-Za-z0-9_]*")
+    sign = pp.one_of("+ -")
+    term = pp.Group(
+        pp.Optional(sign, default="+")("sign")
+        + (
+            (number("coef") + pp.Optional(pp.Suppress("*")) + pp.Optional(name("var")))
+            | name("var")
+        )
     )
-
-    # Operators
-    multiply = pyparsing.Literal("*")
-    plus = pyparsing.Literal("+")
-    minus = pyparsing.Literal("-")
-
-    # Constraint operators
-    le = pyparsing.Literal("<=")
-    ge = pyparsing.Literal(">=")
-    eq = pyparsing.Literal("=")
-    constraint_op = (le | ge | eq).setResultsName("operator")
-
-    # Coefficient (optional, defaults to 1)
-    coefficient = pyparsing.Optional(number, default=Decimal("1"))
-
-    # Expression: term + term + ... (handling signs)
-    expression = pyparsing.Forward()
-    first_term = pyparsing.Group(
-        pyparsing.Optional(plus | minus, default="+").setResultsName("sign")
-        + coefficient.setResultsName("coeff")
-        + pyparsing.Optional(multiply)
-        + variable
+    # Terms after the first must carry a sign.
+    signed_term = pp.Group(
+        sign("sign")
+        + (
+            (number("coef") + pp.Optional(pp.Suppress("*")) + pp.Optional(name("var")))
+            | name("var")
+        )
     )
-    additional_term = pyparsing.Group(
-        (plus | minus).setResultsName("sign")
-        + coefficient.setResultsName("coeff")
-        + pyparsing.Optional(multiply)
-        + variable
+    expression = pp.Group(term + pp.ZeroOrMore(signed_term))
+    operator = pp.one_of("<= >= ≤ ≥ =")
+    constraint = expression("lhs") + operator("op") + expression("rhs")
+    names = pp.Group(pp.DelimitedList(name))
+    signed_number = pp.Combine(pp.Optional(sign) + pp.Regex(r"(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?"))
+    signed_number.set_parse_action(lambda t: Decimal(t[0]))
+    keyword = pp.one_of("integer binary free", caseless=True)
+    bound = (
+        (
+            signed_number("low")
+            + pp.one_of("<= ≤")
+            + name("var")
+            + pp.one_of("<= ≤")
+            + signed_number("high")
+        )
+        | (names("vars") + operator("op") + signed_number("value"))
+        | (keyword("kind") + names("vars"))
+        | (names("vars") + keyword("kind"))
     )
-    expression <<= first_term + pyparsing.ZeroOrMore(additional_term)
+    return {"expression": expression, "constraint": constraint, "bound": bound}
 
-    # Objective direction keywords (English and Portuguese)
-    maximize_en = pyparsing.CaselessKeyword("maximize") | pyparsing.CaselessKeyword("max")
-    minimize_en = pyparsing.CaselessKeyword("minimize") | pyparsing.CaselessKeyword("min")
-    maximize_pt = pyparsing.CaselessKeyword("maximizar")
-    minimize_pt = pyparsing.CaselessKeyword("minimizar")
 
-    maximize_kw = (maximize_en | maximize_pt).setParseAction(lambda: "maximize")
-    minimize_kw = (minimize_en | minimize_pt).setParseAction(lambda: "minimize")
+def _parse_line(grammar: str, text: str, line: int) -> pp.ParseResults:
+    try:
+        return _grammar()[grammar].parse_string(text, parse_all=True)
+    except pp.ParseException as e:
+        raise ParseError(f"cannot read '{text}' ({e.msg})", line, e.col) from e
 
-    objective_direction = (maximize_kw | minimize_kw).setResultsName("direction")
 
-    # Objective function
-    objective = pyparsing.Group(
-        objective_direction + expression.setResultsName("expression")
-    ).setResultsName("objective")
+def _terms(expression: pp.ParseResults) -> list[Term]:
+    terms: list[Term] = []
+    for item in expression:
+        coef = item.get("coef", Decimal(1))
+        if item.get("sign") == "-":
+            coef = -coef
+        var = item.get("var") or None
+        terms.append((coef, var))
+    return terms
 
-    # Constraint keywords
-    subject_to_en = (
-        pyparsing.CaselessKeyword("subject")
-        + pyparsing.CaselessKeyword("to")
-        + pyparsing.Suppress(":")
-        | pyparsing.CaselessKeyword("s.t.") + pyparsing.Suppress(":")
-        | pyparsing.CaselessKeyword("st") + pyparsing.Suppress(":")
-    )
-    subject_to_pt = (
-        pyparsing.CaselessKeyword("sujeito")
-        + pyparsing.CaselessKeyword("a")
-        + pyparsing.Suppress(":")
-    )
-    subject_to = subject_to_en | subject_to_pt
 
-    # Single constraint
-    constraint = pyparsing.Group(
-        expression.setResultsName("lhs") + constraint_op + number.setResultsName("rhs")
-    )
+def _linear(terms: list[Term]) -> tuple[LinearExpression, Decimal]:
+    """Split terms into a linear expression and a constant."""
+    expression = LinearExpression()
+    constant = Decimal(0)
+    for coef, var in terms:
+        if var is None:
+            constant += coef
+        else:
+            expression.add_term(coef, var)
+    return expression, constant
 
-    # Constraints section
-    constraints_section = pyparsing.Group(
-        pyparsing.Suppress(subject_to) + pyparsing.OneOrMore(constraint)
-    ).setResultsName("constraints")
 
-    # Variable bounds and types keywords (optional)
-    where_en = pyparsing.CaselessKeyword("where") + pyparsing.Suppress(":")
-    where_pt = pyparsing.CaselessKeyword("onde") + pyparsing.Suppress(":")
-    where_kw = where_en | where_pt
-
-    # Variable lists
-    var_list = pyparsing.Group(variable + pyparsing.ZeroOrMore(pyparsing.Suppress(",") + variable))
-
-    # Bound specifications
-    non_negative = pyparsing.Group(
-        var_list.setResultsName("variables") + pyparsing.Suppress(">=") + pyparsing.Literal("0")
-    ).setResultsName("non_negative")
-
-    # Variable type declarations (support both "integer vars" and "vars integer")
-    integer_decl = pyparsing.Group(
-        (pyparsing.CaselessKeyword("integer") + var_list.setResultsName("variables"))
-        | (var_list.setResultsName("variables") + pyparsing.CaselessKeyword("integer"))
-    ).setResultsName("integer")
-
-    binary_decl = pyparsing.Group(
-        (pyparsing.CaselessKeyword("binary") + var_list.setResultsName("variables"))
-        | (var_list.setResultsName("variables") + pyparsing.CaselessKeyword("binary"))
-    ).setResultsName("binary")
-
-    # Bounds can appear with or without "where:" keyword
-    bounds_content = pyparsing.ZeroOrMore(non_negative | integer_decl | binary_decl)
-    bounds_section = pyparsing.Group(
-        pyparsing.Optional(pyparsing.Suppress(where_kw)) + bounds_content
-    ).setResultsName("bounds")
-
-    # Complete LP problem
-    lp_problem = (
-        objective + pyparsing.Optional(constraints_section) + pyparsing.Optional(bounds_section)
-    )
-
-    return lp_problem
-
-    def parse(self, problem_text: str) -> Problem:
-        """Parse a complete LP problem from text."""
-        return parse_lp_text_with_grammar(problem_text, self.grammar)
-
-    def _preprocess_text(self, text: str) -> str:
-        """Clean and preprocess the input text (deprecated - use standalone function)."""
-        return clean_and_normalize_problem_text(text)
-
-    def _build_problem(self, parsed_data) -> Problem:
-        """Build a Problem object from parsed data (deprecated - use standalone function)."""
-        return _construct_problem_from_parsed_structure(parsed_data)
-
-    def _build_objective(self, obj_data) -> ObjectiveFunction:
-        """Build an ObjectiveFunction from parsed data (deprecated - use standalone function)."""
-        return _construct_objective_from_parsed_data(obj_data)
-
-    def _build_constraint(self, constraint_data) -> Constraint:
-        """Build a Constraint from parsed data (deprecated - use standalone function)."""
-        return _construct_constraint_from_parsed_data(constraint_data)
-
-    def _build_expression(self, expr_data) -> LinearExpression:
-        """Build a LinearExpression from parsed data (deprecated - use standalone function)."""
-        return _construct_linear_expression_from_parsed_data(expr_data)
-
-    def _process_bounds(self, problem: Problem, bounds_data):
-        """Process variable bounds and type declarations (deprecated - use standalone function)."""
-        return apply_variable_bounds_and_types(problem, bounds_data)
-
-    def _process_integer_variables(self, problem: Problem, var_list):
-        """Process integer variable declarations (deprecated - use standalone function)."""
-        return _set_variables_as_integer_type(problem, var_list)
-
-    def _process_binary_variables(self, problem: Problem, var_list):
-        """Process binary variable declarations (deprecated - use standalone function)."""
-        return _set_variables_as_binary_type(problem, var_list)
-
-    def _process_non_negative_variables(self, problem: Problem, var_list):
-        """Process non-negative variable bounds (deprecated - use standalone function)."""
-        return _set_variables_non_negative_bounds(problem, var_list)
+def _split_comment(raw: str) -> str:
+    return raw.split("#", 1)[0].strip()
 
 
 def parse_lp_problem(problem_text: str) -> Problem:
-    """Parse a linear programming problem from text.
+    """Parse a problem text into a Problem. Raises ParseError with the failing line."""
+    lines = [(n, _split_comment(raw)) for n, raw in enumerate(problem_text.splitlines(), start=1)]
+    lines = [(n, text) for n, text in lines if text]
+    if not lines:
+        raise ParseError("the problem is empty: start with 'maximize' or 'minimize'")
 
-    This is a convenience function that creates a parser instance
-    and parses the problem.
+    first_line, first_text = lines[0]
+    match = _OBJECTIVE_START.match(first_text)
+    if not match:
+        raise ParseError("the problem must start with 'maximize' or 'minimize'", first_line)
+    direction = _DIRECTIONS[match.group(1).lower()]
+    objective_parts = [(first_line, match.group(2))]
 
-    Args:
-        problem_text: The LP problem text to parse.
+    section = "objective"
+    constraint_lines: list[tuple[int, str]] = []
+    bound_lines: list[tuple[int, str]] = []
+    for line, text in lines[1:]:
+        if header := _CONSTRAINTS_HEADER.match(text):
+            section = "constraints"
+            if header.group(2):
+                constraint_lines.append((line, header.group(2)))
+        elif header := _WHERE_HEADER.match(text):
+            section = "where"
+            if header.group(2):
+                bound_lines.append((line, header.group(2)))
+        elif section == "objective":
+            objective_parts.append((line, text))
+        elif section == "constraints":
+            constraint_lines.append((line, text))
+        else:
+            bound_lines.append((line, text))
 
-    Returns:
-        A Problem object representing the parsed problem.
-
-    Raises:
-        ParseError: If parsing fails.
-    """
-    complete_grammar = _get_or_initialize_parser_grammar()
-    return parse_lp_text_with_grammar(problem_text, complete_grammar)
-
-
-# Standalone parsing functions (functional programming approach)
-
-
-def parse_lp_text_with_grammar(problem_text: str, parsing_grammar) -> Problem:
-    """Parse LP text using the provided grammar."""
-    try:
-        preprocessed_text = clean_and_normalize_problem_text(problem_text)
-
-        parsed_structure = parsing_grammar.parseString(preprocessed_text, parseAll=True)
-        return _construct_problem_from_parsed_structure(parsed_structure)
-
-    except ParseException as e:
-        # Provide more detailed error information
-        error_line = e.lineno if hasattr(e, "lineno") else "unknown"
-        error_col = e.col if hasattr(e, "col") else "unknown"
-        error_context = e.line if hasattr(e, "line") else ""
-
-        error_msg = f"Parsing failed at line {error_line}, column {error_col}"
-        if error_context:
-            error_msg += f" in: '{error_context}'"
-        error_msg += f" - {e!s}"
-
-        raise ParseError(error_msg) from e
-
-
-def clean_and_normalize_problem_text(text: str) -> str:
-    """Clean and preprocess the input text."""
-    # Remove comments and clean up
-    lines = []
-    for line in text.split("\n"):
-        # Remove comments (anything after #)
-        line = re.sub(r"#.*$", "", line)
-        # Remove extra whitespace and normalize
-        line = line.strip()
-        # Skip empty lines or lines with only whitespace
-        if line and not line.isspace():
-            # Normalize multiple spaces to single spaces
-            line = re.sub(r"\s+", " ", line)
-            # Ensure proper spacing around operators
-            line = re.sub(r"([<>=]+)", r" \1 ", line)
-            line = re.sub(r"([+-])", r" \1 ", line)
-            line = re.sub(r"\s+", " ", line).strip()
-            lines.append(line)
-
-    result = "\n".join(lines)
-    # Remove any trailing whitespace or newlines
-    return result.strip()
-
-
-def _construct_problem_from_parsed_structure(parsed_structure) -> Problem:
-    """Build a Problem object from parsed data."""
-    optimization_problem = Problem(
-        objective=_construct_objective_from_parsed_data(parsed_structure.objective),
-        constraints=[],
-        variables={},
+    objective_text = " ".join(part for _, part in objective_parts if part)
+    if not objective_text:
+        raise ParseError("the objective has no expression", first_line)
+    objective_terms = _terms(_parse_line("expression", objective_text, first_line)[0])
+    objective_expression, _ = _linear(objective_terms)
+    problem = Problem(
+        objective=ObjectiveFunction(direction=direction, expression=objective_expression)
     )
 
-    if hasattr(parsed_structure, "constraints"):
-        for constraint_data in parsed_structure.constraints:
-            new_constraint = _construct_constraint_from_parsed_data(constraint_data)
-            optimization_problem.add_constraint(new_constraint)
+    for line, text in constraint_lines:
+        problem.add_constraint(_parse_constraint(text, line))
 
-    if hasattr(parsed_structure, "bounds"):
-        apply_variable_bounds_and_types(optimization_problem, parsed_structure.bounds)
+    # Every variable starts non-negative and continuous; the where: section refines it.
+    problem.variables = {
+        name: Variable(name=name, lower_bound=Decimal(0))
+        for name in problem.extract_all_variable_names()
+    }
 
-    return optimization_problem
+    for line, text in bound_lines:
+        _apply_bound(problem, text, line)
 
-
-def _construct_objective_from_parsed_data(objective_data) -> ObjectiveFunction:
-    """Build an ObjectiveFunction from parsed data."""
-    optimization_direction = objective_data[0]  # "maximize" or "minimize"
-    direction_enum = ObjectiveDirection(optimization_direction)
-
-    objective_expression = _construct_linear_expression_from_parsed_data(objective_data.expression)
-
-    return ObjectiveFunction(direction=direction_enum, expression=objective_expression)
+    return problem
 
 
-def _construct_constraint_from_parsed_data(constraint_data) -> Constraint:
-    """Build a Constraint from parsed data."""
-    left_hand_side_expression = _construct_linear_expression_from_parsed_data(constraint_data.lhs)
-    comparison_operator = ConstraintOperator(constraint_data.operator)
-    right_hand_side_value = constraint_data.rhs
-
+def _parse_constraint(text: str, line: int) -> Constraint:
+    parsed = _parse_line("constraint", text, line)
+    lhs_expr, lhs_const = _linear(_terms(parsed["lhs"]))
+    rhs_expr, rhs_const = _linear(_terms(parsed["rhs"]))
+    # Move variables to the left and constants to the right: lhs - rhs_vars (op) rhs - lhs_const.
+    for term in rhs_expr.terms:
+        lhs_expr.add_term(-term.coefficient, term.variable)
+    lhs_expr.terms = [t for t in lhs_expr.terms if t.coefficient != 0]
+    if not lhs_expr.terms:
+        raise ParseError(f"'{text}' has no variables", line)
     return Constraint(
-        expression=left_hand_side_expression,
-        operator=comparison_operator,
-        rhs=right_hand_side_value,
+        expression=lhs_expr, operator=_OPERATORS[parsed["op"]], rhs=rhs_const - lhs_const
     )
 
 
-def _construct_linear_expression_from_parsed_data(expression_data) -> LinearExpression:
-    """Build a LinearExpression from parsed data."""
-    linear_expression = LinearExpression()
-
-    for term_data in expression_data:
-        sign_multiplier = 1 if term_data.sign == "+" else -1
-        final_coefficient = term_data.coeff * sign_multiplier
-        variable_name = term_data.variable
-
-        add_term_to_linear_expression(linear_expression, final_coefficient, variable_name)
-
-    return linear_expression
-
-
-def apply_variable_bounds_and_types(optimization_problem: Problem, bounds_specifications):
-    """Process variable bounds and type declarations."""
-    for bound_specification in bounds_specifications:
-        if len(bound_specification) < 2:
-            continue
-
-        if len(bound_specification) == 2:
-            first_element, second_element = (
-                bound_specification[0],
-                bound_specification[1],
+def _apply_bound(problem: Problem, text: str, line: int) -> None:
+    parsed = _parse_line("bound", text, line)
+    names = [parsed["var"]] if "var" in parsed else list(parsed["vars"])
+    for name in names:
+        if name.lower() in _KEYWORDS:
+            raise ParseError(f"'{name}' is a keyword, not a variable", line)
+        if name not in problem.variables:
+            raise ParseError(
+                f"unknown variable '{name}' (it is not used in the objective or constraints)", line
             )
-
-            match (str(first_element).lower(), str(second_element).lower()):
-                case ("integer", _):
-                    _set_variables_as_integer_type(optimization_problem, second_element)
-                case (_, "integer"):
-                    _set_variables_as_integer_type(optimization_problem, first_element)
-                case ("binary", _):
-                    _set_variables_as_binary_type(optimization_problem, second_element)
-                case (_, "binary"):
-                    _set_variables_as_binary_type(optimization_problem, first_element)
-                case _ if (
-                    hasattr(first_element, "__iter__")
-                    and not isinstance(first_element, str)
-                    and str(second_element) == "0"
-                ):
-                    _set_variables_non_negative_bounds(optimization_problem, first_element)
-                case _ if (
-                    hasattr(second_element, "__iter__")
-                    and not isinstance(second_element, str)
-                    and str(first_element) == "0"
-                ):
-                    _set_variables_non_negative_bounds(optimization_problem, second_element)
-
-
-def _set_variables_as_integer_type(optimization_problem: Problem, variable_list):
-    """Process integer variable declarations."""
-    if isinstance(variable_list, str):
-        variable_list = [variable_list]
-    elif not isinstance(variable_list, list):
-        variable_list = list(variable_list) if variable_list else []
-
-    for variable_name in variable_list:
-        clean_variable_name = str(variable_name).strip()
-        if clean_variable_name and clean_variable_name not in optimization_problem.variables:
-            optimization_problem.variables[clean_variable_name] = Variable(name=clean_variable_name)
-        if clean_variable_name in optimization_problem.variables:
-            optimization_problem.variables[clean_variable_name].variable_type = VariableType.INTEGER
-
-
-def _set_variables_as_binary_type(optimization_problem: Problem, variable_list):
-    """Process binary variable declarations."""
-    if isinstance(variable_list, str):
-        variable_list = [variable_list]
-    elif not isinstance(variable_list, list):
-        variable_list = list(variable_list) if variable_list else []
-
-    for variable_name in variable_list:
-        clean_variable_name = str(variable_name).strip()
-        if clean_variable_name and clean_variable_name not in optimization_problem.variables:
-            optimization_problem.variables[clean_variable_name] = Variable(name=clean_variable_name)
-        if clean_variable_name in optimization_problem.variables:
-            optimization_problem.variables[clean_variable_name].variable_type = VariableType.BINARY
-            optimization_problem.variables[clean_variable_name].lower_bound = Decimal("0")
-            optimization_problem.variables[clean_variable_name].upper_bound = Decimal("1")
-
-
-def _set_variables_non_negative_bounds(optimization_problem: Problem, variable_list):
-    """Process non-negative variable bounds."""
-    if isinstance(variable_list, str):
-        variable_list = [variable_list]
-    elif hasattr(variable_list, "__iter__") and not isinstance(variable_list, str):
-        variable_list = list(variable_list)
-        if (
-            len(variable_list) == 1
-            and hasattr(variable_list[0], "__iter__")
-            and not isinstance(variable_list[0], str)
-        ):
-            variable_list = list(variable_list[0])
-    else:
-        variable_list = [variable_list] if variable_list else []
-
-    for variable_name in variable_list:
-        clean_variable_name = str(variable_name).strip()
-        if clean_variable_name and clean_variable_name not in optimization_problem.variables:
-            optimization_problem.variables[clean_variable_name] = Variable(name=clean_variable_name)
-        if clean_variable_name in optimization_problem.variables:
-            optimization_problem.variables[clean_variable_name].lower_bound = Decimal("0")
+        variable = problem.variables[name]
+        if "kind" in parsed:
+            kind = parsed["kind"].lower()
+            if kind == "free":
+                variable.lower_bound = None
+            elif kind == "integer":
+                variable.variable_type = VariableType.INTEGER
+            else:
+                variable.variable_type = VariableType.BINARY
+                variable.lower_bound, variable.upper_bound = Decimal(0), Decimal(1)
+        elif "low" in parsed:
+            variable.lower_bound, variable.upper_bound = parsed["low"], parsed["high"]
+        else:
+            operator = _OPERATORS[parsed["op"]]
+            value = parsed["value"]
+            if operator is ConstraintOperator.GREATER_EQUAL:
+                variable.lower_bound = value
+            elif operator is ConstraintOperator.LESS_EQUAL:
+                variable.upper_bound = value
+            else:
+                variable.lower_bound = variable.upper_bound = value

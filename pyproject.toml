@@ -84,7 +84,7 @@ ignore_missing_imports = true
 # TEMPORARY: modules rewritten by later refactor tasks (parser: Task 2, backends: Task 4,
 # engine: Task 5, tests: Task 10). Each task removes its entry; none may remain at the end.
 [[tool.mypy.overrides]]
-module = ["solvedor.solver.parser", "solvedor.solver.backends", "solvedor.solver.engine", "tests.*"]
+module = ["solvedor.solver.backends", "solvedor.solver.engine", "tests.*"]
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 disallow_untyped_calls = false
