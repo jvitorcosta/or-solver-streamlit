@@ -25,6 +25,8 @@ Box = tuple[float, float, float, float]  # x_min, x_max, y_min, y_max
 HalfPlane = tuple[float, float, float]  # a, b, c meaning a*x + b*y <= c
 
 _EPS = 1e-9
+# Readable on Streamlit's light (#ffffff) and dark (#0e1117) backgrounds: contrast 4.5 and 4.2
+_ARROW_COLOR = "#3a76d0"
 _COLORS = ["#d62728", "#1f77b4", "#9467bd", "#ff7f0e", "#8c564b", "#e377c2", "#17becf"]
 
 
@@ -231,9 +233,9 @@ def build_figure(
             showarrow=True,
             arrowhead=3,
             arrowwidth=2,
-            arrowcolor="#1f3b73",
+            arrowcolor=_ARROW_COLOR,
             text=t.visualization.direction_label,
-            font={"color": "#1f3b73"},
+            font={"color": _ARROW_COLOR},
         )
 
     if solution is not None and solution.is_feasible:

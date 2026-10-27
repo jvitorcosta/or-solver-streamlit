@@ -108,3 +108,27 @@ def test_unbounded_region_view_is_not_cramped() -> None:
     )
     x_min, x_max, y_min, y_max = plot_box(problem, solve(problem))
     assert x_max - x_min >= 3 and y_max - y_min >= 3
+
+
+def _contrast(foreground: str, background: str) -> float:
+    def luminance(color: str) -> float:
+        channels = [int(color.lstrip("#")[i : i + 2], 16) / 255 for i in (0, 2, 4)]
+        linear = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+    light, dark = sorted((luminance(foreground), luminance(background)), reverse=True)
+    return (light + 0.05) / (dark + 0.05)
+
+
+@pytest.mark.parametrize("background", ["#ffffff", "#0e1117"])  # Streamlit light and dark themes
+def test_direction_arrow_is_readable_on_light_and_dark_themes(background: str) -> None:
+    t = load_language_translations(language_code="en")
+    result = solve_text("max 3x + 2y\nsubject to:\nx + 2y <= 4\n2x + y <= 4\n")
+    assert result.problem is not None
+
+    figure = build_figure(result.problem, result.solution, t)
+
+    assert figure is not None
+    arrow = figure.layout.annotations[0]
+    assert _contrast(arrow.arrowcolor, background) >= 3
+    assert _contrast(arrow.font.color, background) >= 3
