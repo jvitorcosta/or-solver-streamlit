@@ -133,5 +133,4 @@ facility_location:
         x1 + x2 + x3 + x4 >= 2 # Need at least 2 facilities
 
     where:
-        x1, x2, x3, x4 >= 0
-        x1, x2, x3, x4 integer  # Binary decision variables (0 or 1)
+        binary x1, x2, x3, x4  # open (1) or closed (0)
