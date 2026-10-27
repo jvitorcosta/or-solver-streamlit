@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from solver.models import (
+from solvedor.solver.models import (
     Constraint,
     ConstraintOperator,
     LinearExpression,
@@ -76,7 +76,7 @@ from solver.models import (
         ),
     ],
 )
-def test_variable_creation_and_properties(input_data, expected):
+def test_variable_creation_and_properties(input_data, expected) -> None:
     """Test variable creation with different configurations and property validation."""
     variable = Variable(**input_data)
 
@@ -99,7 +99,7 @@ def test_variable_creation_and_properties(input_data, expected):
         ({"name": "valid_name"}, None),  # Should not raise
     ],
 )
-def test_variable_name_validation(input_data, expected_exception):
+def test_variable_name_validation(input_data, expected_exception) -> None:
     """Test variable name validation."""
     if expected_exception is None:
         # Should not raise exception
@@ -156,7 +156,7 @@ def test_variable_name_validation(input_data, expected_exception):
         ),
     ],
 )
-def test_linear_expression_operations(input_data, expected):
+def test_linear_expression_operations(input_data, expected) -> None:
     """Test linear expression creation, term addition, and properties."""
     expression = LinearExpression()
 
@@ -214,16 +214,14 @@ def test_linear_expression_operations(input_data, expected):
         ),
     ],
 )
-def test_constraint_creation_and_properties(input_data, expected):
+def test_constraint_creation_and_properties(input_data, expected) -> None:
     """Test constraint creation with different operators and expressions."""
     # Create expression
     expr = LinearExpression()
     for coeff, var_name in input_data["terms"]:
         expr.add_term(coeff, var_name)
 
-    constraint = Constraint(
-        expression=expr, operator=input_data["operator"], rhs=input_data["rhs"]
-    )
+    constraint = Constraint(expression=expr, operator=input_data["operator"], rhs=input_data["rhs"])
 
     assert constraint.operator == expected["operator"]
     assert constraint.rhs == expected["rhs"]
@@ -265,7 +263,7 @@ def test_constraint_creation_and_properties(input_data, expected):
         ),
     ],
 )
-def test_objective_function_creation_and_properties(input_data, expected):
+def test_objective_function_creation_and_properties(input_data, expected) -> None:
     """Test objective function creation with different directions."""
     # Create expression
     expr = LinearExpression()
@@ -312,7 +310,7 @@ def test_objective_function_creation_and_properties(input_data, expected):
         )
     ],
 )
-def test_problem_creation_and_properties(input_data, expected):
+def test_problem_creation_and_properties(input_data, expected) -> None:
     """Test complete problem creation and validation."""
     # Create objective
     obj_expr = LinearExpression()
@@ -394,7 +392,7 @@ def test_problem_creation_and_properties(input_data, expected):
         ),
     ],
 )
-def test_solution_status_and_properties(input_data, expected):
+def test_solution_status_and_properties(input_data, expected) -> None:
     """Test solution creation with different statuses and property validation."""
     solution = Solution(**input_data)
 

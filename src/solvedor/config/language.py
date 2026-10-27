@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -7,7 +7,7 @@ import yaml
 from pydantic import BaseModel
 
 
-class LanguageCode(str, Enum):
+class LanguageCode(StrEnum):
     """Supported language codes for application translations."""
 
     ENGLISH = "en"
@@ -241,9 +241,7 @@ class LanguageManager(BaseModel):
             TranslationSchema for the requested language.
         """
         if language_code not in self.translation_schemas:
-            raise ValueError(
-                f"Translations for language code '{language_code}' not found."
-            )
+            raise ValueError(f"Translations for language code '{language_code}' not found.")
         return self.translation_schemas[language_code]
 
     def get_translation(self, key_path: str, language_code: LanguageCode) -> str:
@@ -273,17 +271,13 @@ def parse_yaml_translation_file_for_language(
     Returns:
         TranslationSchema if file exists and is valid, None otherwise.
     """
-    translations_directory = Path(__file__).parents[2] / "translations"
+    translations_directory = Path(__file__).parents[1] / "translations"
     yaml_file_path = translations_directory / f"{language_code.value}.yaml"
 
     try:
         yaml_file_content = yaml_file_path.read_text(encoding="utf-8")
         parsed_translation_data = yaml.safe_load(yaml_file_content)
-        return (
-            TranslationSchema(**parsed_translation_data)
-            if parsed_translation_data
-            else None
-        )
+        return TranslationSchema(**parsed_translation_data) if parsed_translation_data else None
     except (FileNotFoundError, yaml.YAMLError, OSError):
         return None
 
@@ -306,9 +300,7 @@ def build_language_schema_dictionary() -> dict[LanguageCode, TranslationSchema]:
     }
 
 
-def traverse_nested_translation_attributes(
-    *, translation_object: Any, key_path: str
-) -> str:
+def traverse_nested_translation_attributes(*, translation_object: Any, key_path: str) -> str:
     """Traverse nested translation attributes using dot-separated key path.
 
     Args:
@@ -323,7 +315,8 @@ def traverse_nested_translation_attributes(
     """
     from functools import reduce
 
-    return reduce(getattr, key_path.split("."), translation_object)
+    value = reduce(getattr, key_path.split("."), translation_object)
+    return str(value)
 
 
 def load_language_translations(*, language_code: str) -> TranslationSchema:

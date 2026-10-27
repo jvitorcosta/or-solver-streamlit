@@ -1,7 +1,7 @@
 import streamlit as st
 
-from config import language
-from ui import components, tabs, workspace
+from solvedor.config import language
+from solvedor.ui import components, tabs, workspace
 
 
 def initialize_streamlit_page_configuration() -> None:
@@ -13,9 +13,7 @@ def initialize_streamlit_page_configuration() -> None:
         initial_sidebar_state="expanded",
         menu_items={
             "Get Help": ("https://github.com/jvitorcosta/or-solver-streamlit"),
-            "Report a bug": (
-                "https://github.com/jvitorcosta/or-solver-streamlit/issues"
-            ),
+            "Report a bug": ("https://github.com/jvitorcosta/or-solver-streamlit/issues"),
             "About": "# OR-Solver\nModern Operations Research Solver",
         },
     )
@@ -28,9 +26,7 @@ def setup_default_session_state_variables() -> None:
     st.session_state.setdefault("language", "en")
 
 
-def display_tabbed_application_interface(
-    *, translations: language.TranslationSchema
-) -> None:
+def display_tabbed_application_interface(*, translations: language.TranslationSchema) -> None:
     """Display main tabbed interface with workspace, documentation, and guide sections.
 
     Args:
@@ -54,9 +50,7 @@ def display_tabbed_application_interface(
         "contributing": (":material/group:", translations.tabs.contributing),
     }
 
-    formatted_tab_names = [
-        f"{icon} {label}" for icon, label in tab_configuration_mapping.values()
-    ]
+    formatted_tab_names = [f"{icon} {label}" for icon, label in tab_configuration_mapping.values()]
     streamlit_tabs_dictionary = dict(
         zip(tab_configuration_mapping.keys(), st.tabs(formatted_tab_names), strict=True)
     )
@@ -81,18 +75,21 @@ def display_tabbed_application_interface(
         tabs.display_markdown_content_from_file("CONTRIBUTING.md", translations)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Render the whole app (called by streamlit_app.py)."""
     initialize_streamlit_page_configuration()
     setup_default_session_state_variables()
 
     current_language_translations = language.load_language_translations(
-        language_code=st.session_state.get("language")
+        language_code=str(st.session_state.get("language", "en"))
     )
 
-    components.display_language_selection_sidebar(
-        translations=current_language_translations
-    )
+    components.display_language_selection_sidebar(translations=current_language_translations)
     display_tabbed_application_interface(translations=current_language_translations)
 
     st.divider()
     st.markdown(current_language_translations.app.footer)
+
+
+if __name__ == "__main__":
+    main()

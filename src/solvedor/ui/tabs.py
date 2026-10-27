@@ -2,14 +2,14 @@ from pathlib import Path
 
 import streamlit as st
 
-from config import language
+from solvedor.config import language
 
 
 def display_research_thesis_with_viewer(
     translations: language.TranslationSchema | None = None,
 ) -> None:
     """Display research thesis PDF with integrated viewer and download functionality."""
-    project_resources_directory = Path(__file__).parents[2] / "resources"
+    project_resources_directory = Path(__file__).parents[1] / "resources"
     thesis_pdf_file_path = project_resources_directory / "solvedor_article.pdf"
 
     # Load translations if not provided
@@ -104,7 +104,7 @@ def display_markdown_content_from_file(
         language_code = st.session_state.get("language", "en")
         translations = language.load_language_translations(language_code=language_code)
 
-    markdown_file_path = Path(__file__).parents[2] / file_name
+    markdown_file_path = Path(__file__).parents[3] / file_name
 
     try:
         markdown_file_content = markdown_file_path.read_text(encoding="utf-8")
@@ -128,14 +128,9 @@ def display_thesis_header_with_download_button(
 
     with col1:
         st.markdown(
-            (
-                "**:material/school: Research Thesis - SolvedOR: "
-                "Modern Operations Research Interface**"
-            )
+            "**:material/school: Research Thesis - SolvedOR: Modern Operations Research Interface**"
         )
-        st.caption(
-            ("This thesis introduces the OR-Solver application and its methodology.")
-        )
+        st.caption("This thesis introduces the OR-Solver application and its methodology.")
 
     with col2:
         try:
@@ -170,4 +165,4 @@ def display_pdf_in_streamlit_viewer(
         st.pdf(str(pdf_file_path))
     except Exception as pdf_display_error:
         st.warning(translations.errors.pdf_display_error)
-        st.info(f"Error: {str(pdf_display_error)}")
+        st.info(f"Error: {pdf_display_error!s}")

@@ -8,7 +8,7 @@ from typing import Any
 
 from ortools.linear_solver import pywraplp
 
-from solver.models import (
+from solvedor.solver.models import (
     Constraint,
     ConstraintOperator,
     Problem,
@@ -30,9 +30,7 @@ class SolverConfig:
         return f"OR-Tools {self.solver_name}"
 
 
-def check_solver_compatibility_with_problem(
-    config: SolverConfig, problem: Problem
-) -> bool:
+def check_solver_compatibility_with_problem(config: SolverConfig, problem: Problem) -> bool:
     """Check if solver configuration is compatible with problem variable types."""
     contains_integer_or_binary_variables = any(
         var.variable_type in (VariableType.INTEGER, VariableType.BINARY)
@@ -92,9 +90,7 @@ def select_optimal_solver_for_problem(
         if backend.supports_problem_type(problem):
             return backend
         else:
-            raise ValueError(
-                f"Solver {solver_preference} does not support this problem type"
-            )
+            raise ValueError(f"Solver {solver_preference} does not support this problem type")
 
     # Auto-select based on problem type
     if problem_contains_integer_variables:
@@ -115,9 +111,7 @@ class SolverFactory:
     """Factory for creating appropriate solver backends."""
 
     @staticmethod
-    def create_solver(
-        problem: Problem, solver_preference: str | None = None
-    ) -> OrToolsBackend:
+    def create_solver(problem: Problem, solver_preference: str | None = None) -> OrToolsBackend:
         """Create the best solver for the given problem."""
         return select_optimal_solver_for_problem(problem, solver_preference)
 
@@ -147,17 +141,13 @@ def execute_problem_with_ortools_backend(
             _apply_constraint_to_solver(solver, solver_variable_map, constraint)
 
         # Set objective
-        _configure_optimization_objective(
-            solver, solver_variable_map, problem.objective
-        )
+        _configure_optimization_objective(solver, solver_variable_map, problem.objective)
 
         # Solve
         status = solver.Solve()
 
         # Extract solution
-        return _build_solution_from_solver_results(
-            solver, solver_variable_map, status, start_time
-        )
+        return _build_solution_from_solver_results(solver, solver_variable_map, status, start_time)
 
     except Exception as e:
         solve_time = time.time() - start_time
@@ -166,13 +156,11 @@ def execute_problem_with_ortools_backend(
             objective_value=None,
             variable_values={},
             solve_time=solve_time,
-            solver_message=f"Error during solving: {str(e)}",
+            solver_message=f"Error during solving: {e!s}",
         )
 
 
-def _initialize_decision_variables_in_solver(
-    solver, problem: Problem
-) -> dict[str, Any]:
+def _initialize_decision_variables_in_solver(solver, problem: Problem) -> dict[str, Any]:
     """Initialize decision variables in OR-Tools solver based on problem definition."""
     solver_variable_mapping = {}
     for variable_name, variable_definition in problem.variables.items():
@@ -236,9 +224,7 @@ def _apply_constraint_to_solver(
         solver.Add(constraint_left_hand_side == constraint_right_hand_side)
 
 
-def _configure_optimization_objective(
-    solver, solver_variables: dict[str, Any], objective
-) -> None:
+def _configure_optimization_objective(solver, solver_variables: dict[str, Any], objective) -> None:
     """Configure objective function coefficients and optimization direction."""
     objective_function = solver.Objective()
     for (

@@ -4,12 +4,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from solver import parser
-from solver.backends import SolverFactory
-from solver.models import SolverStatus, VariableType
+from solvedor.solver import parser
+from solvedor.solver.backends import SolverFactory
+from solvedor.solver.models import SolverStatus, VariableType
 
 # Import only the core functions without UI dependencies
-from solver.parser import ParseError
+from solvedor.solver.parser import ParseError
 
 
 def parse_and_solve_without_ui_dependencies(problem_text: str):
@@ -23,8 +23,8 @@ def parse_and_solve_without_ui_dependencies(problem_text: str):
 @pytest.fixture
 def examples_data():
     """Load example problems from YAML file."""
-    examples_path = Path("resources") / "examples.yaml"
-    with open(examples_path, "r", encoding="utf-8") as file:
+    examples_path = Path(__file__).parents[1] / "src" / "solvedor" / "resources" / "examples.yaml"
+    with examples_path.open(encoding="utf-8") as file:
         return yaml.safe_load(file)
 
 
@@ -164,11 +164,9 @@ def examples_data():
         ),
     ],
 )
-def test_comprehensive_problem_solving_flow(input_data, expected):
+def test_comprehensive_problem_solving_flow(input_data, expected) -> None:
     """Test complete parse and solve flow for various problem types and edge cases."""
-    problem, solution = parse_and_solve_without_ui_dependencies(
-        input_data["problem_text"]
-    )
+    problem, solution = parse_and_solve_without_ui_dependencies(input_data["problem_text"])
 
     # Verify parsing
     assert problem is not None
@@ -266,7 +264,7 @@ def test_comprehensive_problem_solving_flow(input_data, expected):
         ),
     ],
 )
-def test_yaml_examples_comprehensive(examples_data, example_key, expected):
+def test_yaml_examples_comprehensive(examples_data, example_key, expected) -> None:
     """Test all YAML example problems with comprehensive validation."""
     problem_text = examples_data[example_key]["problem"]
 
@@ -286,8 +284,7 @@ def test_yaml_examples_comprehensive(examples_data, example_key, expected):
             # Allow mixed types, but check that continuous variables exist
             if expected["variable_type"] == VariableType.CONTINUOUS:
                 assert any(
-                    v.variable_type == VariableType.CONTINUOUS
-                    for v in problem.variables.values()
+                    v.variable_type == VariableType.CONTINUOUS for v in problem.variables.values()
                 )
 
     # Solution validation
@@ -299,13 +296,9 @@ def test_yaml_examples_comprehensive(examples_data, example_key, expected):
 
     # Objective value validation
     if expected.get("expected_profit", False):
-        assert (
-            solution.objective_value > 0
-        )  # Should have positive value for maximization
+        assert solution.objective_value > 0  # Should have positive value for maximization
     elif expected.get("expected_cost", False):
-        assert (
-            solution.objective_value > 0
-        )  # Should have positive cost for minimization
+        assert solution.objective_value > 0  # Should have positive cost for minimization
 
     # Variable value validation
     for _var_name, var_value in solution.variable_values.items():
@@ -346,7 +339,7 @@ def test_yaml_examples_comprehensive(examples_data, example_key, expected):
         ),
     ],
 )
-def test_error_handling_comprehensive(input_data, expected_exception):
+def test_error_handling_comprehensive(input_data, expected_exception) -> None:
     """Test comprehensive error handling for invalid problem formats."""
     with pytest.raises(expected_exception):
         parse_and_solve_without_ui_dependencies(input_data["problem_text"])
@@ -370,7 +363,7 @@ def test_error_handling_comprehensive(input_data, expected_exception):
         )
     ],
 )
-def test_solution_formatting_comprehensive(examples_data, input_data, expected):
+def test_solution_formatting_comprehensive(examples_data, input_data, expected) -> None:
     """Test solution formatting and string representation."""
     problem_text = examples_data[input_data["example_key"]]["problem"]
     problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
@@ -395,10 +388,10 @@ def test_solution_formatting_comprehensive(examples_data, input_data, expected):
 
 
 # Problem variable extraction tests
-def test_problem_variable_extraction_comprehensive(examples_data):
+def test_problem_variable_extraction_comprehensive(examples_data) -> None:
     """Test comprehensive variable extraction from problems."""
     problem_text = examples_data["production_planning"]["problem"]
-    problem, solution = parse_and_solve_without_ui_dependencies(problem_text)
+    problem, _solution = parse_and_solve_without_ui_dependencies(problem_text)
 
     # Test variable extraction from problem
     assert len(problem.variables) > 0
@@ -430,7 +423,7 @@ def test_problem_variable_extraction_comprehensive(examples_data):
         "facility_location",
     ],
 )
-def test_all_examples_solve_successfully_comprehensive(examples_data, example_key):
+def test_all_examples_solve_successfully_comprehensive(examples_data, example_key) -> None:
     """Test that all example problems solve successfully with comprehensive validation."""
     problem_text = examples_data[example_key]["problem"]
 
@@ -452,7 +445,5 @@ def test_all_examples_solve_successfully_comprehensive(examples_data, example_ke
     # All variable values should be valid numbers
     for _var_name, var_value in solution.variable_values.items():
         assert isinstance(var_value, (int, float, Decimal))
-        assert not (
-            isinstance(var_value, float) and (var_value != var_value)
-        )  # Not NaN
+        assert not (isinstance(var_value, float) and (var_value != var_value))  # Not NaN
         assert var_value >= -1e-6  # Non-negative with tolerance

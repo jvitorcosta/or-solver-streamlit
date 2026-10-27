@@ -1,7 +1,7 @@
 import streamlit as st
 
-from config import language, settings
-from solver import engine
+from solvedor.config import language, settings
+from solvedor.solver import engine
 
 # Example template configuration for better maintainability.
 _EXAMPLE_TEMPLATES = {
@@ -16,24 +16,20 @@ _EXAMPLE_TEMPLATES = {
 _INTEGER_KEYWORDS = frozenset(["integer", "binary"])
 
 
-def display_optimization_problem_gallery(
-    *, translations: language.TranslationSchema
-) -> None:
+def display_optimization_problem_gallery(*, translations: language.TranslationSchema) -> None:
     """Display interactive gallery of optimization problem examples with selection.
 
     Args:
         translations: Translation schema for the current language.
     """
-    optimization_examples_dictionary = (
-        settings.extract_examples_from_resources_directory()
-    )
+    optimization_examples_dictionary = settings.extract_examples_from_resources_directory()
     if not optimization_examples_dictionary:
         return
 
     user_selected_example_key = st.pills(
         translations.gallery.choose_text,
         options=list(_EXAMPLE_TEMPLATES.keys()),
-        format_func=_EXAMPLE_TEMPLATES.get,
+        format_func=lambda key: _EXAMPLE_TEMPLATES[key],
         help=translations.gallery.select_help,
     )
 
@@ -102,17 +98,13 @@ def copy_example_to_active_workspace(
     st.rerun()
 
 
-def display_optimization_workspace_interface(
-    *, translations: language.TranslationSchema
-) -> None:
+def display_optimization_workspace_interface(*, translations: language.TranslationSchema) -> None:
     """Display complete optimization workspace interface with form and processing.
 
     Args:
         translations: Dictionary containing translation data.
     """
-    initial_workspace_text, example_currently_loaded = (
-        get_workspace_initial_state_from_session()
-    )
+    initial_workspace_text, example_currently_loaded = get_workspace_initial_state_from_session()
     active_language_code = st.session_state.get("language", "en")
 
     display_workspace_header_with_example_status(
@@ -124,18 +116,14 @@ def display_optimization_workspace_interface(
     execute_queued_optimization_problem()
 
 
-def display_problem_input_form_with_buttons(
-    *, initial_text: str, language_code: str
-) -> None:
+def display_problem_input_form_with_buttons(*, initial_text: str, language_code: str) -> None:
     """Display form with text input area and solve/clear buttons.
 
     Args:
         initial_text: Initial text to display in the text area.
         language_code: Language code for processing.
     """
-    interface_translations = language.load_language_translations(
-        language_code=language_code
-    )
+    interface_translations = language.load_language_translations(language_code=language_code)
 
     with st.form("problem_form", border=False):
         # To ensure we won't erase the text area content on rerun
@@ -157,9 +145,7 @@ def display_problem_input_form_with_buttons(
 
         with solve_button_column:
             solve_button_clicked = st.form_submit_button(
-                (
-                    f":material/play_arrow: **{interface_translations.interface.solve_button}**"
-                ),
+                (f":material/play_arrow: **{interface_translations.interface.solve_button}**"),
                 type="primary",
                 use_container_width=True,
                 help=interface_translations.interface.solve_help,
@@ -167,9 +153,7 @@ def display_problem_input_form_with_buttons(
 
         with clear_button_column:
             clear_button_clicked = st.form_submit_button(
-                (
-                    f":material/restart_alt: {interface_translations.interface.clear_workspace}"
-                ),
+                (f":material/restart_alt: {interface_translations.interface.clear_workspace}"),
                 type="secondary",
                 use_container_width=True,
                 help=interface_translations.interface.clear_help,
@@ -184,26 +168,19 @@ def display_problem_input_form_with_buttons(
                     problem_text=user_input_problem_text, language_code=language_code
                 )
                 st.toast(
-                    (
-                        f":material/calculate: {interface_translations.interface.processing_toast}"
-                    ),
+                    (f":material/calculate: {interface_translations.interface.processing_toast}"),
                     icon=":material/play_arrow:",
                 )
                 st.rerun()
             else:
                 st.toast(
-                    (
-                        f":material/warning: "
-                        f"{interface_translations.messages.empty_problem_solve}!"
-                    ),
+                    (f":material/warning: {interface_translations.messages.empty_problem_solve}!"),
                     icon=":material/error:",
                 )
 
         if clear_button_clicked:
             st.toast(
-                (
-                    f":material/refresh: {interface_translations.interface.clear_workspace}!"
-                ),
+                (f":material/refresh: {interface_translations.interface.clear_workspace}!"),
                 icon=":material/restart_alt:",
             )
 
@@ -237,15 +214,12 @@ def display_workspace_header_with_example_status(
     st.markdown(f"#### :material/edit_note: {translations.interface.workspace_title}")
     if example_is_loaded and "example_name" in st.session_state:
         st.caption(
-            (
-                f":material/lightbulb: {translations.interface.using_example}: **{st.session_state.example_name}**"
-            )
+            f":material/lightbulb: {translations.interface.using_example}: "
+            f"**{st.session_state.example_name}**"
         )
 
 
-def queue_problem_text_for_optimization(
-    *, problem_text: str, language_code: str
-) -> None:
+def queue_problem_text_for_optimization(*, problem_text: str, language_code: str) -> None:
     """Queue optimization problem in session state for processing by solver.
 
     Args:
@@ -253,9 +227,7 @@ def queue_problem_text_for_optimization(
         language_code: Language code for processing.
     """
     # Auto-detect variable type from problem syntax
-    detected_variable_type = analyze_text_for_variable_type_hints(
-        problem_text=problem_text
-    )
+    detected_variable_type = analyze_text_for_variable_type_hints(problem_text=problem_text)
 
     st.session_state.current_problem = {
         "text": problem_text,
@@ -277,10 +249,7 @@ def analyze_text_for_variable_type_hints(*, problem_text: str) -> str:
     problem_text_lowercase = problem_text.lower()
     return (
         "integer"
-        if any(
-            integer_keyword in problem_text_lowercase
-            for integer_keyword in _INTEGER_KEYWORDS
-        )
+        if any(integer_keyword in problem_text_lowercase for integer_keyword in _INTEGER_KEYWORDS)
         else "continuous"
     )
 

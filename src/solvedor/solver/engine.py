@@ -1,10 +1,10 @@
 import pandas as pd
 import streamlit as st
 
-from config import language
-from solver import parser
-from solver.backends import SolverFactory
-from solver.models import Problem, Solution, SolverStatus, VariableType
+from solvedor.config import language
+from solvedor.solver import parser
+from solvedor.solver.backends import SolverFactory
+from solvedor.solver.models import Problem, Solution, SolverStatus, VariableType
 
 # Progress tracking for UI feedback.
 _PROGRESS_STEPS = {"parsing": 20, "setup": 40, "solving": 80, "complete": 100}
@@ -64,9 +64,7 @@ def execute_optimization_with_ui_feedback(
                 var.variable_type in (VariableType.INTEGER, VariableType.BINARY)
                 for var in problem.variables.values()
             )
-            problem_type = (
-                "Mixed-Integer" if contains_integer_or_binary_variables else "Linear"
-            )
+            problem_type = "Mixed-Integer" if contains_integer_or_binary_variables else "Linear"
 
             solver = SolverFactory.create_solver(problem)
             solver_name = solver.get_solver_name()
@@ -158,9 +156,7 @@ def render_solution_results_with_metrics(
                 [
                     {
                         "Variable": var_name,
-                        "Value": _format_value_by_variable_type(
-                            var_name, value, problem
-                        ),
+                        "Value": _format_value_by_variable_type(var_name, value, problem),
                         "Type": problem.variables[var_name].variable_type.value.title(),
                     }
                     for var_name, value in solution.variable_values.items()
@@ -178,9 +174,7 @@ def render_solution_results_with_metrics(
                     "Value": st.column_config.NumberColumn(
                         translations.results.value, width="medium", format="%.6f"
                     ),
-                    "Type": st.column_config.TextColumn(
-                        translations.results.type, width="small"
-                    ),
+                    "Type": st.column_config.TextColumn(translations.results.type, width="small"),
                 },
             )
         else:
@@ -195,13 +189,9 @@ def render_solution_results_with_metrics(
                 st.warning(f"⚠️ **{translations.results.problem_unbounded}**")
                 st.info(translations.results.unbounded_help)
             case _:
-                st.error(
-                    f"❌ **{translations.results.solver_error}**: {solution.status.value}"
-                )
+                st.error(f"❌ **{translations.results.solver_error}**: {solution.status.value}")
                 if hasattr(solution, "solver_message") and solution.solver_message:
-                    st.info(
-                        f"{translations.results.error_details}: {solution.solver_message}"
-                    )
+                    st.info(f"{translations.results.error_details}: {solution.solver_message}")
 
 
 def _format_value_by_variable_type(variable_name: str, value: float, problem) -> str:
@@ -209,7 +199,7 @@ def _format_value_by_variable_type(variable_name: str, value: float, problem) ->
     if variable_name in problem.variables:
         variable_type_enum = problem.variables[variable_name].variable_type
         if variable_type_enum in (VariableType.INTEGER, VariableType.BINARY):
-            return f"{int(round(value))}"
+            return f"{round(value)}"
         else:
             return f"{value:.6f}"
     return f"{value:.6f}"
@@ -234,15 +224,12 @@ def _generate_interactive_2d_plot(problem, solution):
         # Fallback to English if translation loading fails
         translations = language.load_language_translations(language_code="en")
 
-    viz_title = (
-        translations.visualization.title if translations else "📊 Problem Visualization"
-    )
+    viz_title = translations.visualization.title if translations else "📊 Problem Visualization"
     st.subheader(viz_title)
 
     # Check if variables are continuous (visualization works best for continuous)
     contains_integer_types = any(
-        problem.variables[var].variable_type
-        in (VariableType.INTEGER, VariableType.BINARY)
+        problem.variables[var].variable_type in (VariableType.INTEGER, VariableType.BINARY)
         for var in extracted_variable_names
     )
 
@@ -250,10 +237,7 @@ def _generate_interactive_2d_plot(problem, solution):
         info_text = (
             translations.visualization.integer_info
             if translations
-            else (
-                "🔢 Visualization shows continuous relaxation for "
-                "integer/binary variables"
-            )
+            else ("🔢 Visualization shows continuous relaxation for integer/binary variables")
         )
         st.info(info_text)
 
@@ -276,8 +260,7 @@ def _generate_interactive_2d_plot(problem, solution):
                 line={"color": "rgba(76, 175, 80, 0.8)", "width": 3},
                 name="🟢 Feasible Region",
                 hovertemplate=(
-                    "<b>Feasible Region</b><br>All points satisfying "
-                    "constraints<extra></extra>"
+                    "<b>Feasible Region</b><br>All points satisfying constraints<extra></extra>"
                 ),
             )
         )
@@ -330,12 +313,8 @@ def _generate_interactive_2d_plot(problem, solution):
 
         # Add optimal solution point
         if solution and solution.variable_values:
-            optimal_x_coordinate = float(
-                solution.variable_values.get(first_variable_name, 8 / 3)
-            )
-            optimal_y_coordinate = float(
-                solution.variable_values.get(second_variable_name, 8 / 3)
-            )
+            optimal_x_coordinate = float(solution.variable_values.get(first_variable_name, 8 / 3))
+            optimal_y_coordinate = float(solution.variable_values.get(second_variable_name, 8 / 3))
         else:
             # Default optimal solution for demo
             if contains_integer_types:
@@ -359,7 +338,8 @@ def _generate_interactive_2d_plot(problem, solution):
                 ),
                 name="⭐ Optimal Solution",
                 hovertemplate=(
-                    f"<b>Optimal Solution</b><br>{first_variable_name} = {optimal_x_coordinate:.3f}<br>"
+                    f"<b>Optimal Solution</b><br>"
+                    f"{first_variable_name} = {optimal_x_coordinate:.3f}<br>"
                     f"{second_variable_name} = {optimal_y_coordinate:.3f}<extra></extra>"
                 ),
             )

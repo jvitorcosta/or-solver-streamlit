@@ -36,7 +36,7 @@ def extract_examples_from_resources_directory() -> dict[str, Any]:
         Dictionary containing example optimization problems.
         Returns empty dict if examples file is not found or invalid.
     """
-    examples_yaml_file_path = Path(__file__).parents[2] / "resources" / "examples.yaml"
+    examples_yaml_file_path = Path(__file__).parents[1] / "resources" / "examples.yaml"
 
     try:
         examples_file_content = examples_yaml_file_path.read_text(encoding="utf-8")

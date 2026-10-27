@@ -1,8 +1,8 @@
 import pytest
 
-from solver import parser
-from solver.models import ObjectiveDirection, VariableType
-from solver.parser import ParseError
+from solvedor.solver import parser
+from solvedor.solver.models import ObjectiveDirection, VariableType
+from solvedor.solver.parser import ParseError
 
 
 # Core parsing tests with input,expected structure
@@ -85,7 +85,7 @@ from solver.parser import ParseError
         ),
     ],
 )
-def test_parse_linear_programs(input_data, expected):
+def test_parse_linear_programs(input_data, expected) -> None:
     """Test parsing linear programs with different objective directions and formats."""
     problem = parser.parse_lp_problem(input_data["problem_text"])
 
@@ -181,7 +181,7 @@ def test_parse_linear_programs(input_data, expected):
         ),
     ],
 )
-def test_variable_type_declarations(input_data, expected):
+def test_variable_type_declarations(input_data, expected) -> None:
     """Test parsing of different variable type declarations."""
     problem = parser.parse_lp_problem(input_data["problem_text"])
 
@@ -239,7 +239,7 @@ def test_variable_type_declarations(input_data, expected):
         ),
     ],
 )
-def test_problem_formatting_tolerance(input_data, expected):
+def test_problem_formatting_tolerance(input_data, expected) -> None:
     """Test parsing tolerance for comments and whitespace."""
     if expected["should_parse"]:
         problem = parser.parse_lp_problem(input_data["problem_text"])
@@ -298,7 +298,7 @@ def test_problem_formatting_tolerance(input_data, expected):
         ),
     ],
 )
-def test_parsing_error_handling(input_data, expected_exception):
+def test_parsing_error_handling(input_data, expected_exception) -> None:
     """Test that invalid syntax raises appropriate parsing errors."""
     with pytest.raises(expected_exception):
         parser.parse_lp_problem(input_data["problem_text"])
@@ -349,7 +349,7 @@ def test_parsing_error_handling(input_data, expected_exception):
         ),
     ],
 )
-def test_complex_problem_structures(input_data, expected):
+def test_complex_problem_structures(input_data, expected) -> None:
     """Test parsing of complex problems with multiple variables and constraints."""
     problem = parser.parse_lp_problem(input_data["problem_text"])
 
@@ -376,14 +376,14 @@ def test_complex_problem_structures(input_data, expected):
         )
     ],
 )
-def test_parse_coefficients(input_data, expected_vars):
+def test_parse_coefficients(input_data, expected_vars) -> None:
     """Test parsing with implicit and negative coefficients."""
     problem = parser.parse_lp_problem(input_data)
     obj_vars = problem.objective.extract_variable_names()
     assert len(obj_vars) == expected_vars
 
 
-def test_comments_ignored():
+def test_comments_ignored() -> None:
     """Test that comments are properly ignored."""
     problem_text = """
         # This is a cat food optimization problem
@@ -406,7 +406,7 @@ def test_comments_ignored():
     assert "cat_toys" in variables
 
 
-def test_invalid_syntax_raises_error():
+def test_invalid_syntax_raises_error() -> None:
     """Test that invalid syntax raises ParseError."""
     invalid_problems = [
         "invalid problem text",

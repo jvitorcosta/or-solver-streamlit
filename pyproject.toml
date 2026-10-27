@@ -1,121 +1,104 @@
 [project]
 name = "or-solver-streamlit"
-version = "2.0.0"
-description = "🐱 Modern Operations Research Solver with Streamlit Interface - A purr-fect tool for linear programming!"
-authors = [{name = "João Pinheiro", email = "joao.pinheiro@example.com"}]
+version = "2.1.0"
+description = "Linear and integer programming solver for teaching, with textbook syntax"
 readme = "README.md"
-requires-python = ">=3.11"
-license = {text = "MIT"}
-keywords = ["operations-research", "linear-programming", "optimization", "streamlit", "cli"]
+requires-python = ">=3.12"
+authors = [{ name = "Vitor Pinheiro" }]
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["operations-research", "linear-programming", "optimization", "education", "streamlit"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Education",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
-
 dependencies = [
-    "typer", # CLI framework
-    "rich", # Terminal output
-    "pydantic", # Data validation
-    "pyparsing", # Parsing library
-    "pyyaml", # YAML configuration
-    "streamlit[pdf]", # Web interface
-    "plotly>=5.0.0", # Interactive 2D/3D plotting
-    "matplotlib>=3.5.0", # Static plotting support
-    "numpy>=1.21.0", # Numerical computations
-    "pandas>=1.3.0",
-    "ortools>=9.8.0", # Google OR-Tools optimization suite
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest",
-    "pytest-cov",
-    "ruff",
-    "pre-commit",
-    "mypy",
-]
-
-test = [
-    "pytest",
-    "pytest-cov",
+    "ortools>=9.10",
+    "pandas>=2.2",
+    "plotly>=5.20",
+    "pydantic>=2.7",
+    "pyparsing>=3.1",
+    "pyyaml>=6.0",
+    "streamlit[pdf]>=1.50",
 ]
 
 [project.urls]
-Homepage = "https://github.com/username/or-solver-streamlit"
-Documentation = "https://username.github.io/or-solver-streamlit"
-Repository = "https://github.com/username/or-solver-streamlit"
-Issues = "https://github.com/username/or-solver-streamlit/issues"
-
-[project.scripts]
-or-solver = "app:main"
+Homepage = "https://github.com/jvitorcosta/or-solver-streamlit"
+Repository = "https://github.com/jvitorcosta/or-solver-streamlit"
+Issues = "https://github.com/jvitorcosta/or-solver-streamlit/issues"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.9,<1"]
+build-backend = "uv_build"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src"]
+[tool.uv.build-backend]
+module-name = "solvedor"  # import name differs from the distribution name
 
-[tool.uv]
-dev-dependencies = [
-    "ipython>=8.28.0",
-    "pre-commit>=4.5.0",
-    "ruff>=0.14.9",
+[dependency-groups]
+dev = [
+    "mypy>=1.18",
+    "pandas-stubs>=3.0.5.260914",
+    "pre-commit>=4.3",
+    "pytest>=8.4",
+    "pytest-cov>=7.0",
+    "ruff>=0.14",
+    "types-pyyaml>=6.0.12.20260906",
 ]
 
+# ---------------------------------------------------------------- ruff
 [tool.ruff]
-target-version = "py311"
-line-length = 88
-src = ["src"]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = [
-    "E4",
-    "E7",
-    "E9",  # pycodestyle
-    "F",   # Pyflakes
-    "I",   # isort
-    "A",   # flake8-builtins
-    "B",   # flake8-bugbear
-    "SIM", # flake8-simplify
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "B",        # bugbear
+    "UP",       # pyupgrade
+    "SIM",      # simplify
+    "RUF",      # ruff-specific
+    "N",        # pep8-naming
+    "PTH",      # use pathlib
+    "S",        # bandit (security)
 ]
-unfixable = ["F401"]
-isort.split-on-trailing-comma = false
 
-[tool.ruff.format]
-docstring-code-format = true
-line-ending = "lf"
-skip-magic-trailing-comma = true
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # assert is fine in tests
 
+# ---------------------------------------------------------------- mypy
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = true
-exclude = ["docs/", "build/"]
+files = ["src", "tests"]
 
+[[tool.mypy.overrides]]
+module = ["ortools.*", "plotly.*"]  # no type stubs published
+ignore_missing_imports = true
+
+# TEMPORARY: modules rewritten by later refactor tasks (parser: Task 2, backends: Task 4,
+# engine: Task 5, tests: Task 10). Each task removes its entry; none may remain at the end.
+[[tool.mypy.overrides]]
+module = ["solvedor.solver.parser", "solvedor.solver.backends", "solvedor.solver.engine", "tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+
+# ---------------------------------------------------------------- pytest
 [tool.pytest.ini_options]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
 testpaths = ["tests"]
-python_files = ["test_*.py", "*_test.py"]
-pythonpath = ["src"]
-addopts = "--tb=short"
 
 [tool.coverage.run]
-source = ["src"]
-omit = ["*/tests/*", "*/test_*"]
+source = ["solvedor"]
+branch = true
 
 [tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:",
-]
+show_missing = true
+skip_covered = true
+fail_under = 55  # TEMPORARY: raised to 80 in Task 10 (AppTest covers the UI)

@@ -3,31 +3,31 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 
 import pydantic
 
 
-class ObjectiveDirection(str, Enum):
+class ObjectiveDirection(StrEnum):
     MINIMIZE = "minimize"
     MAXIMIZE = "maximize"
     MINIMIZAR = "minimizar"  # Portuguese
     MAXIMIZAR = "maximizar"  # Portuguese
 
 
-class ConstraintOperator(str, Enum):
+class ConstraintOperator(StrEnum):
     LESS_EQUAL = "<="
     GREATER_EQUAL = ">="
     EQUAL = "="
 
 
-class VariableType(str, Enum):
+class VariableType(StrEnum):
     CONTINUOUS = "continuous"
     INTEGER = "integer"
     BINARY = "binary"
 
 
-class SolverStatus(str, Enum):
+class SolverStatus(StrEnum):
     OPTIMAL = "optimal"
     INFEASIBLE = "infeasible"
     UNBOUNDED = "unbounded"
@@ -43,19 +43,15 @@ class Variable(pydantic.BaseModel):
 
     @pydantic.field_validator("name")
     @classmethod
-    def ensure_valid_variable_name(cls, variable_name):
+    def ensure_valid_variable_name(cls, variable_name: str) -> str:
         if not variable_name or not isinstance(variable_name, str):
-            raise ValueError(
-                f"Variable name must be a non-empty string: {variable_name}"
-            )
+            raise ValueError(f"Variable name must be a non-empty string: {variable_name}")
 
         if not variable_name.replace("_", "").replace("-", "").isalnum():
             raise ValueError(f"Invalid variable name: {variable_name}")
 
         if variable_name[0].isdigit():
-            raise ValueError(
-                f"Variable name cannot start with a number: {variable_name}"
-            )
+            raise ValueError(f"Variable name cannot start with a number: {variable_name}")
 
         return variable_name
 
@@ -85,12 +81,8 @@ class Term(pydantic.BaseModel):
 class LinearExpression(pydantic.BaseModel):
     """Represents a linear expression as a sum of terms."""
 
-    terms: list[Term] = pydantic.Field(
-        default_factory=list, description="List of terms"
-    )
-    constant: Decimal = pydantic.Field(
-        default=Decimal("0"), description="Constant term"
-    )
+    terms: list[Term] = pydantic.Field(default_factory=list, description="List of terms")
+    constant: Decimal = pydantic.Field(default=Decimal("0"), description="Constant term")
 
     def add_term(self, coefficient: Decimal | float | int, variable_name: str) -> None:
         decimal_coefficient = Decimal(str(coefficient))
@@ -140,12 +132,8 @@ class LinearExpression(pydantic.BaseModel):
 class Constraint(pydantic.BaseModel):
     """Represents a linear constraint."""
 
-    expression: LinearExpression = pydantic.Field(
-        ..., description="Left-hand side expression"
-    )
-    operator: ConstraintOperator = pydantic.Field(
-        ..., description="Constraint operator"
-    )
+    expression: LinearExpression = pydantic.Field(..., description="Left-hand side expression")
+    operator: ConstraintOperator = pydantic.Field(..., description="Constraint operator")
     rhs: Decimal = pydantic.Field(..., description="Right-hand side value")
     name: str | None = pydantic.Field(default=None, description="Constraint name")
 
@@ -171,12 +159,8 @@ class Constraint(pydantic.BaseModel):
 class ObjectiveFunction(pydantic.BaseModel):
     """Represents the objective function."""
 
-    direction: ObjectiveDirection = pydantic.Field(
-        ..., description="Optimization direction"
-    )
-    expression: LinearExpression = pydantic.Field(
-        ..., description="Objective expression"
-    )
+    direction: ObjectiveDirection = pydantic.Field(..., description="Optimization direction")
+    expression: LinearExpression = pydantic.Field(..., description="Objective expression")
 
     def __str__(self) -> str:
         match self.direction:
@@ -264,19 +248,13 @@ class Problem(pydantic.BaseModel):
                     else:
                         bound_constraint_parts = []
                         if variable_definition.lower_bound is not None:
-                            bound_constraint_parts.append(
-                                str(variable_definition.lower_bound)
-                            )
+                            bound_constraint_parts.append(str(variable_definition.lower_bound))
                         bound_constraint_parts.append("<=")
                         bound_constraint_parts.append(variable_name)
                         if variable_definition.upper_bound is not None:
                             bound_constraint_parts.append("<=")
-                            bound_constraint_parts.append(
-                                str(variable_definition.upper_bound)
-                            )
-                        bounded_variable_constraints.append(
-                            " ".join(bound_constraint_parts)
-                        )
+                            bound_constraint_parts.append(str(variable_definition.upper_bound))
+                        bounded_variable_constraints.append(" ".join(bound_constraint_parts))
                 else:
                     non_negative_variable_names.append(variable_name)
             else:
@@ -295,9 +273,7 @@ class Problem(pydantic.BaseModel):
             problem_lines.append("where:")
 
             if non_negative_variable_names:
-                problem_lines.append(
-                    f"    {', '.join(non_negative_variable_names)} >= 0"
-                )
+                problem_lines.append(f"    {', '.join(non_negative_variable_names)} >= 0")
 
             for bound_constraint in bounded_variable_constraints:
                 problem_lines.append(f"    {bound_constraint}")
@@ -327,9 +303,7 @@ class Solution(pydantic.BaseModel):
     solve_time: float | None = pydantic.Field(
         default=None, description="Time taken to solve (in seconds)"
     )
-    iterations: int | None = pydantic.Field(
-        default=None, description="Number of iterations"
-    )
+    iterations: int | None = pydantic.Field(default=None, description="Number of iterations")
 
     @property
     def is_optimal(self) -> bool:
@@ -350,27 +324,19 @@ class Solution(pydantic.BaseModel):
         if self.status == SolverStatus.OPTIMAL:
             solution_display_lines.append("🎯 Optimal Solution Found!")
             if self.objective_value is not None:
-                solution_display_lines.append(
-                    f"   Objective Value: {self.objective_value}"
-                )
+                solution_display_lines.append(f"   Objective Value: {self.objective_value}")
             solution_display_lines.append("")
             solution_display_lines.append("   Variables:")
             for variable_name, variable_value in sorted(self.variable_values.items()):
-                solution_display_lines.append(
-                    f"   🐾 {variable_name} = {variable_value}"
-                )
+                solution_display_lines.append(f"   🐾 {variable_name} = {variable_value}")
             solution_display_lines.append("")
             solution_display_lines.append("   Status: OPTIMAL 😺")
         elif self.status == SolverStatus.INFEASIBLE:
             solution_display_lines.append("🙀 Problem is Infeasible!")
-            solution_display_lines.append(
-                "   No solution exists that satisfies all constraints."
-            )
+            solution_display_lines.append("   No solution exists that satisfies all constraints.")
         elif self.status == SolverStatus.UNBOUNDED:
             solution_display_lines.append("😿 Problem is Unbounded!")
-            solution_display_lines.append(
-                "   The objective function can be improved infinitely."
-            )
+            solution_display_lines.append("   The objective function can be improved infinitely.")
         else:
             solution_display_lines.append(f"😾 Solver Status: {self.status}")
 

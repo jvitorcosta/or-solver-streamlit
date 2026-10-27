@@ -1,27 +1,14 @@
-## Context
+## What & why
 
-<!-- Describe the context, motivation, problem. -->
+<!-- One or two sentences. Link the issue: Closes #123 -->
 
-## Changes
+## How
 
-<!--
-### Build changes
+<!-- Key changes, anything reviewers should look at first -->
 
-- Changes in the package's build and release
+## Checklist
 
-### API changes
-
-- Changes to classes and functions
-
-### UI changes
-
-- Changes in the user interface
-
-### Fixes
-
-- Changes due to bugs or bad user experience
-
-### Documentation
-
-- Changes to documentation and examples
--->
+- [ ] Tests added/updated
+- [ ] `make check` passes locally
+- [ ] Docs / CLAUDE.md / `.claude/rules` updated if conventions changed
+- [ ] Conventional Commit title (`feat:`, `fix:`, ...)

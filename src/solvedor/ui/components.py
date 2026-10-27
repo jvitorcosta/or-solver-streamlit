@@ -2,15 +2,13 @@
 
 import streamlit as st
 
-from config import language
+from solvedor.config import language
 
 # Language display configuration.
 _LANGUAGE_DISPLAY = {"en": "🇺🇸 English", "pt": "🇵🇹 Português"}
 
 
-def display_language_selection_sidebar(
-    *, translations: language.TranslationSchema
-) -> None:
+def display_language_selection_sidebar(*, translations: language.TranslationSchema) -> None:
     """Display sidebar with interactive language selection interface.
 
     Args:
@@ -36,7 +34,5 @@ def display_language_selection_sidebar(
         # Handle language change with immediate feedback
         if user_selected_language != active_language_code:
             st.session_state.language = user_selected_language
-            st.toast(
-                ":material/language: Language changed!", icon=":material/language:"
-            )
+            st.toast(":material/language: Language changed!", icon=":material/language:")
             st.rerun()
