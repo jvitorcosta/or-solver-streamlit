@@ -561,3 +561,10 @@ def test_bad_names_and_huge_numbers_are_parse_errors(text: str, line: int) -> No
     with pytest.raises(ParseError) as error:
         parse_lp_problem(text)
     assert error.value.line == line
+
+
+def test_package_errors_share_one_base_class() -> None:
+    import solvedor
+
+    with pytest.raises(solvedor.SolvedorError):
+        parse_lp_problem("not a problem")

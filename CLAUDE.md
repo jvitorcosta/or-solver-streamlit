@@ -44,7 +44,7 @@ parsed, solved with Google OR-Tools, and shown with results and (for 2 variables
 - `src/solvedor/resources/`: gallery examples (`examples.yaml`) and the thesis PDF.
 - `requirements.txt` is generated from `uv.lock` (`make requirements`) for Streamlit Cloud; CI
   fails if it drifts. Never edit it by hand.
-- Refactor in progress: `docs/superpowers/plans/2026-10-27-or-solver-refactor.md`. Temporary
-  mypy exemptions and the coverage floor in `pyproject.toml` are removed as its tasks land.
+- `solver/api.py`: `solve_text(text) -> SolveResult`, the entry point the UI uses.
+- Errors raised by the package subclass `solvedor.SolvedorError` (`src/solvedor/errors.py`).
 
 Run the app: `make run`.

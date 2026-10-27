@@ -1,21 +1,28 @@
 # CHANGELOG format
 
-Based on [Keep a Changelog](https://keepachangelog.com). Newest first.
+`CHANGELOG.rst` (reStructuredText), based on [Keep a Changelog](https://keepachangelog.com).
+Newest first, under the `[Unreleased]` heading.
 
-```markdown
-## [X.Y.Z] - YYYY-MM-DD
+```rst
+[X.Y.Z] - YYYY-MM-DD
+====================
 
-### Added
-- New user-visible features (`feat:` commits)
+Added
+-----
+* New user-visible features (``feat:`` commits)
 
-### Fixed
-- Bug fixes (`fix:` commits)
+Fixed
+-----
+* Bug fixes (``fix:`` commits)
 
-### Changed
-- Behaviour changes, refactors users might notice
+Changed
+-------
+* Behaviour changes, refactors users might notice
 
-### Removed
-- Removed features (mark breaking ones with **BREAKING**)
+Removed
+-------
+* Removed features (mark breaking ones with **BREAKING**)
 ```
 
-Omit empty sections. Write entries for users, not as raw commit messages.
+Omit empty sections. Write entries for users, not as raw commit messages. The `=` and `-`
+underlines must be at least as long as the heading text.

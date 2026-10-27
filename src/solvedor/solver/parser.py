@@ -23,6 +23,7 @@ from functools import cache
 
 import pyparsing as pp
 
+from solvedor.errors import SolvedorError
 from solvedor.solver.models import (
     Constraint,
     ConstraintOperator,
@@ -35,7 +36,7 @@ from solvedor.solver.models import (
 )
 
 
-class ParseError(Exception):
+class ParseError(SolvedorError):
     """A problem text that cannot be parsed, with the 1-based line it failed on."""
 
     def __init__(self, message: str, line: int = 0, column: int = 0) -> None:
