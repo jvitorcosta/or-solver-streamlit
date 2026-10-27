@@ -157,3 +157,20 @@ def test_readme_and_contributing_tabs_render_the_files(app: AppTest, file_name: 
 
     # st.markdown drops the final newline
     assert any(m.value == content.strip() for m in app.markdown)
+
+
+def test_sidebar_collapses_on_narrow_screens(monkeypatch: pytest.MonkeyPatch) -> None:
+    import streamlit as st
+
+    from solvedor import app as solvedor_app
+    from solvedor.config.language import load_language_translations
+
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(st, "set_page_config", lambda **kwargs: calls.append(kwargs))
+
+    solvedor_app.initialize_streamlit_page_configuration(
+        load_language_translations(language_code="en")
+    )
+
+    # "auto" keeps the sidebar open on wide screens and closed on phones and in embeds.
+    assert calls[0]["initial_sidebar_state"] == "auto"

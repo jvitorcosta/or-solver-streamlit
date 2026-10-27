@@ -11,7 +11,7 @@ def initialize_streamlit_page_configuration(translations: language.TranslationSc
         page_title="SolvedOR",
         page_icon=":material/analytics:",
         layout="wide",
-        initial_sidebar_state="expanded",
+        initial_sidebar_state="auto",  # closed on phones and when embedded in a narrow page
         menu_items={
             "Get Help": _REPO,
             "Report a bug": f"{_REPO}/issues",
