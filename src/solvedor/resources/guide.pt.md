@@ -19,6 +19,8 @@ where:                    # ou onde; opcional: limites e tipos
 
 - **As variáveis são não negativas**, a menos que você escreva `free` ou dê um limite inferior.
 - Coeficientes podem ser `3x`, `3*x` ou `3 x`, com ponto decimal (`0.5x`) ou expoente (`1e3x`).
+  `2e1` é o número 20; para uma variável chamada `e1`, escreva `2*e1`.
+- Uma constante no objetivo (`max 3x + 5`) é somada ao valor do objetivo.
 - Constantes e variáveis podem ficar dos dois lados de uma restrição: `x + 5 >= y` funciona.
 - Nomes de variáveis começam com letra ou `_` e podem ter dígitos (`produto_a`, `x1`).
 - `#` inicia um comentário.

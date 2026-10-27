@@ -62,20 +62,30 @@ _OPERATORS = {
     "=": ConstraintOperator.EQUAL,
 }
 _KEYWORDS = {"integer", "binary", "free"}
-_CONSTRAINTS_HEADER = re.compile(r"^(subject\s+to|s\.t\.|st|sujeito\s+a)\s*:?\s*(.*)$", re.I)
-_WHERE_HEADER = re.compile(r"^(where|onde)\s*:?\s*(.*)$", re.I)
+# A header is the whole keyword: "stock <= 3" is a constraint, not "st" + "ock <= 3".
+_CONSTRAINTS_HEADER = re.compile(
+    r"^(subject\s+to|s\.t\.|st|sujeito\s+a)(?=\s|:|$)\s*:?\s*(.*)$", re.I
+)
+_WHERE_HEADER = re.compile(r"^(where|onde)(?=\s|:|$)\s*:?\s*(.*)$", re.I)
+_MAX_EXPONENT = 300  # beyond this a value is not a usable float (and Decimal can overflow)
 _OBJECTIVE_START = re.compile(r"^(maximize|maximizar|max|minimize|minimizar|min)\b\s*(.*)$", re.I)
 
 Term = tuple[Decimal, str | None]  # (coefficient, variable name or None for a constant)
 
 
+def _to_decimal(text: str, location: int, tokens: pp.ParseResults) -> Decimal:
+    value = Decimal(tokens[0])
+    if value and abs(value.adjusted()) > _MAX_EXPONENT:
+        raise pp.ParseFatalException(text, location, f"the number {tokens[0]} is out of range")
+    return value
+
+
 @cache
 def _grammar() -> dict[str, pp.ParserElement]:
     """Build the per-line grammars once."""
-    number = pp.Regex(r"(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?").set_parse_action(
-        lambda t: Decimal(t[0])
-    )
-    name = pp.Regex(r"[A-Za-z_][A-Za-z0-9_]*")
+    number = pp.Regex(r"(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?").set_parse_action(_to_decimal)
+    # A name needs a letter or digit somewhere: a bare "_" is not a variable.
+    name = pp.Regex(r"(?!_+(?![A-Za-z0-9]))[A-Za-z_][A-Za-z0-9_]*")
     sign = pp.one_of("+ -")
     term = pp.Group(
         pp.Optional(sign, default="+")("sign")
@@ -97,7 +107,7 @@ def _grammar() -> dict[str, pp.ParserElement]:
     constraint = expression("lhs") + operator("op") + expression("rhs")
     names = pp.Group(pp.DelimitedList(name))
     signed_number = pp.Combine(pp.Optional(sign) + pp.Regex(r"(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?"))
-    signed_number.set_parse_action(lambda t: Decimal(t[0]))
+    signed_number.set_parse_action(_to_decimal)
     keyword = pp.one_of("integer binary free", caseless=True)
     bound = (
         (
@@ -117,7 +127,7 @@ def _grammar() -> dict[str, pp.ParserElement]:
 def _parse_line(grammar: str, text: str, line: int) -> pp.ParseResults:
     try:
         return _grammar()[grammar].parse_string(text, parse_all=True)
-    except pp.ParseException as e:
+    except pp.ParseBaseException as e:
         raise ParseError(f"cannot read '{text}' ({e.msg})", line, e.col) from e
 
 
@@ -185,9 +195,11 @@ def parse_lp_problem(problem_text: str) -> Problem:
     if not objective_text:
         raise ParseError("the objective has no expression", first_line)
     objective_terms = _terms(_parse_line("expression", objective_text, first_line)[0])
-    objective_expression, _ = _linear(objective_terms)
+    objective_expression, objective_constant = _linear(objective_terms)
     problem = Problem(
-        objective=ObjectiveFunction(direction=direction, expression=objective_expression)
+        objective=ObjectiveFunction(
+            direction=direction, expression=objective_expression, constant=objective_constant
+        )
     )
 
     for line, text in constraint_lines:
@@ -231,8 +243,13 @@ def _apply_bound(problem: Problem, text: str, line: int) -> None:
                 f"unknown variable '{name}' (it is not used in the objective or constraints)", line
             )
         variable = problem.variables[name]
-        if "kind" in parsed:
-            kind = parsed["kind"].lower()
+        kind = parsed["kind"].lower() if "kind" in parsed else None
+        # binary means exactly 0 or 1, so it does not combine with any other bound.
+        if variable.variable_type is VariableType.BINARY and kind != "binary":
+            raise ParseError(f"'{name}' is binary (0 or 1); it cannot have other bounds", line)
+        if kind == "binary" and (variable.lower_bound != 0 or variable.upper_bound is not None):
+            raise ParseError(f"'{name}' has bounds, so it cannot also be binary", line)
+        if kind is not None:
             if kind == "free":
                 variable.lower_bound = None
             elif kind == "integer":
@@ -251,3 +268,6 @@ def _apply_bound(problem: Problem, text: str, line: int) -> None:
                 variable.upper_bound = value
             else:
                 variable.lower_bound = variable.upper_bound = value
+        low, high = variable.lower_bound, variable.upper_bound
+        if low is not None and high is not None and low > high:
+            raise ParseError(f"'{name}' has lower bound {low} above upper bound {high}", line)

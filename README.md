@@ -46,11 +46,12 @@ where:
 - **Constraints** go after `subject to`, `s.t.`, `st` or `sujeito a` (the colon is optional).
   Operators are `<=`, `>=`, `=`, `≤` and `≥`. Constants and variables can sit on either side.
 - **Numbers** can be signed, decimal (`0.5`) or scientific (`1e3`). Write coefficients as
-  `3x`, `3*x` or `3 x`.
+  `3x`, `3*x` or `3 x`. `2e1` is the number 20, so for a variable named `e1` write `2*e1`.
+- **A constant in the objective** (`max 3x + 5`) is added to the objective value.
 - **Bounds and types** go after `where` or `onde` (optional):
   - `x, y >= 0`, `x <= 30`, `0 <= z <= 10`, `w = 5`
   - `free x` lets a variable be negative
-  - `integer a, b` or `binary c` (also `a, b integer`)
+  - `integer a, b` or `binary c` (also `a, b integer`); a binary variable takes no other bounds
 - **Every variable is non-negative** unless it is declared `free` or given a lower bound.
 - `#` starts a comment. A syntax error message names the line it happened on.
 

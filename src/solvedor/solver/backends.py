@@ -94,6 +94,7 @@ def _build_and_solve(
     objective = solver.Objective()
     for term in problem.objective.expression.terms:
         objective.SetCoefficient(variables[term.variable], float(term.coefficient))
+    objective.SetOffset(float(problem.objective.constant))
     if problem.objective.direction is ObjectiveDirection.MAXIMIZE:
         objective.SetMaximization()
     else:

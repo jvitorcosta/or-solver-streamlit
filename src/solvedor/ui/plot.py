@@ -137,7 +137,9 @@ def plot_box(problem: Problem, solution: Solution | None) -> Box:
     if not points:
         points = [(0.0, 0.0)]
     xs, ys = [p[0] for p in points], [p[1] for p in points]
-    span = max(max(xs) - min(xs), max(ys) - min(ys), 1.0)
+    # At least the distance from the origin, so a lone corner far out still gets context.
+    largest = max(abs(v) for v in xs + ys)
+    span = max(max(xs) - min(xs), max(ys) - min(ys), largest, 1.0)
     # An unbounded region gets extra room past its last corner so its open side shows.
     margin = span * (0.5 if solution is None or not solution.is_feasible else 0.15)
     # Each axis covers at least the full span, so a flat region is not drawn squashed.
@@ -165,7 +167,8 @@ def build_figure(
 ) -> go.Figure | None:
     """The feasible region, constraint lines, objective direction and solution, or None."""
     axes = _axes(problem)
-    if axes is None or (solution is not None and solution.status is SolverStatus.INFEASIBLE):
+    no_region = (SolverStatus.INFEASIBLE, SolverStatus.ERROR)  # nothing trustworthy to draw
+    if axes is None or (solution is not None and solution.status in no_region):
         return None
     box = plot_box(problem, solution)
     region = feasible_polygon(problem, box)

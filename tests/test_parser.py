@@ -7,7 +7,7 @@ import yaml
 
 from solvedor.solver import parser
 from solvedor.solver.models import ConstraintOperator, ObjectiveDirection, VariableType
-from solvedor.solver.parser import ParseError
+from solvedor.solver.parser import ParseError, parse_lp_problem
 
 
 # Core parsing tests with input,expected structure
@@ -518,3 +518,46 @@ def test_coefficient_values() -> None:
     problem = parser.parse_lp_problem("max 3x - y + 2.5z\nsubject to:\nx + y + z <= 1\n")
     coeffs = problem.objective.expression.variable_coefficients_map
     assert coeffs == {"x": Decimal("3"), "y": Decimal("-1"), "z": Decimal("2.5")}
+
+
+# --- Final review fixes ----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("name", ["st1", "stock", "steel", "wherehouse", "onde2"])
+def test_header_words_inside_names_are_variables(name: str) -> None:
+    problem = parse_lp_problem(f"max x + {name}\nsubject to:\n{name} + x <= 6\nx <= 4\n")
+    assert sorted(problem.variables) == sorted([name, "x"])
+    assert [str(c) for c in problem.constraints] == [f"{name} + x <= 6", "x <= 4"]
+
+
+def test_binary_cannot_take_other_bounds() -> None:
+    for where in ("binary x\nx <= 5", "binary x\nfree x", "x <= 5\nbinary x"):
+        with pytest.raises(ParseError) as error:
+            parse_lp_problem(f"max x\nsubject to:\nx <= 10\nwhere:\n{where}\n")
+        assert error.value.line == 6 and "binary" in str(error.value)
+
+
+def test_lower_bound_above_upper_bound_is_an_error() -> None:
+    with pytest.raises(ParseError) as error:
+        parse_lp_problem("max x\nsubject to:\nx <= 3\nwhere:\n5 <= x <= 1\n")
+    assert error.value.line == 5
+
+
+def test_objective_constant_is_kept() -> None:
+    problem = parse_lp_problem("max x + 5 - 2\nsubject to:\nx <= 3\n")
+    assert problem.objective.constant == Decimal(3)
+    assert parse_lp_problem(str(problem)) == problem
+
+
+@pytest.mark.parametrize(
+    ("text", "line"),
+    [
+        ("max _\nsubject to:\n_ <= 1\n", 1),
+        ("max x - 1e9999999y\nsubject to:\nx <= 1\n", 1),
+        ("max x\nsubject to:\n1e400x <= 1\n", 3),
+    ],
+)
+def test_bad_names_and_huge_numbers_are_parse_errors(text: str, line: int) -> None:
+    with pytest.raises(ParseError) as error:
+        parse_lp_problem(text)
+    assert error.value.line == line

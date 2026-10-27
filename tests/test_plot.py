@@ -6,6 +6,7 @@ import yaml
 from solvedor.config.language import load_language_translations
 from solvedor.solver.api import solve_text
 from solvedor.solver.backends import solve
+from solvedor.solver.models import Solution, SolverStatus
 from solvedor.solver.parser import parse_lp_problem
 from solvedor.ui.plot import build_figure, feasible_polygon, plot_box
 
@@ -92,3 +93,18 @@ def test_figure_uses_the_problem_and_translations(language_code: str) -> None:
     assert star.name == t.visualization.optimum_label
     assert star.x[0] == pytest.approx(4 / 3)
     assert figure.layout.annotations[0].text == t.visualization.direction_label
+
+
+def test_solver_error_has_no_figure() -> None:
+    t = load_language_translations(language_code="en")
+    problem = parse_lp_problem("max x + y\nsubject to:\nx + y <= 4\n")
+    solution = Solution(status=SolverStatus.ERROR, solver_message="boom")
+    assert build_figure(problem, solution, t) is None
+
+
+def test_unbounded_region_view_is_not_cramped() -> None:
+    problem = parse_lp_problem(
+        "max x + y\nsubject to:\nx + y <= 4\nx - y <= 2\nwhere:\nfree x, y\n"
+    )
+    x_min, x_max, y_min, y_max = plot_box(problem, solve(problem))
+    assert x_max - x_min >= 3 and y_max - y_min >= 3

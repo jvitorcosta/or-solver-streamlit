@@ -150,9 +150,15 @@ class ObjectiveFunction(pydantic.BaseModel):
 
     direction: ObjectiveDirection = pydantic.Field(..., description="Optimization direction")
     expression: LinearExpression = pydantic.Field(..., description="Objective expression")
+    constant: Decimal = Decimal(0)  # added to the objective value
 
     def __str__(self) -> str:
-        return f"{self.direction.value} {self.expression}"
+        text = f"{self.direction.value} {self.expression}"
+        if self.constant > 0:
+            text += f" + {self.constant}"
+        elif self.constant < 0:
+            text += f" - {-self.constant}"
+        return text
 
     def extract_variable_names(self) -> list[str]:
         return self.expression.extract_variable_names()

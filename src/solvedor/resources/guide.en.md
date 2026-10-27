@@ -18,6 +18,8 @@ where:                    # optional: bounds and types
 
 - **Variables are non-negative** unless you write `free` or give them a lower bound.
 - Coefficients can be written `3x`, `3*x` or `3 x`, with decimals (`0.5x`) or exponents (`1e3x`).
+  `2e1` is the number 20, so for a variable named `e1` write `2*e1`.
+- A constant in the objective (`max 3x + 5`) is added to the objective value.
 - Constants and variables may sit on either side of a constraint: `x + 5 >= y` is fine.
 - Variable names start with a letter or `_` and may contain digits (`product_a`, `x1`).
 - `#` starts a comment.

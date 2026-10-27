@@ -147,3 +147,7 @@ def test_gallery_objectives_unchanged() -> None:
         solution = _solve(example["problem"])
         assert solution.status is SolverStatus.OPTIMAL, key
         assert solution.objective_value == pytest.approx(_GALLERY_OBJECTIVES[key]), key
+
+
+def test_objective_constant_is_in_the_value() -> None:
+    assert _solve("max x + 5\nsubject to:\nx <= 3\n").objective_value == pytest.approx(8)
