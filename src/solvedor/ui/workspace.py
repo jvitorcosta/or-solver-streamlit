@@ -1,3 +1,14 @@
+"""The gallery and the workspace.
+
+Everything the page shows comes from session state, so a rerun (a language switch, a click
+elsewhere) redraws the same results instead of losing them:
+
+- ``problem_text``: the text area's content (its widget key)
+- ``example_key``: the gallery pill that is selected (its widget key)
+- ``loaded_example``: the gallery example last copied into the workspace, if any
+- ``last_result``: the last ``SolveResult``, rendered on every run
+"""
+
 import logging
 
 import streamlit as st
@@ -8,236 +19,128 @@ from solvedor.ui.results import render_results
 
 logger = logging.getLogger(__name__)
 
-# Example template configuration for better maintainability.
-_EXAMPLE_TEMPLATES = {
-    "production_planning": ":material/factory: Production",
-    "transportation": ":material/local_shipping: Transport",
-    "diet_optimization": ":material/restaurant: Diet",
-    "resource_allocation": ":material/account_balance: Resource",
-    "facility_location": ":material/location_on: Location",
+MAX_PROBLEM_CHARS = 20_000
+
+_EXAMPLE_ICONS = {
+    "production_planning": ":material/factory:",
+    "transportation": ":material/local_shipping:",
+    "diet_optimization": ":material/restaurant:",
+    "resource_allocation": ":material/account_balance:",
+    "facility_location": ":material/location_on:",
 }
 
 
+def init_state() -> None:
+    for key, default in {
+        "problem_text": "",
+        "example_key": None,
+        "loaded_example": None,
+        "last_result": None,
+    }.items():
+        st.session_state.setdefault(key, default)
+
+
 def display_optimization_problem_gallery(*, translations: language.TranslationSchema) -> None:
-    """Display interactive gallery of optimization problem examples with selection.
-
-    Args:
-        translations: Translation schema for the current language.
-    """
-    optimization_examples_dictionary = settings.extract_examples_from_resources_directory()
-    if not optimization_examples_dictionary:
+    examples = settings.extract_examples_from_resources_directory()
+    if not examples:
         return
 
-    user_selected_example_key = st.pills(
+    selected = st.pills(
         translations.gallery.choose_text,
-        options=list(_EXAMPLE_TEMPLATES.keys()),
-        format_func=lambda key: _EXAMPLE_TEMPLATES[key],
+        options=[key for key in _EXAMPLE_ICONS if key in examples],
+        format_func=lambda key: f"{_EXAMPLE_ICONS[key]} {examples[key]['name']}",
         help=translations.gallery.select_help,
+        key="example_key",
     )
-
-    # Early return if no selection
-    if (
-        not user_selected_example_key
-        or user_selected_example_key not in optimization_examples_dictionary
-    ):
+    if selected is None:
         return
 
-    chosen_example_data = optimization_examples_dictionary[user_selected_example_key]
-    display_example_preview_with_copy_button(chosen_example_data, translations)
-
-
-def display_example_preview_with_copy_button(
-    example: dict[str, str], translations: language.TranslationSchema
-) -> None:
-    """Display example preview with interactive copy-to-workspace functionality.
-
-    Args:
-        example: Example data dictionary.
-        translations: Translation schema.
-    """
-    st.markdown("")
+    example = examples[selected]
     with st.container(border=True):
         st.markdown(f"**:material/assignment: {example['name']}**")
         st.code(example["problem"], language="text")
-
-        # Center-aligned copy button
-        _, center_column, _ = st.columns([1, 2, 1])
-        with center_column:
-            copy_button_clicked = st.button(
+        _, center, _ = st.columns([1, 2, 1])
+        with center:
+            st.button(
                 f":material/content_copy: {translations.gallery.copy_button}",
-                key="load_template",
+                key="load_example",
                 type="primary",
-                use_container_width=True,
+                width="stretch",
                 help=translations.gallery.copy_help,
+                on_click=_load_example,
+                args=(selected, example["problem"]),
             )
-            if copy_button_clicked:
-                copy_example_to_active_workspace(example, translations)
 
 
-def copy_example_to_active_workspace(
-    example: dict[str, str], translations: language.TranslationSchema
-) -> None:
-    """Copy selected example to active workspace with user feedback.
+def _load_example(key: str, problem_text: str) -> None:
+    # Callbacks run before the widgets are drawn, so the text area can still be set here.
+    st.session_state.problem_text = problem_text
+    st.session_state.loaded_example = key
+    st.session_state.last_result = None
 
-    Args:
-        example: Example data to copy.
-        translations: Translation schema for messages.
-    """
-    # Update session state with example data
-    st.session_state.update(
-        {
-            "example_text": example["problem"],
-            "example_name": example["name"],
-            "problem_text": example["problem"],
-        }
-    )
 
-    # Show success feedback
-    st.toast(
-        f":material/check_circle: **{example['name']}** {translations.gallery.copied_toast}",
-        icon=":material/content_copy:",
-    )
-    st.rerun()
+def _clear_workspace() -> None:
+    st.session_state.problem_text = ""
+    st.session_state.example_key = None
+    st.session_state.loaded_example = None
+    st.session_state.last_result = None
 
 
 def display_optimization_workspace_interface(*, translations: language.TranslationSchema) -> None:
-    """Display complete optimization workspace interface with form and processing.
-
-    Args:
-        translations: Dictionary containing translation data.
-    """
-    initial_workspace_text, example_currently_loaded = get_workspace_initial_state_from_session()
-    active_language_code = st.session_state.get("language", "en")
-
-    display_workspace_header_with_example_status(
-        example_is_loaded=example_currently_loaded, translations=translations
-    )
-    display_problem_input_form_with_buttons(
-        initial_text=initial_workspace_text, language_code=active_language_code
-    )
-    execute_queued_optimization_problem()
-
-
-def display_problem_input_form_with_buttons(*, initial_text: str, language_code: str) -> None:
-    """Display form with text input area and solve/clear buttons.
-
-    Args:
-        initial_text: Initial text to display in the text area.
-        language_code: Language code for processing.
-    """
-    interface_translations = language.load_language_translations(language_code=language_code)
-
-    with st.form("problem_form", border=False):
-        # To ensure we won't erase the text area content on rerun
-        # (e.g. changing language)
-        if "problem_text" not in st.session_state:
-            st.session_state.problem_text = initial_text
-
-        user_input_problem_text = st.text_area(
-            "",
-            height=300,
-            label_visibility="collapsed",
-            placeholder=interface_translations.interface.placeholder,
-            help=interface_translations.interface.help_text,
-            key="problem_text",
-        )
-
-        st.markdown("")
-        solve_button_column, clear_button_column = st.columns(2)
-
-        with solve_button_column:
-            solve_button_clicked = st.form_submit_button(
-                (f":material/play_arrow: **{interface_translations.interface.solve_button}**"),
-                type="primary",
-                use_container_width=True,
-                help=interface_translations.interface.solve_help,
-            )
-
-        with clear_button_column:
-            clear_button_clicked = st.form_submit_button(
-                (f":material/restart_alt: {interface_translations.interface.clear_workspace}"),
-                type="secondary",
-                use_container_width=True,
-                help=interface_translations.interface.clear_help,
-                on_click=lambda: st.session_state.update(
-                    {"problem_text": "", "example_text": None, "example_name": None}
-                ),
-            )
-
-        if solve_button_clicked:
-            if user_input_problem_text.strip():
-                queue_problem_text_for_optimization(
-                    problem_text=user_input_problem_text, language_code=language_code
-                )
-                st.toast(
-                    (f":material/calculate: {interface_translations.interface.processing_toast}"),
-                    icon=":material/play_arrow:",
-                )
-                st.rerun()
-            else:
-                st.toast(
-                    (f":material/warning: {interface_translations.messages.empty_problem_solve}!"),
-                    icon=":material/error:",
-                )
-
-        if clear_button_clicked:
-            st.toast(
-                (f":material/refresh: {interface_translations.interface.clear_workspace}!"),
-                icon=":material/restart_alt:",
-            )
-
-
-def get_workspace_initial_state_from_session() -> tuple[str, bool]:
-    """Retrieve initial workspace state from Streamlit session storage.
-
-    Returns:
-        Tuple of (initial_text, example_is_loaded) for workspace
-        initialization.
-    """
-    initial_text_content = ""
-    example_currently_loaded = False
-
-    if "example_text" in st.session_state:
-        initial_text_content = st.session_state.example_text
-        example_currently_loaded = True
-
-    return initial_text_content, example_currently_loaded
-
-
-def display_workspace_header_with_example_status(
-    *, example_is_loaded: bool, translations: language.TranslationSchema
-) -> None:
-    """Display workspace header showing current example status.
-
-    Args:
-        example_is_loaded: Whether an example is currently loaded in workspace.
-        translations: Translation schema for localized text.
-    """
     st.markdown(f"#### :material/edit_note: {translations.interface.workspace_title}")
-    if example_is_loaded and "example_name" in st.session_state:
+    loaded = st.session_state.loaded_example
+    examples = settings.extract_examples_from_resources_directory()
+    if loaded in examples:
         st.caption(
             f":material/lightbulb: {translations.interface.using_example}: "
-            f"**{st.session_state.example_name}**"
+            f"**{examples[loaded]['name']}**"
         )
 
+    with st.form("problem_form", border=False):
+        st.text_area(
+            translations.interface.workspace_title,
+            key="problem_text",
+            height=300,
+            max_chars=MAX_PROBLEM_CHARS,
+            label_visibility="collapsed",
+            placeholder=translations.interface.placeholder,
+            help=translations.interface.help_text,
+        )
+        solve_column, clear_column = st.columns(2)
+        with solve_column:
+            solve_clicked = st.form_submit_button(
+                f":material/play_arrow: **{translations.interface.solve_button}**",
+                key="solve",
+                type="primary",
+                width="stretch",
+                help=translations.interface.solve_help,
+            )
+        with clear_column:
+            st.form_submit_button(
+                f":material/restart_alt: {translations.interface.clear_workspace}",
+                key="clear",
+                width="stretch",
+                help=translations.interface.clear_help,
+                on_click=_clear_workspace,
+            )
 
-def queue_problem_text_for_optimization(*, problem_text: str, language_code: str) -> None:
-    """Queue the problem in session state; the next run solves and shows it."""
-    st.session_state.current_problem = {"text": problem_text, "language": language_code}
+    if solve_clicked:
+        _solve(st.session_state.problem_text, translations)
+
+    if st.session_state.last_result is not None:
+        render_results(st.session_state.last_result, translations)
 
 
-def execute_queued_optimization_problem() -> None:
-    """Solve and show the queued problem, if there is one."""
-    queued = st.session_state.pop("current_problem", None)
-    if queued is None:
+def _solve(problem_text: str, translations: language.TranslationSchema) -> None:
+    if not problem_text.strip():
+        st.session_state.last_result = None
+        st.toast(translations.messages.empty_problem_solve, icon=":material/warning:")
         return
-    translations = language.load_language_translations(language_code=queued["language"])
     try:
         with st.spinner(translations.status.solving):
-            result = solve_text(queued["text"])
+            st.session_state.last_result = solve_text(problem_text)
     except Exception:
         # Unexpected bug: keep the traceback in the server log, not on the page.
         logger.exception("solving failed")
+        st.session_state.last_result = None
         st.error(translations.errors.solving_error, icon=":material/error:")
-        return
-    render_results(result, translations)

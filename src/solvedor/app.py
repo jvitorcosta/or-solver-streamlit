@@ -20,10 +20,8 @@ def initialize_streamlit_page_configuration() -> None:
 
 
 def setup_default_session_state_variables() -> None:
-    """Setup default values for Streamlit session state variables across application."""
-    # Use setdefault for cleaner initialization
-    st.session_state.setdefault("solver_status", "ready")
-    st.session_state.setdefault("language", "en")
+    st.session_state.setdefault("language", language.LanguageCode.ENGLISH.value)
+    workspace.init_state()
 
 
 def display_tabbed_application_interface(*, translations: language.TranslationSchema) -> None:
@@ -81,7 +79,7 @@ def main() -> None:
     setup_default_session_state_variables()
 
     current_language_translations = language.load_language_translations(
-        language_code=str(st.session_state.get("language", "en"))
+        language_code=st.session_state.language
     )
 
     components.display_language_selection_sidebar(translations=current_language_translations)

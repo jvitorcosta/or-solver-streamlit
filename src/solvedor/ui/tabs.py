@@ -5,17 +5,18 @@ import streamlit as st
 from solvedor.config import language
 
 
+@st.cache_data(show_spinner=False)
+def _read_bytes(path: str) -> bytes:
+    """The thesis PDF is a few MB; read it once, not on every rerun."""
+    return Path(path).read_bytes()
+
+
 def display_research_thesis_with_viewer(
-    translations: language.TranslationSchema | None = None,
+    translations: language.TranslationSchema,
 ) -> None:
     """Display research thesis PDF with integrated viewer and download functionality."""
     project_resources_directory = Path(__file__).parents[1] / "resources"
     thesis_pdf_file_path = project_resources_directory / "solvedor_article.pdf"
-
-    # Load translations if not provided
-    if translations is None:
-        language_code = st.session_state.get("language", "en")
-        translations = language.load_language_translations(language_code=language_code)
 
     if thesis_pdf_file_path.exists():
         display_thesis_header_with_download_button(
@@ -91,7 +92,7 @@ def display_visualization_elements_guide() -> None:
 
 
 def display_markdown_content_from_file(
-    file_name: str, translations: language.TranslationSchema | None = None
+    file_name: str, translations: language.TranslationSchema
 ) -> None:
     """Display markdown file content from project root directory.
 
@@ -99,11 +100,6 @@ def display_markdown_content_from_file(
         file_name: Name of the markdown file to render.
         translations: Translation schema for localized text.
     """
-    # Load translations if not provided
-    if translations is None:
-        language_code = st.session_state.get("language", "en")
-        translations = language.load_language_translations(language_code=language_code)
-
     markdown_file_path = Path(__file__).parents[3] / file_name
 
     try:
@@ -134,13 +130,13 @@ def display_thesis_header_with_download_button(
 
     with col2:
         try:
-            thesis_pdf_binary_data = thesis_file_path.read_bytes()
+            thesis_pdf_binary_data = _read_bytes(str(thesis_file_path))
             download_button_clicked = st.download_button(
                 f":material/download: {translations.resources.download_pdf}",
                 thesis_pdf_binary_data,
                 file_name="solvedor_article.pdf",
                 mime="application/pdf",
-                use_container_width=True,
+                width="stretch",
             )
 
             if download_button_clicked:

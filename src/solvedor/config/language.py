@@ -1,6 +1,6 @@
 from enum import StrEnum
+from functools import cache
 from pathlib import Path
-from typing import Any
 
 import pydantic
 import yaml
@@ -202,150 +202,18 @@ class TranslationSchema(BaseModel):
     model_config = pydantic.ConfigDict(frozen=True)  # Immutable after creation
 
 
-class LanguageManager(BaseModel):
-    """Manages language translations with Pydantic validation and immutable state."""
-
-    translation_schemas: dict[LanguageCode, TranslationSchema] = pydantic.Field(
-        default_factory=dict
-    )
-
-    model_config = pydantic.ConfigDict(
-        use_enum_values=True, frozen=True
-    )  # Immutable after creation
-
-    @staticmethod
-    def load_translations() -> "LanguageManager":
-        """Load all available translations from YAML files.
-
-        Returns:
-            LanguageManager instance with loaded translation schemas.
-        """
-        return LanguageManager(translation_schemas=build_language_schema_dictionary())
-
-    @staticmethod
-    def from_dict(
-        *, language_code: LanguageCode, translations: dict[str, Any]
-    ) -> "LanguageManager":
-        """Create LanguageManager from translation dictionary.
-
-        Args:
-            language_code: Primary language code for the manager.
-            translations: Translation data dictionary.
-
-        Returns:
-            LanguageManager instance with validated translations.
-        """
-        validated_translation_schema = TranslationSchema(**translations)
-        language_schema_mapping = {language_code: validated_translation_schema}
-        return LanguageManager(translation_schemas=language_schema_mapping)
-
-    def get_translations(self, language_code: LanguageCode) -> TranslationSchema:
-        """Get translation schema for specified language.
-
-        Args:
-            language_code: Language code for translations.
-
-        Returns:
-            TranslationSchema for the requested language.
-        """
-        if language_code not in self.translation_schemas:
-            raise ValueError(f"Translations for language code '{language_code}' not found.")
-        return self.translation_schemas[language_code]
-
-    def get_translation(self, key_path: str, language_code: LanguageCode) -> str:
-        """Get specific translation using dot notation key path.
-
-        Args:
-            key_path: Dot-separated path to translation (e.g., 'app.title').
-            language_code: Language code for translation lookup.
-
-        Returns:
-            Translation string for the specified key path.
-        """
-        language_translation_schema = self.get_translations(language_code)
-        return traverse_nested_translation_attributes(
-            translation_object=language_translation_schema, key_path=key_path
-        )
+_TRANSLATIONS_DIR = Path(__file__).parents[1] / "translations"
 
 
-def parse_yaml_translation_file_for_language(
-    *, language_code: LanguageCode
-) -> TranslationSchema | None:
-    """Parse YAML translation file and return validated schema for specific language.
-
-    Args:
-        language_code: Language code to load translations for.
-
-    Returns:
-        TranslationSchema if file exists and is valid, None otherwise.
-    """
-    translations_directory = Path(__file__).parents[1] / "translations"
-    yaml_file_path = translations_directory / f"{language_code.value}.yaml"
-
-    try:
-        yaml_file_content = yaml_file_path.read_text(encoding="utf-8")
-        parsed_translation_data = yaml.safe_load(yaml_file_content)
-        return TranslationSchema(**parsed_translation_data) if parsed_translation_data else None
-    except (FileNotFoundError, yaml.YAMLError, OSError):
-        return None
-
-
-def build_language_schema_dictionary() -> dict[LanguageCode, TranslationSchema]:
-    """Build dictionary of all supported languages with their translation schemas.
-
-    Returns:
-        Dictionary mapping language codes to their translation schemas.
-    """
-    return {
-        language_code_enum: translation_schema
-        for language_code_enum in LanguageCode
-        if (
-            translation_schema := parse_yaml_translation_file_for_language(
-                language_code=language_code_enum
-            )
-        )
-        is not None
-    }
-
-
-def traverse_nested_translation_attributes(*, translation_object: Any, key_path: str) -> str:
-    """Traverse nested translation attributes using dot-separated key path.
-
-    Args:
-        translation_object: Starting translation object to navigate.
-        key_path: Dot-separated path to desired translation.
-
-    Returns:
-        Translation string at the specified path.
-
-    Raises:
-        AttributeError: If the key path is invalid or not found.
-    """
-    from functools import reduce
-
-    value = reduce(getattr, key_path.split("."), translation_object)
-    return str(value)
-
-
+@cache
 def load_language_translations(*, language_code: str) -> TranslationSchema:
-    """Load localization strings for specified language with English fallback.
+    """The translations for a language code, English for an unknown code. Loaded once per code.
 
-    Args:
-        language_code: Language code string (e.g., 'en', 'pt').
-
-    Returns:
-        TranslationSchema instance with validated translations for the language.
-        Falls back to English if the requested language is invalid.
+    A missing or broken translation file raises: it ships inside the package, so that is a bug.
     """
-    # Validate and fallback to English if invalid
     try:
-        validated_language_code = LanguageCode(language_code)
+        code = LanguageCode(language_code)
     except ValueError:
-        validated_language_code = LanguageCode.ENGLISH
-
-    # Load requested language or fallback to English
-    return (
-        parse_yaml_translation_file_for_language(language_code=validated_language_code)
-        or parse_yaml_translation_file_for_language(language_code=LanguageCode.ENGLISH)
-        or TranslationSchema(**{})  # Empty schema as last resort
-    )
+        code = LanguageCode.ENGLISH
+    data = yaml.safe_load((_TRANSLATIONS_DIR / f"{code.value}.yaml").read_text(encoding="utf-8"))
+    return TranslationSchema(**data)
