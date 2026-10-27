@@ -1,0 +1,32 @@
+name: Paper
+
+on:
+  push:
+    branches: [main]
+    paths: ["paper/**", ".github/workflows/paper.yml"]
+  pull_request:
+    paths: ["paper/**", ".github/workflows/paper.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compile article.tex
+        uses: xu-cheng/latex-action@4.1.0
+        with:
+          working_directory: paper
+          root_file: article.tex
+          latexmk_use_lualatex: false
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: solvedor-article
+          path: paper/article.pdf
+          if-no-files-found: error
