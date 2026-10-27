@@ -3,7 +3,7 @@ import streamlit as st
 
 from solvedor.config import language
 from solvedor.solver import parser
-from solvedor.solver.backends import SolverFactory
+from solvedor.solver.backends import solve
 from solvedor.solver.models import Problem, Solution, SolverStatus, VariableType
 
 # Progress tracking for UI feedback.
@@ -23,9 +23,7 @@ def parse_text_and_solve_with_backend(problem_text: str) -> tuple[Problem, Solut
         parser.ParseError: If problem text cannot be parsed.
     """
     problem = parser.parse_lp_problem(problem_text)
-    solver = SolverFactory.create_solver(problem)
-    solution = solver.execute_optimization_with_backend(problem)
-    return problem, solution
+    return problem, solve(problem)
 
 
 def execute_optimization_with_ui_feedback(
@@ -66,8 +64,7 @@ def execute_optimization_with_ui_feedback(
             )
             problem_type = "Mixed-Integer" if contains_integer_or_binary_variables else "Linear"
 
-            solver = SolverFactory.create_solver(problem)
-            solver_name = solver.get_solver_name()
+            solver_name = f"OR-Tools {solution.solver_name}"
 
             # Complete.
             progress_text.text(translations.status.solution_found)
@@ -137,7 +134,7 @@ def render_solution_results_with_metrics(
         # Objective value
         st.metric(
             translations.results.objective_value,
-            f"{solution.objective_value:.6f}" if solution.objective_value else "N/A",
+            f"{solution.objective_value:.6f}" if solution.objective_value is not None else "N/A",
             help=translations.results.objective_value_help,
         )
 

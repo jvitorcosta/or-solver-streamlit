@@ -27,10 +27,11 @@ class VariableType(StrEnum):
 
 class SolverStatus(StrEnum):
     OPTIMAL = "optimal"
+    FEASIBLE = "feasible"  # a solution, but the time limit stopped the proof of optimality
     INFEASIBLE = "infeasible"
     UNBOUNDED = "unbounded"
-    NOT_SOLVED = "not_solved"
-    ABNORMAL = "abnormal"
+    TIME_LIMIT = "time_limit"  # stopped before any solution was found
+    ERROR = "error"
 
 
 class Variable(pydantic.BaseModel):
@@ -247,62 +248,36 @@ class Problem(pydantic.BaseModel):
 
 
 class Solution(pydantic.BaseModel):
-    """Represents a solution to an optimization problem."""
+    """The solver's answer. Values are floats: they come from a floating-point solver."""
 
-    status: SolverStatus = pydantic.Field(..., description="Solver status")
-    objective_value: Decimal | None = pydantic.Field(
-        default=None, description="Optimal objective value"
-    )
-    variable_values: dict[str, float] = pydantic.Field(
-        default_factory=dict, description="Variable values in the solution"
-    )
-    solver_message: str | None = pydantic.Field(
-        default=None, description="Optional solver message or error details"
-    )
-    solve_time: float | None = pydantic.Field(
-        default=None, description="Time taken to solve (in seconds)"
-    )
-    iterations: int | None = pydantic.Field(default=None, description="Number of iterations")
+    status: SolverStatus
+    objective_value: float | None = None
+    variable_values: dict[str, float] = pydantic.Field(default_factory=dict)
+    solver_message: str | None = None
+    solver_name: str | None = None
+    solve_time: float | None = None  # seconds
+    iterations: int | None = None
 
     @property
     def is_optimal(self) -> bool:
-        """Check if solution is optimal."""
-        return self.status == SolverStatus.OPTIMAL
+        return self.status is SolverStatus.OPTIMAL
 
     @property
     def is_feasible(self) -> bool:
-        """Check if solution is feasible."""
-        return self.status in [SolverStatus.OPTIMAL]
+        """True when there is a solution to show (optimal, or the best found in time)."""
+        return self.status in (SolverStatus.OPTIMAL, SolverStatus.FEASIBLE)
 
     def extract_variable_value(self, variable_name: str) -> float | None:
         return self.variable_values.get(variable_name)
 
     def __str__(self) -> str:
-        solution_display_lines = []
-
-        if self.status == SolverStatus.OPTIMAL:
-            solution_display_lines.append("🎯 Optimal Solution Found!")
-            if self.objective_value is not None:
-                solution_display_lines.append(f"   Objective Value: {self.objective_value}")
-            solution_display_lines.append("")
-            solution_display_lines.append("   Variables:")
-            for variable_name, variable_value in sorted(self.variable_values.items()):
-                solution_display_lines.append(f"   🐾 {variable_name} = {variable_value}")
-            solution_display_lines.append("")
-            solution_display_lines.append("   Status: OPTIMAL 😺")
-        elif self.status == SolverStatus.INFEASIBLE:
-            solution_display_lines.append("🙀 Problem is Infeasible!")
-            solution_display_lines.append("   No solution exists that satisfies all constraints.")
-        elif self.status == SolverStatus.UNBOUNDED:
-            solution_display_lines.append("😿 Problem is Unbounded!")
-            solution_display_lines.append("   The objective function can be improved infinitely.")
-        else:
-            solution_display_lines.append(f"😾 Solver Status: {self.status}")
-
-        if self.solve_time is not None:
-            solution_display_lines.append(f"   ⏱️ Solve Time: {self.solve_time:.3f}s")
-
-        return "\n".join(solution_display_lines)
+        lines = [f"Status: {self.status.value}"]
+        if self.objective_value is not None:
+            lines.append(f"Objective: {self.objective_value:g}")
+        lines.extend(f"{name} = {value:g}" for name, value in sorted(self.variable_values.items()))
+        if self.solver_message:
+            lines.append(self.solver_message)
+        return "\n".join(lines)
 
 
 def add_term_to_linear_expression(
