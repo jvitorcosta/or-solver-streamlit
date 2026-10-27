@@ -73,9 +73,10 @@
   \AtPageUpperLeft{%
     \put(20,-72){\includegraphics[width=1.75cm]{images/logo_ufam.png}}%
     }%
-  \AtPageUpperRight{%
-    \put(465, 735){\includegraphics[width=4.5cm]{images/logo_eng_h.png}}
-    }% fiz essa rataria porque não funcionou como esperado
+  % eso-pic has no \AtPageUpperRight; (465, 735) is measured from the page's bottom-left corner
+  \AtPageLowerLeft{%
+    \put(465, 735){\includegraphics[width=4.5cm]{images/logo_eng_h.png}}%
+    }%
 }%
 
 \maketitle
