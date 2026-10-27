@@ -1,7 +1,12 @@
+import logging
+
 import streamlit as st
 
 from solvedor.config import language, settings
-from solvedor.solver import engine
+from solvedor.solver.api import solve_text
+from solvedor.ui.results import render_results
+
+logger = logging.getLogger(__name__)
 
 # Example template configuration for better maintainability.
 _EXAMPLE_TEMPLATES = {
@@ -11,9 +16,6 @@ _EXAMPLE_TEMPLATES = {
     "resource_allocation": ":material/account_balance: Resource",
     "facility_location": ":material/location_on: Location",
 }
-
-# Detection keywords for variable types.
-_INTEGER_KEYWORDS = frozenset(["integer", "binary"])
 
 
 def display_optimization_problem_gallery(*, translations: language.TranslationSchema) -> None:
@@ -220,48 +222,22 @@ def display_workspace_header_with_example_status(
 
 
 def queue_problem_text_for_optimization(*, problem_text: str, language_code: str) -> None:
-    """Queue optimization problem in session state for processing by solver.
-
-    Args:
-        problem_text: The optimization problem text input.
-        language_code: Language code for processing.
-    """
-    # Auto-detect variable type from problem syntax
-    detected_variable_type = analyze_text_for_variable_type_hints(problem_text=problem_text)
-
-    st.session_state.current_problem = {
-        "text": problem_text,
-        "language": language_code,
-        "variable_type": detected_variable_type,
-    }
-
-
-def analyze_text_for_variable_type_hints(*, problem_text: str) -> str:
-    """Analyze problem text for variable type hints and keywords.
-
-    Args:
-        problem_text: The optimization problem text to analyze.
-
-    Returns:
-        Variable type: 'integer' if integer/binary keywords found,
-        else 'continuous'.
-    """
-    problem_text_lowercase = problem_text.lower()
-    return (
-        "integer"
-        if any(integer_keyword in problem_text_lowercase for integer_keyword in _INTEGER_KEYWORDS)
-        else "continuous"
-    )
+    """Queue the problem in session state; the next run solves and shows it."""
+    st.session_state.current_problem = {"text": problem_text, "language": language_code}
 
 
 def execute_queued_optimization_problem() -> None:
-    """Execute and display queued optimization problem solution if available."""
-    if "current_problem" in st.session_state:
-        queued_problem_data = st.session_state.current_problem
-        engine.execute_optimization_with_ui_feedback(
-            queued_problem_data["text"],
-            language_code=queued_problem_data["language"],
-            variable_type=queued_problem_data["variable_type"],
-        )
-        # Clear the problem data after processing
-        del st.session_state.current_problem
+    """Solve and show the queued problem, if there is one."""
+    queued = st.session_state.pop("current_problem", None)
+    if queued is None:
+        return
+    translations = language.load_language_translations(language_code=queued["language"])
+    try:
+        with st.spinner(translations.status.solving):
+            result = solve_text(queued["text"])
+    except Exception:
+        # Unexpected bug: keep the traceback in the server log, not on the page.
+        logger.exception("solving failed")
+        st.error(translations.errors.solving_error, icon=":material/error:")
+        return
+    render_results(result, translations)

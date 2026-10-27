@@ -171,6 +171,11 @@ class ResultsTranslations(BaseModel):
     variable: str
     value: str
     type: str
+    feasible_found: str
+    time_limit: str
+    time_limit_help: str
+    linear: str
+    mixed_integer: str
     tabs: ResultTabsTranslations
     summary: ResultSummaryTranslations
 

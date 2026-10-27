@@ -105,6 +105,11 @@ results:
   variable: "Variável"
   value: "Valor"
   type: "Tipo"
+  feasible_found: "Melhor solução encontrada antes do limite de tempo (sem prova de otimalidade)"
+  time_limit: "Nenhuma solução encontrada dentro do limite de tempo"
+  time_limit_help: "Tente um modelo menor ou limites mais apertados nas variáveis."
+  linear: "Linear"
+  mixed_integer: "Inteiro misto"
 
   tabs:
     summary: "Resumo"

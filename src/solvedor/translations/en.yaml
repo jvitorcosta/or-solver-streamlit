@@ -103,6 +103,11 @@ results:
   variable: "Variable"
   value: "Value"
   type: "Type"
+  feasible_found: "Best solution found before the time limit (not proven optimal)"
+  time_limit: "No solution found within the time limit"
+  time_limit_help: "Try a smaller model or tighter bounds on the variables."
+  linear: "Linear"
+  mixed_integer: "Mixed-integer"
 
   tabs:
     summary: "Summary"
