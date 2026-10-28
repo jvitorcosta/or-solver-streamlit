@@ -262,8 +262,9 @@ def build_figure(
         xaxis={"title": axes[0], "range": [x_min, x_max], "zeroline": True},
         yaxis={"title": axes[1], "range": [y_min, y_max], "zeroline": True},
         height=520,
-        margin={"l": 40, "r": 20, "t": 30, "b": 40},
-        legend={"orientation": "h", "yanchor": "top", "y": -0.15},
+        margin={"l": 40, "r": 20, "t": 70, "b": 40},
+        # Above the plot: below it, the legend covered the x-axis title.
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1.02, "x": 0},
     )
     return figure
 
