@@ -1,4 +1,4 @@
-"""Core domain models for OR-Solver."""
+"""Core domain models for SolvedOR."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""UI components for the OR-Solver interface."""
+"""UI components for the SolvedOR interface."""
 
 import streamlit as st
 

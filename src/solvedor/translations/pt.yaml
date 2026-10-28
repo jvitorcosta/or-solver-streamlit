@@ -1,5 +1,5 @@
 app:
-  title: "OR-Solver"
+  title: "SolvedOR"
   subtitle: "Uma aplicação de Pesquisa Operacional"
   about: "Escreva um programa linear ou inteiro em notação de livro-texto e resolva com o Google OR-Tools."
   footer: ":material/favorite: Gostou de usar? Por favor, dê uma estrela no GitHub!"
@@ -51,7 +51,7 @@ visualization:
 
 resources:
   thesis: "Tese de Pesquisa - SolvedOR: Interface Moderna de Pesquisa Operacional"
-  thesis_caption: "Esta tese apresenta a aplicação OR-Solver e sua metodologia."
+  thesis_caption: "Esta tese apresenta a aplicação SolvedOR e sua metodologia."
   download_pdf: "Baixar PDF"
 
 messages:

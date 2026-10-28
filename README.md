@@ -1,4 +1,4 @@
-# OR-Solver
+# SolvedOR
 
 [![CI](https://github.com/jvitorcosta/or-solver-streamlit/actions/workflows/ci.yml/badge.svg)](https://github.com/jvitorcosta/or-solver-streamlit/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://python.org)
@@ -9,7 +9,7 @@ Write a linear or integer program the way a textbook does, and solve it in the b
 
 **Live demo: [solvedor.streamlit.app](https://solvedor.streamlit.app)**
 
-OR-Solver is a Streamlit app. It parses the model you type, solves it with
+SolvedOR is a Streamlit app. It parses the model you type, solves it with
 [Google OR-Tools](https://developers.google.com/optimization) (GLOP for linear programs,
 SCIP for integer ones), and shows the solution. For two-variable problems it also draws the
 feasible region, the constraint lines, the direction the objective improves and the solution.
