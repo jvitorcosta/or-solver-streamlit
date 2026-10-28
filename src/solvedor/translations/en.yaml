@@ -1,5 +1,5 @@
 app:
-  title: "OR-Solver"
+  title: "SolvedOR"
   subtitle: "An Operations Research app"
   about: "Write a linear or integer program in textbook notation and solve it with Google OR-Tools."
   footer: ":material/favorite: Did you enjoy using it? Please star the project on GitHub!"
@@ -51,7 +51,7 @@ visualization:
 
 resources:
   thesis: "Research Thesis - SolvedOR: Modern Operations Research Interface"
-  thesis_caption: "This thesis introduces the OR-Solver application and its methodology."
+  thesis_caption: "This thesis introduces the SolvedOR application and its methodology."
   download_pdf: "Download PDF"
 
 messages:
