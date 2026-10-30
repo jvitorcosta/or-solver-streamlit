@@ -9,6 +9,8 @@ Write a linear or integer program the way a textbook does, and solve it in the b
 
 **Live demo: [solvedor.streamlit.app](https://solvedor.streamlit.app)**
 
+![SolvedOR solving a production planning model and drawing its feasible region](docs/demo.gif)
+
 SolvedOR is a Streamlit app. It parses the model you type, solves it with
 [Google OR-Tools](https://developers.google.com/optimization) (GLOP for linear programs,
 SCIP for integer ones), and shows the solution. For two-variable problems it also draws the
