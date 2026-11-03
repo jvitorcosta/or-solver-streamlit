@@ -75,7 +75,7 @@ pyarrow==26.0.0
     # via streamlit
 pydantic==2.14.1
     # via or-solver-streamlit
-pydantic-core==2.50.1
+pydantic-core==2.50.2
     # via pydantic
 pydeck==0.9.3
     # via streamlit
