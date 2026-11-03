@@ -73,7 +73,7 @@ protobuf==6.33.6
     #   streamlit
 pyarrow==26.0.0
     # via streamlit
-pydantic==2.14.1
+pydantic==2.14.2
     # via or-solver-streamlit
 pydantic-core==2.50.1
     # via pydantic
