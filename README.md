@@ -7,6 +7,8 @@
 
 Write a linear or integer program the way a textbook does, and solve it in the browser.
 
+**Status:** finished
+
 **Live demo: [solvedor.streamlit.app](https://solvedor.streamlit.app)**
 
 ![SolvedOR solving a production planning model and drawing its feasible region](docs/demo.gif)
@@ -16,6 +18,10 @@ SolvedOR is a Streamlit app. It parses the model you type, solves it with
 SCIP for integer ones), and shows the solution. For two-variable problems it also draws the
 feasible region, the constraint lines, the direction the objective improves and the solution.
 The interface is in English and Portuguese.
+
+## Why I built it
+
+I built SolvedOR for my undergraduate thesis in Production Engineering at UFAM (2023): a tool to help students learn Operations Research by trying models, not only reading them. The article, in Portuguese, is in [`paper/`](paper/), and I've kept improving the app since.
 
 ## Quick start
 
